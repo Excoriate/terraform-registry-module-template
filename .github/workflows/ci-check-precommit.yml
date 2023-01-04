@@ -1,0 +1,32 @@
+---
+name: Run pre-commit
+
+on:
+    push:
+        branches:
+            - '*'
+    pull_request:
+        types: [opened, edited, synchronize]
+
+env:
+    PRE_COMMIT_CONFIG: pre-commit-config-githubactions.yaml
+
+jobs:
+    run-all-hooks:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-python@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+            - uses: terraform-linters/setup-tflint@v2
+              name: Setup TFLint
+              with:
+                  tflint_version: v0.44.0
+            - name: Install TfLInt and NodeJS
+              run: |
+                  npm install -g markdown-link-check
+            - uses: pre-commit/action@v3.0.0
+              with:
+                  extra_args: --config $PRE_COMMIT_CONFIG

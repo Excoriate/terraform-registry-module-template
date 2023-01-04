@@ -1,0 +1,48 @@
+---
+repos:
+    - repo: https://github.com/adrienverge/yamllint.git
+      rev: v1.28.0
+      hooks:
+          - id: yamllint
+
+    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+      rev: 0.2.2
+      hooks:
+          - id: yamlfmt
+
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.4.0
+      hooks:
+          - id: trailing-whitespace
+          - id: check-added-large-files
+          - id: check-case-conflict
+          - id: check-merge-conflict
+          - id: check-shebang-scripts-are-executable
+          - id: check-symlinks
+          - id: detect-private-key
+          - id: end-of-file-fixer
+
+    - repo: https://github.com/jumanjihouse/pre-commit-hooks
+      rev: 3.0.0
+      hooks:
+          - id: git-check  # Configure in .gitattributes
+          - id: script-must-have-extension
+
+
+    - repo: https://github.com/gruntwork-io/pre-commit
+      rev: v0.1.17
+      hooks:
+          - id: shellcheck
+
+    - repo: https://github.com/mineiros-io/pre-commit-hooks
+      rev: v0.4.3
+      hooks:
+          - id: terraform-fmt
+            files: ^module/.*\.tf$
+          - id: terraform-validate
+            files: ^module/.*\.tf$
+            exclude: ^examples|.terraform/|tests/.*\.tf$
+          - id: tflint
+            exclude: ^examples|.terraform/|tests/.*\.tf$
+          - id: markdown-link-check
+            args: [-p]

@@ -1,0 +1,133 @@
+---
+version: '3'
+
+#-----------------------------------------------------------------------------------------
+# ENVIRONMENT VARIABLES CONFIGURATION
+# ----------------------------------
+# - These variables are used to configure the environment for the task.
+# - It's set while calling the task. E.g.: ENV=master task <task_name>
+# - Remember to generate the .env.<env>.aws or .env.<env>.terraform previously.
+#-----------------------------------------------------------------------------------------
+env:
+    TARGET_ENVIRONMENT: '{{.ENV}}'
+
+vars:
+    MODULE: '{{default "default" .MODULE}}'
+    RECIPE: '{{default "basic" .RECIPE}}'
+
+dotenv: ['.env.{{.TARGET_ENVIRONMENT}}.aws', '.env.{{.TARGET_ENVIRONMENT}}.terraform']
+
+includes:
+    common:
+        taskfile: ./DevEx/taskfile/Taskfile.common.yml
+
+    devex:
+        taskfile: ./DevEx/taskfile/Taskfile.devex.yml
+
+
+  #-----------------------------------------------------------------------------------------
+  # TERRAFORM/TERRAGRUNT MODULES
+  # ----------------------------------
+  # - These are specific IAC modules, either in Terragrunt o terraform that will be executed.
+  # - Normally, these modules have their own TaskFile.yml in the folder infrastructure/terraform
+  #-----------------------------------------------------------------------------------------
+    module:
+        taskfile: ./modules/TaskFile.yml
+        dir: ./modules
+
+    test:
+        taskfile: ./tests/TaskFile.yml
+        dir: ./tests
+
+    example:
+        taskfile: ./examples/TaskFile.yml
+        dir: ./examples
+
+tasks:
+    default:
+        cmds:
+            - task: common:default
+
+    pre-commit-init:
+        desc: Initialize and install required hooks
+        cmds:
+            - task: common:hooks-install
+
+    pre-commit:
+        desc: Run all the pre-configured pre-commit hooks.
+        cmds:
+            - task: common:hooks
+
+    gen-env-aws:
+        desc: Generate an .env.<env>.aws file for a given environment
+        cmds:
+            - task: devex:gen-env-aws
+
+    module-init:
+        desc: Run Terraform Init on module's source code.
+        cmds:
+            - task: module:init
+              vars: {TF_MODULE: '{{.MODULE}}'}
+
+    module-ci:
+        desc: Run common terraform tasks on module's folder.
+        cmds:
+            - task: module:ci
+              vars: {TF_MODULE: '{{.MODULE}}'}
+
+    recipe-init:
+        desc: Run Terraform Init on module's example recipe source code.
+        cmds:
+            - task: example:init
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    recipe-plan:
+        desc: Run Terraform Plan on module's example recipe source code.
+        cmds:
+            - task: example:plan
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    recipe-ci:
+        desc: Run Set of checks, fmt and linting operations over the example's module.
+        cmds:
+            - task: example:ci
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+            - task: example:docs
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    test-unit:
+        desc: Run unit tests
+        cmds:
+            - task: test:run-unit-all
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    test-integration:
+        desc: Run integration tests
+        cmds:
+            - task: test:run-integration-all
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    test-unit-nocache:
+        desc: Run unit tests (no cache)
+        cmds:
+            - task: test:run-unit-all-nocache
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    test-integration-nocache:
+        desc: Run integration tests (no cache)
+        cmds:
+            - task: test:run-integration-all-nocache
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+
+    init:
+        desc: Generate code using the built-in CLI.
+        cmds:
+            - |
+              cd DevEx/scripts/config/generator
+
+              if [ -f gen-cli ]; then
+                rm gen-cli
+              fi
+
+              go build -o gen-cli
+            - ./DevEx/scripts/config/generator/gen-cli
