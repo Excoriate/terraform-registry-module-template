@@ -7,7 +7,7 @@ terraform {
     }
     // FIXME: Remove, refactor or change. (Template)
     random = {
-      source = "hashicorp/random"
+      source  = "hashicorp/random"
       version = "3.4.3"
     }
   }
