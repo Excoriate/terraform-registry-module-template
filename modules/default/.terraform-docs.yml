@@ -2,7 +2,7 @@
 formatter: markdown table
 
 header-from: main.tf
-# (FIXME: Complete and fill/change it accordingly (template)
+# (// FIXME: Remove, refactor or change. (Template)
 content: |-
     # ☁️ AWS Account Creator Module
     ## Description

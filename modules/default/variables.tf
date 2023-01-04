@@ -16,3 +16,10 @@ variable "tags" {
   description = "A map of tags to add to all resources."
   default     = {}
 }
+
+/*
+-------------------------------------
+Custom input variables
+-------------------------------------
+*/
+// FIXME: Remove, refactor or change. (Template)

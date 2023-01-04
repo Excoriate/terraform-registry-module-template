@@ -1,6 +1,6 @@
 <!-- BEGIN_TF_DOCS -->
 
-[//]: # (FIXME: Change the badges accordingly &#40;template&#41;)
+[//]: # (FIXME: Remove, refactor or change. &#40;Template&#41;)
 # ☁️ AWS Account Creator Module
 ## Description
 

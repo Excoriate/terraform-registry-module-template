@@ -11,7 +11,7 @@
 [![Run pre-commit](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/ci-check-precommit.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/ci-check-precommit.yml)
 [![Terratest](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/ci-pr-terratest.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/ci-pr-terratest.yml)
 
-[//]: # (FIXME: Change the badges accordingly (template)
+[//]: # (// FIXME: Remove, refactor or change. (Template)
 
 ## Table of Contents
 1. [About The Module](#about-the-module)
@@ -33,7 +33,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Module
-[//]: # (FIXME: Complete and fill/change it accordingly (template)
+[//]: # (// FIXME: Remove, refactor or change. (Template)
 (put high level description here)
 
 ---
@@ -42,15 +42,15 @@
 ## Module documentation
 The documentation is **automatically generated** by [terraform-docs](https://terraform-docs.io), and it's available in the module's [README.md](modules/default/README.md) file.
 ### Capabilities
-[//]: # (FIXME: Complete and fill/change it accordingly (template)
+[//]: # (// FIXME: Remove, refactor or change. (Template)
 
 (put description here)
 ### Getting Started
-[//]: # (FIXME: Complete and fill/change it accordingly (template)
+[//]: # (// FIXME: Remove, refactor or change. (Template)
 
 (put description here)
 ### Roadmap
-[//]: # (FIXME: Complete and fill/change it accordingly (template)
+[//]: # (// FIXME: Remove, refactor or change. (Template)
 
 (put description here)
 
