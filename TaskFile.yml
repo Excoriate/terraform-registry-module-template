@@ -14,6 +14,7 @@ env:
 vars:
     MODULE: '{{default "default" .MODULE}}'
     RECIPE: '{{default "basic" .RECIPE}}'
+    VARS: '{{default "config/fixtures.tfvars" .VARS}}'
 
 dotenv: ['.env.{{.TARGET_ENVIRONMENT}}.aws', '.env.{{.TARGET_ENVIRONMENT}}.terraform']
 
@@ -79,13 +80,25 @@ tasks:
         desc: Run Terraform Init on module's example recipe source code.
         cmds:
             - task: example:init
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
 
     recipe-plan:
         desc: Run Terraform Plan on module's example recipe source code.
         cmds:
             - task: example:plan
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
+
+    recipe-apply:
+        desc: Run Terraform Apply on module's example recipe source code.
+        cmds:
+            - task: example:apply
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
+
+    recipe-destroy:
+        desc: Run Terraform Destroy on module's example recipe source code.
+        cmds:
+            - task: example:destroy
+              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
 
     recipe-ci:
         desc: Run Set of checks, fmt and linting operations over the example's module.
