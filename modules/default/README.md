@@ -1,16 +1,20 @@
 <!-- BEGIN_TF_DOCS -->
 # ☁️ AWS Account Creator Module
+
 ## Description
 
 This module creates one or many new AWS accounts, linked to either a new or existing AWS organization. It sets up service principals and organizational units if specified.
 A summary of its main features:
+
 * 🚀 Create multiple AWS accounts.
 * 🚀 Create a new AWS organization or link to an existing one.
 * 🚀 Add organisational units or create accounts directly linked to the root AWS organization.
 * 🚀 Add and customize service principals.
 
 ---
+
 ## Example
+
 Examples of this module's usage are available in the [examples](./examples) folder.
 
 ```hcl
@@ -35,6 +39,7 @@ module "main_module" {
 ```
 
 For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
+
 ```hcl
 output "is_enabled" {
   value       = var.is_enabled
@@ -58,10 +63,13 @@ Custom outputs
 */
 // FIXME: Remove, refactor or change. (Template)
 ```
+
 ---
 
 ## Module's documentation
+
 (This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
+
 ## Providers
 
 | Name | Version |

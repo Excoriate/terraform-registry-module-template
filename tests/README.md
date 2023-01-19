@@ -4,6 +4,7 @@ This directory contains a number of automated tests that cover the functionality
 of the modules that ship with this repository.
 
 ## Introduction
+
 We are using [Terratest] for automated tests that are located in the
 `tests/` **directory**. Terratest deploys _real_ infrastructure
 (e.g., servers) in a _real_ environment (e.g., AWS).
@@ -28,8 +29,10 @@ the cleanup tasks won't run!
 
 
 ## How to run the tests
+
 This repository comes with a [Taskfile]  that helps you to run the
 tests in a convenient way. By default, the tests are divided into two categories:
+
 1. **Unit tests** that are located in the `tests/<modules_name>/unit/` directory.
 2. **Integration tests** that are located in the `tests/<modules_name>/integration/` directory.
 
@@ -37,11 +40,13 @@ As it was mentioned above, [Taskfile] is the easiest way to run the tests.
 You can run the tests by executing the following command:
 
 This run all the unit tests, using the default values (`module`=default, `recipe`=basic)
+
 ```bash
 task test-unit
 ```
 
 This run all the integration tests, using the default values (`module`=default, `recipe`=basic)
+
 ```bash
 task test-integration
 ```
@@ -57,16 +62,20 @@ task test-integration-nocache
 ```
 
 If it's required to test an specific module, with an specific recipe, these two input variables (of the main [Taskfile]) should be set:
+
 * `MODULE`: The name of the module to test. It should be the name of the directory where the module is located.
 * `RECIPE`: The name of the recipe to test. It should be the name of the directory where the recipe is located.
+
 >**NOTE**: The _recipe_ refers to the example module beneath the `examples/` directory.
 E.g.:
+
 ```bash
 task MODULE=ec2 RECIPE=instance test-unit
 ```
 
 
 ## Tests structure
+
 The **tests** structure is described as follows:
 
 ```text
@@ -90,7 +99,9 @@ tests/
             └── basic
                 └── main.tf
 ```
+
 Important things to note:
+
 * The `TaskFile.yml` file is used to run the tests. It's "smart enough" to — by convention — discover the tests, and execute them.
 * The convention for the test discovery is described in the following table:
 
@@ -101,11 +112,13 @@ Important things to note:
 | Recipe            | It's a set of **implementations** that show-case a given module. Are usually known as "example(s)" within OSS module repositories. This part plays a critical role within the auto-discovery of tests, since it also refers to the specific **TestName** convention that your `Go` code should respect. | Recipe name: `basic` should match with the third part of the naming convention of the (Go code) Terratest tests. E.g.: `TestDefaultBasic()` |
 
 ## Convention for naming tests in Terratest
+
 * The first part represents the `module`, e.g.: `default`
 * The second part represents the `recipe`, e.g.: `basic`
 * The third part represents the `test type`, e.g.: `unit` or `integration`
 * The fourth part represents the `test name`, e.g.: `IsSomethingDisabled`
 Which means, we'd have a valid (and discoverable) IAC test coded as:
+
 ```go
 func TestDefaultBasicUnitIsDisabled(t *testing.T) {
   t.Parallel()
@@ -122,7 +135,9 @@ func TestDefaultBasicUnitIsDisabled(t *testing.T) {
 }
 
 ```
+
 If this convention is respected, the test will be auto-discovered and executed using the `TaskFile.yml` file, without any extra code, just passing the required input variables:
+
 ```bash
 # Using default values
 task test-integration-nocache
@@ -130,6 +145,7 @@ task test-integration-nocache
 ```
 
 Or, as it was explained above, it can be customised by passing the `MODULE` and `RECIPE` input variables:
+
 ```bash
 task MODULE=ec2 RECIPE=instance test-integration-nocache
 ```
