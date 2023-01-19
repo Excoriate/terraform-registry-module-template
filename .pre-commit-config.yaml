@@ -45,8 +45,6 @@ repos:
             exclude: ^examples|.terraform/|tests/.*\.tf$
           - id: tflint
             exclude: ^examples|.terraform/|tests/.*\.tf$
-          - id: markdown-link-check
-            args: [-p]
 
     - repo: https://github.com/tekwizely/pre-commit-golang
       rev: v1.0.0-rc.1

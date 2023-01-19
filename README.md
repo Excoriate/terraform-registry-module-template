@@ -22,10 +22,9 @@
    3. [Roadmap](#roadmap)
    4. [Module standard structure](#module-standard-structure)
 3. [Developer Experience](#developer-experience)
-   1. [Tools used](#tools-used)
-   2. [Configuring AWS credentials for local development](#configuring-aws-credentials-for-local-development)
-   3. [Running common development actions](#running-common-actions-for-local-development)
-   4. [Running tests](#tests)
+   1. [Configuring AWS credentials for local development](#configuring-aws-credentials-for-local-development)
+   2. [Running common development actions](#running-common-actions-for-local-development)
+   3[Running tests](#tests)
 4. [Contributions](#contributing)
 5. [License](#license)
 6. [Contact](#contact)
@@ -124,6 +123,7 @@ Where:
 ## Developer Experience
 
 Some tools that this repo uses:
+
 * 🧰 Terraform — strongly recommended the latest versions
 * 🧰 Go — justified mostly for **[Terratest](https://terratest.gruntwork.io/)**
 * 🧰 [TaskFile](https://taskfile.dev/#/) — for the automation of the tasks.
@@ -224,6 +224,7 @@ This module is licensed under the Apache License Version 2.0, January 2004.
 Please see [LICENSE] for full details.
 
 ## Contact
+
 * 📧 **Email**: [Alex T.](mailto:alex@ideaup.cl)
 * 🧳 **Linkedin**: [Alex T.](https://www.linkedin.com/in/alextorresruiz/)
 
