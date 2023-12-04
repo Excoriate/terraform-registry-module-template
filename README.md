@@ -11,7 +11,7 @@
 [![Release](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/release.yaml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/release.yaml)
 [![Terraform CI Checks Modules](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-ci-modules.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-ci-modules.yml)
 [![Terraform CI Checks Recipes](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-ci-recipes.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-ci-recipes.yml)
-[![Terraform Plan recipes](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-plan-recipes.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-plan-recipes.yml)
+[![Terraform Plan recipes AWS on PR](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-ci-plan-recipes-aws.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/terraform-ci-plan-recipes-aws.yml)
 
 [//]: # (// FIXME: Remove, refactor or change. (Template)
 
