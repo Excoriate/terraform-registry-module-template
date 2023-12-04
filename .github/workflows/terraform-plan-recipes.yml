@@ -114,15 +114,17 @@ jobs:
             - name: Set up tfvars matrix
               id: set-tfvars-matrix
               run: |
+                  RECIPES_JSON=${{ needs.set_up_recipes_job.outputs.matrix }}
                   TFVARS_MATRIX_JSON="[]"
-                  RECIPES=${{fromJson(needs.set_up_recipes_job.outputs.matrix)}}
-                  for RECIPE in ${RECIPES[@]}; do
-                    TFVARS_FILES=$(find ${{ env.TF_ROOT }}/$RECIPE/config -name '*.tfvars' -printf '%P\n')
-                    for TFVARS_FILE in $TFVARS_FILES; do
-                      # Construct JSON array entry
-                      ENTRY="{\"recipe\": \"$RECIPE\", \"tfvars_file\": \"$TFVARS_FILE\"}"
-                      TFVARS_MATRIX_JSON=$(echo $TFVARS_MATRIX_JSON | jq --argjson entry "$ENTRY" '. + [$entry]')
-                    done
+                  for RECIPE in $(echo $RECIPES_JSON | jq -r '.[]'); do
+                    CONFIG_DIR="$TF_ROOT/$RECIPE/config"
+                    if [[ -d "$CONFIG_DIR" ]]; then
+                      TFVARS_FILES=$(find "$CONFIG_DIR" -type f -name '*.tfvars' -exec basename {} \;)
+                      for TFVARS_FILE in $TFVARS_FILES; do
+                        ENTRY="{\"recipe\": \"$RECIPE\", \"tfvars_file\": \"$TFVARS_FILE\"}"
+                        TFVARS_MATRIX_JSON=$(echo $TFVARS_MATRIX_JSON | jq --argjson entry "$ENTRY" '. + [$entry]')
+                      done
+                    fi
                   done
                   echo "::set-output name=matrix::$TFVARS_MATRIX_JSON"
 
