@@ -1,6 +1,6 @@
-module github.com/Excoriate/terraform-registry-aws-account-creator
+module github.com/Excoriate/terraform-registry-module-template
 
-go 1.19
+go 1.21
 
 require github.com/gruntwork-io/terratest v0.41.7
 

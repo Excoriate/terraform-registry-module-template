@@ -4,15 +4,12 @@ formatter: markdown table
 header-from: main.tf
 # (// FIXME: Remove, refactor or change. (Template)
 content: |-
-    # ☁️ AWS Account Creator Module
+    # ☁️ Example module
     ## Description
     {{ .Header }}
-    This module creates one or many new AWS accounts, linked to either a new or existing AWS organization. It sets up service principals and organizational units if specified.
-    A summary of its main features:
-    * 🚀 Create multiple AWS accounts.
-    * 🚀 Create a new AWS organization or link to an existing one.
-    * 🚀 Add organisational units or create accounts directly linked to the root AWS organization.
-    * 🚀 Add and customize service principals.
+    This module is used to demonstrate the how easy is to create a new terraform module. Here you usually describe the module's capabilities:
+    * 🚀 Example capability or feature 1
+    * 🚀 Example capability or feature 2
 
     ---
     ## Example
