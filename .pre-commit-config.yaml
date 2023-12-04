@@ -61,8 +61,6 @@ repos:
       hooks:
           - id: go-fmt
             files: ^tests/(.*/)*.*\.go$
-          - id: go-build
-            files: ^tests/(.*/)*.*\.go$
           - id: go-mod-tidy
             files: ^tests/(.*/)*.*\.go$
 
@@ -96,3 +94,9 @@ repos:
             entry: sh -c 'for d in modules/* examples/*; do [ -d "$d" ] && [ -f "$d/.terraform-docs.yml" ] && terraform-docs markdown --config "$d/.terraform-docs.yml"
                 --output-file "$d/README.md" --output-mode inject "$d" || echo "Skipping $d, no .terraform-docs.yml found"; done'
             language: system
+
+    - repo: https://github.com/golangci/golangci-lint
+      rev: v1.55.2
+      hooks:
+          - id: golangci-lint
+            args: [--timeout=5m --config=.golangci.yml]
