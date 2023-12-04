@@ -5,24 +5,31 @@ on:
     workflow_dispatch:
     push:
     pull_request:
+        types: [opened, edited, synchronize]
 
-permissions:
-    contents: read
-    pull-requests: write
+env:
+    TEST_ROOT: tests
 
 jobs:
     setup-matrix:
         runs-on: ubuntu-latest
         outputs:
-            matrix: ${{ steps.find-dirs.outputs.matrix }}
+            matrix: ${{ steps.set-matrix.outputs.matrix }}
+
         steps:
-            - uses: actions/checkout@v3
-            - name: Find test directories
-              id: find-dirs
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set matrix
+              id: set-matrix
               run: |
-                  dirs=$(find tests -type d \( -name 'integration' -o -name 'unit' \) -exec dirname {} \; | sort -u)
-                  matrix=$(echo "$dirs" | jq -R -cs 'split("\n")[:-1]')
-                  echo "matrix=$matrix" > $GITHUB_ENV
+                  DIRS=$(find ${{ env.TEST_ROOT }} -type d \( -name 'integration' -o -name 'unit' \) -exec dirname {} \; | sort -u)
+                  DIRS_ARRAY=()
+                  for dir in $DIRS; do
+                    DIRS_ARRAY+=("$dir")
+                  done
+                  MATRIX_JSON=$(echo "${DIRS_ARRAY[@]}" | jq -R -s -c 'split(" ")')
+                  echo "::set-output name=matrix::${MATRIX_JSON}"
 
     golangci:
         needs: setup-matrix
@@ -30,17 +37,20 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                include:
-                    - dir: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+                dir: ${{fromJson(needs.setup-matrix.outputs.matrix)}}
+
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: '1.18' # Use the correct version of Go
+                  go-version: '1.18' # Adjust this to the Go version you want to use
+
             - name: golangci-lint
               uses: golangci/golangci-lint-action@v3
               with:
                   version: latest
-                  args: --config .golangci.yml
+                  args: --config ../../.golangci.yml
                   working-directory: ${{ matrix.dir }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  reporter: github-pr-check
