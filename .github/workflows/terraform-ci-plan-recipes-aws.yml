@@ -1,5 +1,5 @@
 ---
-name: Terraform Plan recipes
+name: Terraform Plan recipes AWS on PR
 
 on:
     workflow_dispatch:
