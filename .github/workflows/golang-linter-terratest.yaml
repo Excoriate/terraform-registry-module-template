@@ -17,13 +17,12 @@ jobs:
             matrix: ${{ steps.set-matrix.outputs.matrix }}
 
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+            - uses: actions/checkout@v4
 
             - name: Set matrix
               id: set-matrix
               run: |
-                  DIRS=$(find ${{ env.TEST_ROOT }} -type d \( -name 'integration' -o -name 'unit' \) -exec dirname {} \; | sort -u)
+                  DIRS=$(find ${{ env.TEST_ROOT }} -type f -name 'go.mod' -exec dirname {} \;)
                   DIRS_ARRAY=()
                   for dir in $DIRS; do
                     DIRS_ARRAY+=("$dir")
@@ -41,6 +40,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
@@ -50,7 +50,7 @@ jobs:
               uses: golangci/golangci-lint-action@v3
               with:
                   version: latest
-                  args: --config ../../.golangci.yml
+                  args: --config ../../../.golangci.yml
                   working-directory: ${{ matrix.dir }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   reporter: github-pr-check
