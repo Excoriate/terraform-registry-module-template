@@ -1,48 +1,44 @@
----
 name: Go Linter Terratest
 
 on:
-    workflow_dispatch:
-    push:
-    pull_request:
+  workflow_dispatch:
+  push:
+  pull_request:
 
 permissions:
-    contents: read
-    pull-requests: read
+  contents: read
+  pull-requests: write
 
 jobs:
-    setup-matrix:
-        runs-on: ubuntu-latest
-        outputs:
-            matrix: ${{ steps.set-matrix.outputs.matrix }}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
-            - name: Find test directories
-              id: set-matrix
-              run: |
-                  dirs=$(find tests -type d \( -name 'integration' -o -name 'unit' \) -print | jq -R -s 'split("\n")[:-1]')
-                  echo "Found directories: $dirs"
-                  echo "${dirs}" > matrix_dirs.json
-                  echo "MATRIX_JSON=$(jq -Rs . matrix_dirs.json)" >> $GITHUB_ENV
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Find test directories
+        id: set-matrix
+        run: |
+          echo "MATRIX_JSON=$(find tests -type d \( -name 'integration' -o -name 'unit' \) -print0 | xargs -0 -n1 echo | jq -cRs 'split("\n")[:-1]')" >> $GITHUB_ENV
 
-    golangci:
-        needs: setup-matrix
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                dir: ${{fromJson(env.MATRIX_JSON)}}
-        env:
-            GO_VERSION: '1.21'
-        steps:
-            - uses: actions/checkout@v3
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: ${{ env.GO_VERSION }}
-                  cache: false
-            - name: Run golangci-lint
-              run: |
-                  cd ${{ matrix.dir }}
-                  golangci-lint run --config ../../.golangci.yml
+  golangci:
+    needs: setup-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{fromJson(needs.setup-matrix.outputs.matrix)}}
+    env:
+      GO_VERSION: '1.21'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+      - name: golangci-lint
+        run: |
+          cd ${{ matrix.dir }}
+          golangci-lint run --config ../../.golangci.yml
