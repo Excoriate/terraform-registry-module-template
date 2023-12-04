@@ -99,4 +99,6 @@ repos:
       rev: v1.55.2
       hooks:
           - id: golangci-lint
-            args: [--timeout=5m --config=.golangci.yml]
+            args: [--config=.golangci.yml]
+            entry: bash -c 'for d in tests/*/integration tests/*/unit; do if [ -d "$d" ]; then echo "Running golangci-lint in $d"; (cd "$d" && golangci-lint
+                run --config=../../../.golangci.yml ./...); fi; done'
