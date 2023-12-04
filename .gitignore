@@ -37,3 +37,6 @@
 **/.terraform/
 **/.terragrunt-cache/
 .terraform/
+
+# Ignore all .env files
+/.env*

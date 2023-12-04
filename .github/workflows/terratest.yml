@@ -1,8 +1,9 @@
 ---
-name: Unit & Integration tests
+name: Unit & Integration tests TerraTest
 
 on:
     workflow_dispatch:
+    push:
     pull_request:
         types: [opened, edited, synchronize]
 
