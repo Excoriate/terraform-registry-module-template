@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.0...v0.1.1) (2023-12-04)
+
+
+### Refactoring
+
+* Fix text in example module. Changed go module's name ([e0ad3ba](https://github.com/Excoriate/terraform-registry-module-template/commit/e0ad3ba398577d3cf7691d2ebbc026a1a0c5ce90))
+* Fix text in example module. Changed go module's name ([f940e6e](https://github.com/Excoriate/terraform-registry-module-template/commit/f940e6e585ff5ea73144a3d71a1a30e72218e7b3))
+
 ## 0.1.0 (2023-12-04)
 
 
