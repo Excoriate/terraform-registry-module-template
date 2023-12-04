@@ -51,8 +51,7 @@ jobs:
                       OUTPUT=$(terraform plan -no-color -input=false -var-file="$f")
                       PLAN_OUTPUT+="$OUTPUT\n"
                   done
-                  echo "$PLAN_OUTPUT"
-                  echo "plan_output=$PLAN_OUTPUT" >> $GITHUB_ENV
+                  echo "::set-env name=plan_output::$PLAN_OUTPUT"
 
             - name: Update Pull Request
               if: github.event_name == 'pull_request'
