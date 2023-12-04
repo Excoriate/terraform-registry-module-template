@@ -1,0 +1,49 @@
+---
+name: Go Linter Terratest
+
+on:
+    workflow_dispatch:
+    push:
+    pull_request:
+
+permissions:
+    contents: read
+    pull-requests: read
+
+jobs:
+    setup-matrix:
+        runs-on: ubuntu-latest
+        outputs:
+            matrix: ${{ steps.set-matrix.outputs.matrix }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+            - name: Find test directories
+              id: set-matrix
+              run: |
+                  dirs=$(find tests -type d -name 'integration' -o -name 'unit' | jq -R -s -c 'split("\n")[:-1]')
+                  echo "Found directories: $dirs"
+                  echo "::set-output name=matrix::$(echo "::set-output name=matrix::${dirs}")"
+
+    golangci:
+        needs: setup-matrix
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                dir: ${{fromJson(needs.setup-matrix.outputs.matrix)}}
+        env:
+            GO_VERSION: '1.21'
+        steps:
+            - uses: actions/checkout@v3
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: ${{ env.GO_VERSION }}
+                  cache: false
+            - name: golangci-lint
+              uses: golangci/golangci-lint-action@v3
+              with:
+                  args: --config ../../.golangci.yml
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  reporter: github-pr-check
