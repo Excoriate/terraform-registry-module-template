@@ -1,8 +1,8 @@
 <h1 align="center">
   <img alt="logo" src="https://forum.huawei.com/enterprise/en/data/attachment/forum/202204/21/120858nak5g1epkzwq5gcs.png" width="224px"/><br/>
-  Terraform AWS ☁️ [Your module name]
+  Terraform Module Golden Template 🏆
 </h1>
-<p align="center">An easy to understand, opinionated terraform <b>composable</b> module<b> for AWS ☁️</b>.<br/><br/>
+<p align="center">An easy to understand, opinionated terraform <b>composable</b> module<b> with batteries included 🔋</b>.<br/><br/>
 
 ---
 
@@ -12,23 +12,6 @@
 [![Terratest](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/ci-pr-terratest.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/ci-pr-terratest.yml)
 
 [//]: # (// FIXME: Remove, refactor or change. (Template)
-
-## Table of Contents
-
-1. [About The Module](#about-the-module)
-2. [Module documentation](#module-documentation)
-   1. [Capabilities](#capabilities)
-   2. [Getting Started](#getting-started)
-   3. [Roadmap](#roadmap)
-   4. [Module standard structure](#module-standard-structure)
-3. [Developer Experience](#developer-experience)
-   1. [Configuring AWS credentials for local development](#configuring-aws-credentials-for-local-development)
-   2. [Running common development actions](#running-common-actions-for-local-development)
-   3[Running tests](#tests)
-4. [Contributions](#contributing)
-5. [License](#license)
-6. [Contact](#contact)
-
 
 
 <!-- ABOUT THE PROJECT -->

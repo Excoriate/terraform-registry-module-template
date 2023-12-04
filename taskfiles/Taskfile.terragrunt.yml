@@ -1,9 +1,7 @@
 ---
 version: '3'
-
 vars:
     TF_WORKING_DIR: '{{default "." .TF_WORKING_DIR}}'
-
 tasks:
     check-workdir:
         desc: Validate whether the working directory passed is valid for terragrunt
@@ -37,7 +35,6 @@ tasks:
               echo "============================================================"
               echo "All passed"
         silent: true
-
     init:
         deps:
             - task: check-workdir
@@ -60,7 +57,6 @@ tasks:
 
               terragrunt init
         silent: true
-
     plan:
         desc: Run Terragrunt plan
         deps:
@@ -83,7 +79,6 @@ tasks:
 
               terragrunt plan
         silent: true
-
     apply:
         desc: Run Terragrunt apply
         deps:
@@ -106,7 +101,6 @@ tasks:
 
               terragrunt apply -auto-approve
         silent: true
-
     destroy:
         desc: Run Terragrunt destroy
         deps:
@@ -129,7 +123,6 @@ tasks:
 
               terragrunt destroy -auto-approve
         silent: true
-
     lint:
         desc: Run Terragrunt Linters and Validators
         deps:

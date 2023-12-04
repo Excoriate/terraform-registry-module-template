@@ -1,146 +1,210 @@
 ---
 version: '3'
-
-#-----------------------------------------------------------------------------------------
-# ENVIRONMENT VARIABLES CONFIGURATION
-# ----------------------------------
-# - These variables are used to configure the environment for the task.
-# - It's set while calling the task. E.g.: ENV=master task <task_name>
-# - Remember to generate the .env.<env>.aws or .env.<env>.terraform previously.
-#-----------------------------------------------------------------------------------------
 env:
-    TARGET_ENVIRONMENT: '{{.ENV}}'
+    ENV: '{{.ENV}}'
 
 vars:
     MODULE: '{{default "default" .MODULE}}'
+    VARS: '{{default "fixtures.tfvars" .VARS}}'
+    TEST_DIR: '{{default "tests" .TEST_DIR}}'
+    TERRATEST_DIR_UNIT: '{{default "unit" .TERRATEST_DIR_UNIT}}'
+    TERRATEST_DIR_INTEGRATION: '{{default "integration" .TERRATEST_DIR_INTEGRATION}}'
+    TEST_TYPE: '{{default "unit" .TEST_TYPE}}'
+    TERRAFORM_MODULES_DIR: '{{default "modules" .TERRAFORM_MODULES_DIR}}'
+    TERRAFORM_RECIPES_DIR: '{{default "examples" .TERRAFORM_RECIPES_DIR}}'
     RECIPE: '{{default "basic" .RECIPE}}'
-    VARS: '{{default "config/fixtures.tfvars" .VARS}}'
 
-dotenv: ['.env.{{.TARGET_ENVIRONMENT}}.aws', '.env.{{.TARGET_ENVIRONMENT}}.terraform']
+dotenv: ['.env.{{.ENV}}.aws', '.env.{{.ENV}}.terraform', '.env.{{.ENV}}.terragrunt', '.env.{{.ENV}}']
 
 includes:
     common:
-        taskfile: ./DevEx/taskfile/Taskfile.common.yml
-
-    devex:
-        taskfile: ./DevEx/taskfile/Taskfile.devex.yml
-
-
-  #-----------------------------------------------------------------------------------------
-  # TERRAFORM/TERRAGRUNT MODULES
-  # ----------------------------------
-  # - These are specific IAC modules, either in Terragrunt o terraform that will be executed.
-  # - Normally, these modules have their own TaskFile.yml in the folder infrastructure/terraform
-  #-----------------------------------------------------------------------------------------
-    module:
-        taskfile: ./modules/TaskFile.yml
-        dir: ./modules
-
-    test:
-        taskfile: ./tests/TaskFile.yml
-        dir: ./tests
-
-    example:
-        taskfile: ./examples/TaskFile.yml
-        dir: ./examples
+        taskfile: ./taskfiles/taskfile.common.yml
+    precommit:
+        taskfile: ./taskfiles/taskfile.precommit.yml
+    tf:
+        taskfile: ./taskfiles/Taskfile.terraform.yml
 
 tasks:
+  # ***********************
+  # Common tasks
+  # ***********************
     default:
         cmds:
             - task: common:default
 
-    pre-commit-init:
+    pc-init:
         desc: Initialize and install required hooks
         cmds:
-            - task: common:hooks-install
+            - task: precommit:hooks-init
 
-    pre-commit:
-        desc: Run all the pre-configured pre-commit hooks.
+    pc-run:
+        desc: Run all the hooks described in the .pre-commit-config.yaml file
         cmds:
-            - task: common:hooks
+            - task: precommit:hooks-run
+    # ****************************************************
+    # Go Tasks
+    # ****************************************************
+    go-tidy:
+        desc: Tidy go modules
+        dir: ./{{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}
+        cmds:
+            - echo "===========> Run go tidy against code in directory {{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}"
+            - go mod tidy
+    go-fmt:
+        desc: Run go fmt against code
+        dir: ./{{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}
+        cmds:
+            - echo "===========> Run go fmt against code in directory {{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}"
+            - go fmt -x ./...
+    go-vet:
+        desc: Run go vet against code
+        dir: ./{{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}
+        cmds:
+            - echo "===========> Run go vet against code in directory {{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}"
+            - go vet ./...
+    go-lint:
+        desc: Run go lint against code
+        dir: ./{{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}
+        cmds:
+            - echo "===========> Run go lint against code in directory {{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}"
+            - golangci-lint run -v -E gofmt --config ../../../.golangci.yml
+    go-style:
+        desc: Code style -> fmt,vet,lint
+        deps: [go-fmt, go-vet, go-lint]
+    go-test:
+        desc: Run unit test-data
+        dir: ./{{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}
+        cmds:
+            - echo "===========> Run unit tests in directory {{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}"
+            - go test -v ./ -timeout 30m
+    go-ci:
+        desc: Run all the test-data and code checks
+        dir: ./{{.TEST_DIR}}/{{.MODULE}}/{{.TEST_TYPE}}
+        cmds:
+            - task: go-style
+            - task: go-tidy
+            - task: go-test-data
+            - task: go-build
 
-    gen-env-aws:
-        desc: Generate an .env.<env>.aws file for a given environment
+  # ***********************
+  # Terraform task (modules)
+  # (These tasks are used to run terraform commands in the examples directory)
+  # ***********************
+    tf-init:
+        desc: Initialize the terraform module
         cmds:
-            - task: devex:gen-env-aws
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
 
-    module-init:
-        desc: Run Terraform Init on module's source code.
+    tf-plan:
+        desc: In the terraform module, execute a terraform plan
         cmds:
-            - task: module:init
-              vars: {TF_MODULE: '{{.MODULE}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:plan
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}', TF_VARS_FILE: '{{.VARS}}'}
 
-    module-ci:
-        desc: Run common terraform tasks on module's folder.
+    tf-apply:
+        desc: In the terraform module, execute a terraform apply
         cmds:
-            - task: module:ci
-              vars: {TF_MODULE: '{{.MODULE}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:apply
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}', TF_VARS_FILE: '{{.VARS}}'}
+
+    tf-destroy:
+        desc: In the terraform module, execute a terraform destroy
+        cmds:
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:destroy
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}', TF_VARS_FILE: '{{.VARS}}'}
+
+    tf-ci:
+        desc: Run CI tasks for the terraform modules as part of the 'test-data' directory
+        cmds:
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:validate
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:fmt-fix
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:lint
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:docs
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+
+    tf-lint:
+        desc: Run terraform lint
+        cmds:
+            - task: common:clean
+            - task: tf:lint
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+
+    tf-docs:
+        desc: Generate terraform docs
+        cmds:
+            - task: common:clean
+            - task: tf:docs
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
 
     recipe-init:
-        desc: Run Terraform Init on module's example recipe source code.
+        desc: Initialize the terraform module
         cmds:
-            - task: example:init
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
 
     recipe-plan:
-        desc: Run Terraform Plan on module's example recipe source code.
+        desc: In the terraform module, execute a terraform plan
         cmds:
-            - task: example:plan
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:plan
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
 
     recipe-apply:
-        desc: Run Terraform Apply on module's example recipe source code.
+        desc: In the terraform module, execute a terraform apply
         cmds:
-            - task: example:apply
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:apply
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
 
     recipe-destroy:
-        desc: Run Terraform Destroy on module's example recipe source code.
+        desc: In the terraform module, execute a terraform destroy
         cmds:
-            - task: example:destroy
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}', TF_VARS: '{{.VARS}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:destroy
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
 
     recipe-ci:
-        desc: Run Set of checks, fmt and linting operations over the example's module.
+        desc: Run CI tasks for the terraform modules as part of the 'test-data' directory
         cmds:
-            - task: example:ci
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
-            - task: example:docs
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:validate
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:fmt-fix
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:lint
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:docs
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
 
-    test-unit:
-        desc: Run unit tests
+    recipe-docs:
+        desc: Generate terraform docs
         cmds:
-            - task: test:run-unit-all
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
-
-    test-integration:
-        desc: Run integration tests
-        cmds:
-            - task: test:run-integration-all
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
-
-    test-unit-nocache:
-        desc: Run unit tests (no cache)
-        cmds:
-            - task: test:run-unit-all-nocache
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
-
-    test-integration-nocache:
-        desc: Run integration tests (no cache)
-        cmds:
-            - task: test:run-integration-all-nocache
-              vars: {TF_MODULE: '{{.MODULE}}', TF_EXAMPLE_RECIPE: '{{.RECIPE}}'}
-
-    init:
-        desc: Generate code using the built-in CLI.
-        cmds:
-            - |
-              cd DevEx/scripts/config/generator
-
-              if [ -f gen-cli ]; then
-                rm gen-cli
-              fi
-
-              go build -o gen-cli
-            - ./DevEx/scripts/config/generator/gen-cli
+            - task: common:clean
+            - task: tf:docs
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}

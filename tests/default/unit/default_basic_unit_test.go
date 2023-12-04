@@ -3,15 +3,13 @@ package unit
 import (
 	"testing"
 
-	"github.com/gruntwork-io/terratest/modules/aws"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
 func getInputVarsValues(t *testing.T, isEnabled bool) map[string]interface{} {
-	randomAwsRegion := aws.GetRandomRegion(t, nil, nil)
+	// randomAwsRegion := aws.GetRandomRegion(t, nil, nil)
 
 	return map[string]interface{}{
-		"aws_region": randomAwsRegion,
 		"is_enabled": isEnabled,
 	}
 }

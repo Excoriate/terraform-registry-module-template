@@ -1,13 +1,11 @@
 ---
 version: '3'
-
 vars:
     TF_WORKING_DIR:
     TF_VARS_FILE:
     TF_BACKEND_CONFIG:
     AWS_ACCESS_KEY_ID:
     AWS_SECRET_ACCESS_KEY:
-
 tasks:
     check-workdir:
         desc: Validate whether the working directory passed is valid
@@ -42,12 +40,11 @@ tasks:
               echo "============================================================"
               echo "All passed"
         silent: true
-
     init:
         deps:
             - task: check-workdir
               vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
-        desc: Run Terraform init
+        desc: Run Terraform initialize
         cmds:
             - |
               echo "Working directory passed: {{.TF_WORKING_DIR}}"
@@ -67,11 +64,10 @@ tasks:
                 echo "Using backend configuration file: {{.TF_BACKEND_CONFIG}}"
                 terraform init -backend-config="{{.TF_BACKEND_CONFIG}}"
               else
-                echo "No backend configuration file provided, running terraform init without -backend-config flag"
+                echo "No backend configuration provided, running terraform init without a backend"
                 terraform init
               fi
         silent: true
-
     plan:
         desc: Run Terraform plan
         deps:
@@ -101,7 +97,6 @@ tasks:
                 terraform plan
               fi
         silent: true
-
     apply:
         desc: Run Terraform apply
         deps:
@@ -129,8 +124,6 @@ tasks:
                 terraform apply -auto-approve
               fi
         silent: true
-
-
     destroy:
         desc: Run Terraform destroy
         deps:
@@ -158,8 +151,6 @@ tasks:
                 terraform destroy -auto-approve
               fi
         silent: true
-
-
     fmt:
         desc: Run Terraform fmt check
         deps:
@@ -183,8 +174,6 @@ tasks:
 
               terraform fmt -recursive -write=false
         silent: true
-
-
     fmt-fix:
         desc: Run Terraform fmt fixing the non-formatted files
         deps:
@@ -208,8 +197,6 @@ tasks:
 
               terraform fmt -recursive -write=true
         silent: true
-
-
     validate:
         desc: Run Terraform validation
         deps:
@@ -233,7 +220,6 @@ tasks:
 
               terraform validate
         silent: true
-
     lint:
         desc: Run Terraform lint
         deps:
@@ -263,9 +249,8 @@ tasks:
               tflint -v
 
               tflint --init
-              tflint .
+              tflint
         silent: true
-
     docs:
         desc: Generate Terraform docs
         deps:
