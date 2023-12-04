@@ -1,13 +1,22 @@
-## What
-* Describe high-level what changed as a result of these commits (i.e. in plain-english, what do these changes mean?)
-* Use bullet points to be concise and to the point.
+## 🎯 What
+Provide a concise description of the changes:
+* ❓ What changes have you made? (High-level overview)
+* 🎉 What does it mean to the user? (In plain English)
 
-## Why
-* Provide the justifications for the changes (e.g. business case).
-* Describe why these changes were made (e.g. why do these commits fix the problem?)
-* Use bullet points to be concise and to the point.
+Example:
+* 🚀 Upgraded Terraform AWS provider to v3.0.0.
+* 🎉 This means users can now use new features and improvements from the latest AWS Provider.
 
-## References
-* Link to any supporting github issues or helpful documentation to add some context (e.g. stackoverflow).
-* Use `closes #123`, if this PR closes a GitHub issue or a Jira Ticket `#123`
-* Add related Jira tickets if necessary
+## 🤔 Why
+Explain why the changes are necessary:
+* 💡 Why were these changes made?
+* 🎯 What's the benefit?
+
+Example:
+* 💡 We made this upgrade to take advantage of performance improvements and new features in the latest version.
+* 🎯 This will allow us to provision infrastructure more efficiently, and utilize new AWS services and features.
+
+## 📚 References
+Link any supporting context or documentation:
+* 🔗 Github issues, documentation, helpful links.
+* ✅ Use `closes #123`, if this PR closes a GitHub issue `#123`
