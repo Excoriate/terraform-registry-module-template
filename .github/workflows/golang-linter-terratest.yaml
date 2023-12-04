@@ -21,9 +21,10 @@ jobs:
             - name: Find test directories
               id: set-matrix
               run: |
-                  dirs=$(find tests -type d -name 'integration' -o -name 'unit' | jq -R -s -c 'split("\n")[:-1]')
+                  dirs=$(find tests -type d \( -name 'integration' -o -name 'unit' \) -print | jq -R -s 'split("\n")[:-1]')
                   echo "Found directories: $dirs"
-                  echo "::set-output name=matrix::$(echo "::set-output name=matrix::${dirs}")"
+                  echo "${dirs}" > matrix_dirs.json
+                  echo "MATRIX_JSON=$(jq -Rs . matrix_dirs.json)" >> $GITHUB_ENV
 
     golangci:
         needs: setup-matrix
@@ -31,7 +32,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                dir: ${{fromJson(needs.setup-matrix.outputs.matrix)}}
+                dir: ${{fromJson(env.MATRIX_JSON)}}
         env:
             GO_VERSION: '1.21'
         steps:
@@ -41,9 +42,7 @@ jobs:
               with:
                   go-version: ${{ env.GO_VERSION }}
                   cache: false
-            - name: golangci-lint
-              uses: golangci/golangci-lint-action@v3
-              with:
-                  args: --config ../../.golangci.yml
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  reporter: github-pr-check
+            - name: Run golangci-lint
+              run: |
+                  cd ${{ matrix.dir }}
+                  golangci-lint run --config ../../.golangci.yml
