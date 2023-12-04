@@ -1,0 +1,105 @@
+---
+name: Terraform Plan for Changed Modules
+
+on:
+    push:
+    workflow_dispatch:
+    pull_request:
+        types: [opened, edited, synchronize]
+
+jobs:
+    find_changed_modules:
+        runs-on: ubuntu-latest
+        outputs:
+            changed-modules: ${{ steps.set-modules.outputs.modules }}
+        steps:
+            - uses: actions/checkout@v4
+            - name: Determine changed modules
+              id: set-modules
+              run: |
+                  CHANGED_MODULES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^modules/' | awk -F/ '{print $2}' | sort -u)
+                  echo "Changed modules: $CHANGED_MODULES"
+                  echo "::set-output name=modules::$(echo "$CHANGED_MODULES" | jq -R -s -c 'split("\n")[:-1]')"
+
+    terraform_plan_recipes:
+        needs: find_changed_modules
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include: ${{fromJson(needs.find_changed_modules.outputs.changed-modules)}}
+        steps:
+            - uses: actions/checkout@v4
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+
+            - name: Find tfvars for recipes
+              id: find-tfvars
+              run: |
+                  PLANS=""
+                  for module in ${{ toJson(matrix.include) }}; do
+                    RECIPES_PATH="examples/$module"
+                    echo "Checking recipes for module: $module"
+                    if [[ -d "$RECIPES_PATH" ]]; then
+                      for recipe in $(find "$RECIPES_PATH" -mindepth 1 -maxdepth 1 -type d); do
+                        echo "Recipe found: $recipe"
+                        for tfvars in $(find "$recipe/config" -name '*.tfvars'); do
+                          echo "$recipe - $tfvars" >> plan_list.txt
+                        done
+                      done
+                    else
+                      echo "No recipes found for module: $module"
+                    fi
+                  done
+                  if [[ -f plan_list.txt ]]; then
+                    PLANS=$(cat plan_list.txt)
+                  fi
+                  echo "PLANS=$PLANS" >> $GITHUB_ENV
+                  echo "::set-output name=tfvars-list::$PLANS"
+
+            - name: Terraform Init
+              if: env.PLANS != ''
+              run: |
+                  while IFS= read -r line; do
+                    recipe_dir=$(echo "$line" | awk '{print $1}')
+                    cd "$recipe_dir"
+                    terraform init
+                    cd -
+                  done <<< "$PLANS"
+
+            - name: Terraform Validate
+              if: env.PLANS != ''
+              run: |
+                  while IFS= read -r line; do
+                    recipe_dir=$(echo "$line" | awk '{print $1}')
+                    cd "$recipe_dir"
+                    terraform validate
+                    cd -
+                  done <<< "$PLANS"
+
+            - name: Terraform Plan
+              if: env.PLANS != ''
+              run: |
+                  while IFS= read -r line; do
+                    recipe_dir=$(echo "$line" | awk '{print $1}')
+                    tfvars_file=$(echo "$line" | awk '{print $2}')
+                    cd "$recipe_dir"
+                    plan_output=$(terraform plan -var-file="$tfvars_file")
+                    echo "$plan_output"
+                    echo "::set-output name=plan-output::$plan_output"
+                    cd -
+                  done <<< "$PLANS"
+
+            - name: Comment PR with Terraform Plan Output
+              if: ${{ github.event_name == 'pull_request' }} && steps.find-tfvars.outputs.tfvars-list != ''
+              uses: actions/github-script@v5
+              with:
+                  script: |
+                      const output = `${{ steps.find-tfvars.outputs.tfvars-list }}`;
+                      const planOutput = `${{ steps.terraform_plan.outputs.plan-output }}`;
+                      const prNumber = context.issue.number;
+                      github.rest.issues.createComment({
+                        issue_number: prNumber,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: `### Terraform Plan Output\n\`\`\`\n${planOutput}\n\`\`\``
+                      });
