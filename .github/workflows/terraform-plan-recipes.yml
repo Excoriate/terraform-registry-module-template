@@ -102,48 +102,50 @@ jobs:
                     tflint --disable-rule=terraform_module_pinned_source
                     tflint
 
-    terraform_plan:
-        needs: terraform_recipes_ci
+    terraform_plan_varfiles:
+        needs: set_up_recipes_job
         runs-on: ubuntu-latest
         strategy:
+            fail-fast: false
             matrix:
-                include: ${{fromJson(needs.set_up_recipes_job.outputs.matrix)}}
+                recipe: ${{fromJson(needs.set_up_recipes_job.outputs.matrix)}}
         steps:
             - uses: actions/checkout@v4
+
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
 
-            - name: Find tfvars files and create plans
-              id: create-plans
+            - name: Terraform Init and Validate for each recipe
+              run: |
+                  cd ${{ env.TF_ROOT }}/${{ matrix.recipe }}
+                  terraform init
+                  terraform validate
+
+            - name: Find .tfvars and Plan
+              id: tfvar-and-plan
               run: |
                   PLANS=""
-                  for RECIPE in ${{ toJson(matrix.include) }}; do
-                    CONFIG_PATH="${{ env.TF_ROOT }}/$RECIPE/config"
-                    if [ -d "$CONFIG_PATH" ]; then
-                      for TFVARS_FILE in $(ls $CONFIG_PATH/*.tfvars); do
-                        cd ${{ env.TF_ROOT }}/$RECIPE
-                        terraform init
-                        terraform validate
-                        PLAN_OUTPUT=$(terraform plan -var-file="$CONFIG_PATH/$TFVARS_FILE")
-                        PLANS+="$PLAN_OUTPUT\n\n"
-                        cd -
-                      done
-                    fi
+                  TFVARS_PATH="${{ env.TF_ROOT }}/${{ matrix.recipe }}/config"
+                  for TFVARS_FILE in $(find "$TFVARS_PATH" -name '*.tfvars'); do
+                    cd ${{ env.TF_ROOT }}/${{ matrix.recipe }}
+                    PLAN_OUTPUT=$(terraform plan -var-file="$TFVARS_FILE" -no-color)
+                    PLANS="${PLANS}Plan for ${TFVARS_FILE}:\n${PLAN_OUTPUT}\n\n"
+                    cd -
                   done
-                  PLANS=$(echo -e "$PLANS")
-                  echo "::set-output name=plans::$PLANS"
+                  echo "::set-output name=plans::${PLANS}"
 
-            - name: Comment PR with Terraform Plan Outputs
-              if: ${{ github.event_name == 'pull_request' }}
+            - name: Post Terraform Plan Output to PR
+              if: github.event_name == 'pull_request' && steps.tfvar-and-plan.outputs.plans != ''
               uses: actions/github-script@v5
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   script: |
-                      const planOutputs = `${{ steps.create-plans.outputs.plans }}`;
+                      const plans = ${{ steps.tfvar-and-plan.outputs.plans }};
                       const prNumber = ${{ github.event.pull_request.number }};
+                      const body = `### Terraform Plan Outputs\n\`\`\`\n${plans}\n\`\`\``;
                       github.rest.issues.createComment({
-                        issue_number: prNumber,
                         owner: context.repo.owner,
                         repo: context.repo.repo,
-                        body: `### Terraform Plan Outputs\n\`\`\`\n${planOutputs}\n\`\`\``
+                        issue_number: prNumber,
+                        body: body
                       });
