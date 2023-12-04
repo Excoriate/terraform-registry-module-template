@@ -102,50 +102,68 @@ jobs:
                     tflint --disable-rule=terraform_module_pinned_source
                     tflint
 
-    terraform_plan_varfiles:
+    prepare_tfvars_matrix:
         needs: set_up_recipes_job
+        runs-on: ubuntu-latest
+        outputs:
+            tfvars-matrix: ${{ steps.set-tfvars-matrix.outputs.matrix }}
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up tfvars matrix
+              id: set-tfvars-matrix
+              run: |
+                  TFVARS_MATRIX_JSON="[]"
+                  RECIPES=${{fromJson(needs.set_up_recipes_job.outputs.matrix)}}
+                  for RECIPE in ${RECIPES[@]}; do
+                    TFVARS_FILES=$(find ${{ env.TF_ROOT }}/$RECIPE/config -name '*.tfvars' -printf '%P\n')
+                    for TFVARS_FILE in $TFVARS_FILES; do
+                      # Construct JSON array entry
+                      ENTRY="{\"recipe\": \"$RECIPE\", \"tfvars_file\": \"$TFVARS_FILE\"}"
+                      TFVARS_MATRIX_JSON=$(echo $TFVARS_MATRIX_JSON | jq --argjson entry "$ENTRY" '. + [$entry]')
+                    done
+                  done
+                  echo "::set-output name=matrix::$TFVARS_MATRIX_JSON"
+
+    terraform_plan:
+        needs: prepare_tfvars_matrix
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                recipe: ${{fromJson(needs.set_up_recipes_job.outputs.matrix)}}
+                include: ${{fromJson(needs.prepare_tfvars_matrix.outputs.tfvars-matrix)}}
+
         steps:
             - uses: actions/checkout@v4
 
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
 
-            - name: Terraform Init and Validate for each recipe
-              run: |
-                  cd ${{ env.TF_ROOT }}/${{ matrix.recipe }}
-                  terraform init
-                  terraform validate
+            - name: Terraform Init
+              run: terraform init
+              working-directory: ${{ env.TF_ROOT }}/${{ matrix.include.recipe }}
 
-            - name: Find .tfvars and Plan
-              id: tfvar-and-plan
-              run: |
-                  PLANS=""
-                  TFVARS_PATH="${{ env.TF_ROOT }}/${{ matrix.recipe }}/config"
-                  for TFVARS_FILE in $(find "$TFVARS_PATH" -name '*.tfvars'); do
-                    cd ${{ env.TF_ROOT }}/${{ matrix.recipe }}
-                    PLAN_OUTPUT=$(terraform plan -var-file="$TFVARS_FILE" -no-color)
-                    PLANS="${PLANS}Plan for ${TFVARS_FILE}:\n${PLAN_OUTPUT}\n\n"
-                    cd -
-                  done
-                  echo "::set-output name=plans::${PLANS}"
+            - name: Terraform Validate
+              run: terraform validate
+              working-directory: ${{ env.TF_ROOT }}/${{ matrix.include.recipe }}
+
+            - name: Terraform Plan with tfvars
+              run: terraform plan -var-file=config/${{ matrix.include.tfvars_file }}
+              working-directory: ${{ env.TF_ROOT }}/${{ matrix.include.recipe }}
+              id: terraform_plan
 
             - name: Post Terraform Plan Output to PR
-              if: github.event_name == 'pull_request' && steps.tfvar-and-plan.outputs.plans != ''
+              if: github.event_name == 'pull_request'
               uses: actions/github-script@v5
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   script: |
-                      const plans = ${{ steps.tfvar-and-plan.outputs.plans }};
+                      const planOutput = `Terraform Plan Output for ${{ matrix.include.tfvars_file }}:\n${{ steps.terraform_plan.outputs.plan-output }}`;
                       const prNumber = ${{ github.event.pull_request.number }};
-                      const body = `### Terraform Plan Outputs\n\`\`\`\n${plans}\n\`\`\``;
                       github.rest.issues.createComment({
+                        issue_number: prNumber,
                         owner: context.repo.owner,
                         repo: context.repo.repo,
-                        issue_number: prNumber,
-                        body: body
+                        body: planOutput
                       });
