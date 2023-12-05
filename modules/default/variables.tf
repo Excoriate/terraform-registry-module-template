@@ -12,9 +12,7 @@ variable "tags" {
   default     = {}
 }
 
-/*
--------------------------------------
-Custom input variables
--------------------------------------
-*/
+###################################
+# Specific for this module
+###################################
 // FIXME: Remove, refactor or change. (Template)

@@ -156,7 +156,6 @@ tasks:
     recipe-init:
         desc: Initialize the terraform module
         cmds:
-            - task: common:clean
             - task: tf:init
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
 
@@ -179,7 +178,6 @@ tasks:
     recipe-apply:
         desc: In the terraform module, execute a terraform apply
         cmds:
-            - task: common:clean
             - task: tf:init
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
             - task: tf:apply
@@ -188,7 +186,6 @@ tasks:
     recipe-destroy:
         desc: In the terraform module, execute a terraform destroy
         cmds:
-            - task: common:clean
             - task: tf:init
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
             - task: tf:destroy
