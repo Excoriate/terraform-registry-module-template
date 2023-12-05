@@ -76,7 +76,7 @@ repos:
           - id: terraform_tflint
             files: ^(modules|examples)/.+(\.tf|\.hcl)$
             args:
-                - --args=--config=.tflint.hcl
+                - --args=--config=.tflint.hcl --init
 
     - repo: https://github.com/tcort/markdown-link-check
       rev: v3.11.2
