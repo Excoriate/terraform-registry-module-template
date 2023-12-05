@@ -90,6 +90,15 @@ tasks:
   # Terraform task (modules)
   # (These tasks are used to run terraform commands in the examples directory)
   # ***********************
+    tf-clean-all:
+        desc: Clean all the terraform modules and recipes
+        cmds:
+            - |
+              for d in $(find . -type d -name .terraform); do
+                  echo "===========> Cleaning $d"
+                  rm -rf $d
+              done
+
     tf-init:
         desc: Initialize the terraform module
         cmds:

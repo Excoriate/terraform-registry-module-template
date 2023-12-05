@@ -72,6 +72,41 @@ pc-run:
 #####################
 # Terraform targets #
 #####################
+tf-clean-all: clean
+	@echo "Cleaning all terraform directories..."
+	@for dir in $(TERRAFORM_MODULES_DIR)/*; do \
+		if [ -d "$$dir" ]; then \
+			find $$dir -type d -name ".terraform" -exec echo "Removing {}" \; -exec rm -rf '{}' \;; \
+			echo "Cleaned .terraform directories."; \
+		else \
+			echo "$$dir directory not found, skipping cleanup of .terraform directories."; \
+		fi; \
+		if [ -d "$$dir" ]; then \
+			find $$dir -type d -name ".terragrunt-cache" -exec echo "Removing {}" \; -exec rm -rf '{}' \;; \
+			echo "Cleaned .terragrunt-cache directories."; \
+		else \
+			echo "$$dir directory not found, skipping cleanup of .terragrunt-cache directories."; \
+		fi; \
+		if [ -d "$$dir" ]; then \
+			find $$dir -type f -name "terraform.tfstate" -exec echo "Removing {}" \; -exec rm -rf '{}' \;; \
+			echo "Removed terraform.tfstate files."; \
+		else \
+			echo "$$dir directory not found, skipping removal of terraform.tfstate files."; \
+		fi; \
+		if [ -d "$$dir" ]; then \
+			find $$dir -type f -name "terraform.tfstate.backup" -exec echo "Removing {}" \; -exec rm -rf '{}' \;; \
+			echo "Removed terraform.tfstate.backup files."; \
+		else \
+			echo "$$dir directory not found, skipping removal of terraform.tfstate.backup files."; \
+		fi; \
+		if [ -d "$$dir" ]; then \
+			find $$dir -type f -name "terraform.tfplan" -exec echo "Removing {}" \; -exec rm -rf '{}' \;; \
+			echo "Removed terraform.tfplan files."; \
+		else \
+			echo "$$dir directory not found, skipping removal of terraform.tfplan files."; \
+		fi; \
+	done
+
 tf-init: clean
 	@cd $(TERRAFORM_MODULES_DIR)/$(MODULE) && terraform init
 
@@ -100,7 +135,7 @@ tf-plan: clean tf-init
 		cd $(TERRAFORM_MODULES_DIR)/$(MODULE) && terraform plan -var-file=$(VARS); \
 	fi
 
-tf-apply: clean tf-plan
+tf-apply: tf-plan
 	@if [ -z "$(VARS)" ]; then \
 		echo "No vars file provided, skipping terraform apply with vars."; \
 		cd $(TERRAFORM_MODULES_DIR)/$(MODULE) && terraform apply -auto-approve; \
@@ -108,7 +143,7 @@ tf-apply: clean tf-plan
 		cd $(TERRAFORM_MODULES_DIR)/$(MODULE) && terraform apply -auto-approve -var-file=$(VARS); \
 	fi
 
-tf-destroy: clean tf-init
+tf-destroy: tf-init
 	@if [ -z "$(VARS)" ]; then \
 		echo "No vars file provided, skipping terraform destroy with vars."; \
 		cd $(TERRAFORM_MODULES_DIR)/$(MODULE) && terraform destroy -auto-approve; \
@@ -129,22 +164,22 @@ recipe-plan: recipe-init
 		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform plan -var-file=config/$(VARS); \
 	fi
 
-recipe-apply: recipe-plan
+recipe-apply:
 	@echo "In the terraform module, execute a terraform apply"
 	@if [ -z "$(VARS)" ]; then \
 		echo "No vars file provided, skipping terraform apply with vars."; \
-		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform apply -auto-approve; \
+		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform init && terraform apply -auto-approve; \
 	else \
-		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform apply -auto-approve -var-file=config/$(VARS); \
+		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform init && terraform apply -auto-approve -var-file=config/$(VARS); \
 	fi
 
-recipe-destroy: recipe-init
+recipe-destroy:
 	@echo "In the terraform module, execute a terraform destroy"
 	@if [ -z "$(VARS)" ]; then \
 		echo "No vars file provided, skipping terraform destroy with vars."; \
-		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform destroy -auto-approve; \
+		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform init && terraform destroy -auto-approve; \
 	else \
-		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform destroy -auto-approve -var-file=config/$(VARS); \
+		cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform init && terraform destroy -auto-approve -var-file=config/$(VARS); \
 	fi
 
 recipe-ci: clean
