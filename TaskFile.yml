@@ -160,6 +160,13 @@ tasks:
             - task: tf:init
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
 
+    recipe-lint:
+        desc: Lint the terraform module's recipe
+        cmds:
+            - task: common:clean
+            - task: tf:lint
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+
     recipe-plan:
         desc: In the terraform module, execute a terraform plan
         cmds:

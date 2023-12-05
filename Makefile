@@ -151,6 +151,10 @@ recipe-ci: clean
 	@echo "Run CI tasks for the terraform modules as part of the 'test-data' directory"
 	@cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform init && terraform validate && terraform fmt -check=true -diff=true -write=false && terraform-docs -c .terraform-docs.yml md . > README.md && tflint -v && tflint --init && tflint
 
+recipe-lint: clean
+	@echo "Run linting tasks for the terraform modules as part of the 'test-data' directory"
+	@cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && tflint -v && tflint --init && tflint
+
 recipe-docs: clean
 	@echo "Generate terraform docs"
 	@cd $(TERRAFORM_RECIPES_DIR)/$(MODULE)/$(RECIPE) && terraform-docs -c .terraform-docs.yml md . > README.md
