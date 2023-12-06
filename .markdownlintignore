@@ -6,3 +6,4 @@ docs/contribution_guidelines.md
 CONTRIBUTING.md
 modules/**/README.md
 examples/**/**/README.md
+CHANGELOG.md
