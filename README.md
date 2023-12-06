@@ -178,11 +178,12 @@ Given a version number `MAJOR.MINOR.PATCH`, we increment the:
 Contributions are always encouraged and welcome! ❤️. For the process of accepting changes, please refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file, and for a more detailed explanation, please refer to this guideline [here](docs/contribution_guidelines.md).
 
 ---
+
 ### Roadmap 🗺
-- [ ] Integrate [Open Policy Agent](https://www.openpolicyagent.org/) for policy as code.
-- [ ] Integrate [Conftest](https://www.conftest.dev/) for policy as code.
-- [ ] Integrate (Go) TerraDagger for CI using [Dagger.io](https://dagger.io/).
-- [ ] Add built-in CLI for boilerplate generation.
+* [ ] Integrate [Open Policy Agent](https://www.openpolicyagent.org/) for policy as code.
+* [ ] Integrate [Conftest](https://www.conftest.dev/) for policy as code.
+* [ ] Integrate (Go) TerraDagger for CI using [Dagger.io](https://dagger.io/).
+* [ ] Add built-in CLI for boilerplate generation.
 
 ## License
 
