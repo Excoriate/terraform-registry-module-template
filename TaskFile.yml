@@ -200,6 +200,19 @@ tasks:
             - task: tf:destroy
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
 
+
+    recipe-lifecycle:
+        desc: In the terraform module, execute a terraform lifecycle
+        cmds:
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:plan
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
+            - task: tf:apply
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
+            - task: tf:destroy
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}', TF_VARS_FILE: 'config/{{.VARS}}'}
+
     recipe-ci:
         desc: Run CI tasks for the terraform modules as part of the 'test-data' directory
         cmds:
@@ -221,3 +234,29 @@ tasks:
             - task: common:clean
             - task: tf:docs
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+
+    iac-ci:
+        desc: Run CI against modules and its recipes
+        cmds:
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:validate
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:fmt-fix
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:lint
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: tf:docs
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_RECIPES_DIR}}/{{.MODULE}}/{{.RECIPE}}'}
+            - task: common:clean
+            - task: tf:init
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:validate
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:fmt-fix
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:lint
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+            - task: tf:docs
+              vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
