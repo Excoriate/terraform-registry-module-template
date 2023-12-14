@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.1.2](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.1...v0.1.2) (2023-12-14)
+
+
+### Features
+
+* Add new task for managing entirely recipe's lifecycle ([1c37e7c](https://github.com/Excoriate/terraform-registry-module-template/commit/1c37e7cc1c5af05e6811d4d81fca4e2c346d9d3a))
+* Add new tasks for recursively generate docs, and validate files ([04539ed](https://github.com/Excoriate/terraform-registry-module-template/commit/04539ed8164ae7a2dda87ca0e04a823eaf52d403))
+
+
+### Bug Fixes
+
+* Add proper tflint --init flag to pre-commit hook for each module and recipe ([23bcedb](https://github.com/Excoriate/terraform-registry-module-template/commit/23bcedb19d580999eb885efbb831ba57a3174d63))
+* Remove clean hook from taskfile, it removes states whle tsting locally ([6cc0976](https://github.com/Excoriate/terraform-registry-module-template/commit/6cc097696551856986b8877221e721ef42102a08))
+
+
+### Refactoring
+
+* Add recipe-lint specific task and makeFile target ([cdf8888](https://github.com/Excoriate/terraform-registry-module-template/commit/cdf888808e85c2c20e18906c14191f6ab7468a75))
+
+
+### Docs
+
+* Update readme.md adding proposed roadmap ([7e220cd](https://github.com/Excoriate/terraform-registry-module-template/commit/7e220cdfe547cc51d58c070a25d5a2e00c13fc39))
+* Update readme.md adding proposed roadmap ([952dd25](https://github.com/Excoriate/terraform-registry-module-template/commit/952dd2535fe3c7304e0095178f12beb0e1345252))
+
+
+### Other
+
+* fix pre-commit markdown linter, added fixer ([40a2e2c](https://github.com/Excoriate/terraform-registry-module-template/commit/40a2e2c8323d34289bc77352e222d79ea36d0a0f))
+
 ## [0.1.1](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.0...v0.1.1) (2023-12-04)
 
 
