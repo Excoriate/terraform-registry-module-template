@@ -68,7 +68,7 @@ tasks:
                 terraform init
               fi
         silent: true
-    upgrade:
+    upgrade-modules:
         desc: Init and upgrade Terraform modules
         vars:
             TF_MODULES_DIR: '{{.TF_MODULES_DIR}}'
@@ -77,31 +77,20 @@ tasks:
               echo "Inspecting modules directory: {{.TF_MODULES_DIR}}"
               echo "Full path: $(pwd)/{{.TF_MODULES_DIR}}"
               echo "Searching for Terraform modules..."
-              shopt -s nullglob
-              for dir in "{{.TF_MODULES_DIR}}"/*; do
-                if [ -d "$dir" ]; then
-                  echo "Checking directory: $dir"
-                  files=($dir/*.tf)
-                  if [ ${#files[@]} -gt 0 ]; then
-                    echo "       _______"
-                    echo "      /       \\"
-                    echo "      |   0   |"
-                    echo "      |   _   |"
-                    echo "      \_______/"
-                    echo "Found Terraform module: $dir"
-                    echo "Running Terraform command INIT with upgrade"
-                    echo "============================================================"
-                    (cd "$dir" && terraform init -upgrade)
-                    echo "Module initialized: $dir"
-                    echo
-                  else
-                    echo "Skipping non-module directory: $dir"
-                  fi
-                else
-                  echo "Directory not found: $dir"
-                fi
-              done
+            - ./scripts/terraform/tf-helper.sh --modules_dir={{.TF_MODULES_DIR}} --max_depth_flag=2
         silent: true
+    upgrade-recipes:
+        desc: Init and upgrade Terraform recipes in the examples directory
+        vars:
+            TF_RECIPES_DIR: '{{.TF_RECIPES_DIR}}'
+        cmds:
+            - |
+              echo "Inspecting modules directory: {{.TF_RECIPES_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_RECIPES_DIR}}"
+              echo "Searching for Terraform recipes..."
+            - ./scripts/terraform/tf-helper.sh --modules_dir={{.TF_RECIPES_DIR}} --max_depth_flag=2
+        silent: true
+
     plan:
         desc: Run Terraform plan
         deps:
@@ -316,38 +305,25 @@ tasks:
         silent: true
 
     doc-modules:
-        desc: Generate Terraform documentation for all modules in the specified directory
+        desc: Generate Terraform docs for modules
+        vars:
+            TF_MODULES_DIR: '{{.TF_MODULES_DIR}}'
         cmds:
             - |
-              echo "Generating documentation for modules in directory: {{.TF_MODULES_DIR}}"
+              echo "Inspecting modules directory: {{.TF_MODULES_DIR}}"
               echo "Full path: $(pwd)/{{.TF_MODULES_DIR}}"
-              echo "Searching for Terraform modules..."
-              shopt -s nullglob
-              for dir in "{{.TF_MODULES_DIR}}"/*; do
-                if [ -d "$dir" ]; then
-                  echo "Checking directory: $dir"
-                  files=($dir/*.tf)
-                  if [ ${#files[@]} -gt 0 ]; then
-                    if [ ! -f "$dir/.terraform-docs.yml" ]; then
-                      echo "Error: .terraform-docs.yml file not found in $dir"
-                      continue
-                    fi
-                    echo "       _______"
-                    echo "      /       \\"
-                    echo "      |   @   |"
-                    echo "      |   _   |"
-                    echo "      \_______/"
-                    echo "Generating Terraform docs for module: $dir"
-                    echo "============================================================"
-                    echo "Using configuration file:"
-                    cat "$dir/.terraform-docs.yml"
-                    (cd "$dir" && terraform-docs -c .terraform-docs.yml md . > README.md)
-                    echo "Documentation generated for: $dir"
-                    echo
-                  else
-                    echo "Skipping non-module directory: $dir"
-                  fi
-                else
-                  echo "Directory not found: $dir"
-                fi
-              done
+              echo "Searching for Terraform modules for generating docs..."
+            - ./scripts/terraform/tf-helper.sh --modules_dir={{.TF_MODULES_DIR}} --max_depth_flag=2 --action=docs
+        silent: true
+
+    doc-recipes:
+        desc: Generate Terraform docs for recipes and/or examples
+        vars:
+            TF_RECIPES_DIR: '{{.TF_RECIPES_DIR}}'
+        cmds:
+            - |
+              echo "Inspecting modules directory: {{.TF_RECIPES_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_RECIPES_DIR}}"
+              echo "Searching for Terraform modules for generating docs..."
+            - ./scripts/terraform/tf-helper.sh --modules_dir={{.TF_RECIPES_DIR}} --max_depth_flag=2 --action=docs
+        silent: true
