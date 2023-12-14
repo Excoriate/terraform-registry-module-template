@@ -148,6 +148,13 @@ tasks:
             - task: tf:docs
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
 
+    tf-upgrade-all:
+        desc: Run the terraform init upgrade on certain modules, or a group of modules
+        cmds:
+            - task: common:clean
+            - task: tf:upgrade
+              vars: {TF_MODULES_DIR: '{{.TERRAFORM_MODULES_DIR}}'}
+
     tf-lint:
         desc: Run terraform lint
         cmds:
@@ -161,6 +168,13 @@ tasks:
             - task: common:clean
             - task: tf:docs
               vars: {TF_WORKING_DIR: '{{.TERRAFORM_MODULES_DIR}}/{{.MODULE}}'}
+
+    tf-docs-all:
+        desc: Generate terraform docs for a set of modules
+        cmds:
+            - task: common:clean
+            - task: tf:doc-modules
+              vars: {TF_MODULES_DIR: '{{.TERRAFORM_MODULES_DIR}}'}
 
     recipe-init:
         desc: Initialize the terraform module
