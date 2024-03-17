@@ -1,99 +1,75 @@
 #!/usr/bin/env bash
 #
 ##################################################################################
-# Script Name: Terraform Modules Upgrader
+# Script Name: Terraform Modules Upgrader and Docs Generator
 #
 # Author: Alex Torres (github.com/Excoriate), alex_torres@outlook.com
 #
-# Usage: ./script.sh --modules_dir=modules_dir_path [--max_depth_flag=depth]
+# Usage: ./script.sh --modules_dir=modules_dir_path [--max_depth_flag=depth] [--action=action]
 #
 # Description: This bash script searches for Terraform modules within a specified directory
-#              up to a certain depth and runs 'terraform init -upgrade' in each module's directory.
+#              up to a certain depth and runs 'terraform init -upgrade' or generates docs
+#              in each module's directory based on the specified action.
 #
 # Parameters:
 #    --modules_dir:      The path to the directory containing Terraform modules [mandatory].
 #    --max_depth_flag:   The maximum depth for directory traversal. Default is 3 [optional].
+#    --action:           The action to perform: 'upgrade' (default) or 'docs' [optional].
 #
 # Examples:
-#    Upgrade modules: ./script.sh --modules_dir=./modules --max_depth_flag=2
+#    Upgrade modules: ./script.sh --modules_dir=./modules --max_depth_flag=2 --action=upgrade
+#    Generate docs: ./script.sh --modules_dir=./modules --max_depth_flag=2 --action=docs
 #
-# Note: The script assumes that Terraform is installed and available on the system's PATH.
-#
-# For further details and support, contact the author.
+# Note: The script assumes that Terraform and terraform-docs are installed and available on the system's PATH.
 #
 ##################################################################################
 
 set -euo pipefail
 
 # Constants
-readonly DEFAULT_ACTION="upgrade" # it also supports "docs"
+readonly DEFAULT_ACTION="upgrade" # Supports "upgrade" or "docs"
+readonly UPGRADE_EMOJI="🔼"
+readonly DOCS_EMOJI="📄"
+readonly SKIP_EMOJI="⏭️"
+readonly ERROR_EMOJI="❌"
+readonly SUCCESS_EMOJI="✅"
 
-# Log a message
 log() {
     local -r msg="${1}"
-    echo "${msg}" >&2
+    local -r emoji="${2:-${SUCCESS_EMOJI}}"
+    echo -e "${emoji} ${msg}" >&2
 }
 
-# Obtain the Terraform modules' paths
 get_terraform_module_paths() {
     local -r modules_dir="${1}"
     local -r max_depth_flag="${2:-3}" # Default max depth is 3 if not provided
 
-    find "${modules_dir}" -mindepth 1 -maxdepth "${max_depth_flag}" -type d | while read -r dir; do
-        if compgen -G "${dir}"/*.tf > /dev/null; then
-            echo "${dir}"
-        fi
-    done
+    find "${modules_dir}" -mindepth 1 -maxdepth "${max_depth_flag}" -type d -exec sh -c 'ls {}/*.tf >/dev/null 2>&1 && echo {}' \;
 }
 
-# Upgrade the Terraform modules
-upgrade_terraform_modules() {
-    local -r modules_dir="${1}"
-    local -r max_depth_flag="${2:-3}" # Default max depth is 3 if not provided
+perform_action() {
+    local -r module_path="${1}"
+    local -r action="${2}"
 
-    local modules_path
-    modules_path=$(get_terraform_module_paths "${modules_dir}" "${max_depth_flag}")
-    if [[ -z "${modules_path}" ]]; then
-        log "No Terraform modules found in the directory: ${modules_dir}"
-        return 0
-    fi
-
-    echo "${modules_path}" | while read -r module_path; do
-        log "Upgrading Terraform module at: ${module_path}"
-        (cd "${module_path}" && terraform init -upgrade)
-    done
-
-    log "Terraform modules upgraded successfully"
+    case "${action}" in
+        upgrade)
+            log "Upgrading Terraform module at: ${module_path}" "${UPGRADE_EMOJI}"
+            (cd "${module_path}" && terraform init -upgrade)
+            ;;
+        docs)
+            log "Generating Terraform docs for module at: ${module_path}" "${DOCS_EMOJI}"
+            (cd "${module_path}" && terraform-docs md . > README.md)
+            ;;
+        *)
+            log "Skipping unknown action: ${action}" "${SKIP_EMOJI}"
+            ;;
+    esac
 }
 
-generate_terraform_docs() {
-    local -r modules_dir="${1}"
-    local -r max_depth_flag="${2:-3}" # Default max depth is 3 if not provided
-
-    local modules_path
-    modules_path=$(get_terraform_module_paths "${modules_dir}" "${max_depth_flag}")
-    if [[ -z "${modules_path}" ]]; then
-        log "No Terraform modules found in the directory: ${modules_dir}"
-        return 0
-    fi
-
-    echo "${modules_path}" | while read -r module_path; do
-        log "Generating Terraform docs for module at: ${module_path}"
-        (cd "${module_path}" && terraform-docs md . > README.md)
-    done
-
-    log "Terraform docs generated successfully"
-}
-
-# Main entry point
 main() {
     local modules_dir=""
     local max_depth_flag=""
-    local action=""
-
-
-    # Print the arguments received
-    log "Arguments received: $*"
+    local action="${DEFAULT_ACTION}"
 
     while (( $# )); do
         case "$1" in
@@ -110,32 +86,30 @@ main() {
                 shift
                 ;;
             *)
-                log "Error: Invalid argument."
+                log "Error: Invalid argument." "${ERROR_EMOJI}"
                 exit 1
         esac
     done
 
     if [[ -z "${modules_dir}" ]]; then
-        log "Error: Missing mandatory argument '--modules_dir'."
+        log "Error: Missing mandatory argument '--modules_dir'." "${ERROR_EMOJI}"
         exit 1
     fi
 
-    if [[ -z "${action}" ]]; then
-        action="${DEFAULT_ACTION}"
+    local module_found=false
+    local modules_path
+    modules_path=$(get_terraform_module_paths "${modules_dir}" "${max_depth_flag}")
+    echo "${modules_path}" | while read -r module_path; do
+        module_found=true
+        perform_action "${module_path}" "${action}"
+    done
+
+    if ! ${module_found}; then
+        log "No Terraform modules found in the directory: ${modules_dir}" "${SKIP_EMOJI}"
+        return 0
     fi
 
-    # Check the action and then run the function
-    case "${action}" in
-        upgrade)
-            upgrade_terraform_modules "${modules_dir}" "${max_depth_flag}"
-            ;;
-        docs)
-            generate_terraform_docs "${modules_dir}" "${max_depth_flag}"
-            ;;
-        *)
-            log "Error: Invalid action."
-            exit 1
-    esac
+    log "Terraform modules processed successfully with action: ${action}" "${SUCCESS_EMOJI}"
 }
 
 main "$@"
