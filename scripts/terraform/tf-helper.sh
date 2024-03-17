@@ -44,7 +44,7 @@ get_terraform_module_paths() {
     local -r modules_dir="${1}"
     local -r max_depth_flag="${2:-3}" # Default max depth is 3 if not provided
 
-    find "${modules_dir}" -mindepth 1 -maxdepth "${max_depth_flag}" -type d -exec sh -c 'ls {}/*.tf >/dev/null 2>&1 && echo {}' \;
+    find "${modules_dir}" -mindepth 1 -maxdepth "${max_depth_flag}" -type d -exec sh -c 'for dir; do ls "$dir"/*.tf >/dev/null 2>&1 && echo "$dir"; done' sh {} \;
 }
 
 perform_action() {

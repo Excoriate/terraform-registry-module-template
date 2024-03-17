@@ -22,7 +22,7 @@ jobs:
                 include:
                     - name: basic
                       module: default
-                      tf_version: 1.6.1
+                      tf_version: 1.7.1
 
         defaults:
             run:

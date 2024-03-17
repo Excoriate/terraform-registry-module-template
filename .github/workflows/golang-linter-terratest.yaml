@@ -44,13 +44,13 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go-version: '1.18' # Adjust this to the Go version you want to use
+                  go-version: '1.21' # Adjust this to the Go version you want to use
 
             - name: golangci-lint
               uses: golangci/golangci-lint-action@v3
               with:
                   version: latest
-                  args: --config ../../../.golangci.yml
+                  args: --config ../../.golangci.yml
                   working-directory: ${{ matrix.dir }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   reporter: github-pr-check
