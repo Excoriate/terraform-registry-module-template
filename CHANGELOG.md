@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.3...v0.1.4) (2024-03-17)
+
+
+### Refactoring
+
+* enhance hooks ([41bddab](https://github.com/Excoriate/terraform-registry-module-template/commit/41bddabe037a36a6d65696b4371c347516e7cfae))
+
 ## [0.1.3](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.2...v0.1.3) (2024-03-17)
 
 
