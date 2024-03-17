@@ -75,8 +75,9 @@ repos:
       hooks:
           - id: terraform_tflint
             name: Terraform tflint
-            entry: sh -c 'for d in modules/* examples/*; do [ -d "$d" ] && [ -f "$d/.tflint.hcl" ] && tflint --init --config "$d/.tflint.hcl" "$d" || echo
-                "Skipping $d, no .tflint.hcl found"; done'
+            entry: >
+                sh -c 'find modules examples -type f -name ".tflint.hcl" -print0 |
+                xargs -0 -I{} sh -c "tflint --init --config={} \$(dirname {})" || echo "Skipping, no .tflint.hcl found"'
             files: ^(modules|examples)/.*/.*\.(tf|hcl)$
             language: system
 
@@ -93,14 +94,19 @@ repos:
       hooks:
           - id: terraform-docs-go
             files: ^(modules|examples)/.*/.*\.(tf|hcl)$
-            entry: sh -c 'for d in modules/* examples/*; do [ -d "$d" ] && [ -f "$d/.terraform-docs.yml" ] && terraform-docs markdown --config "$d/.terraform-docs.yml"
-                --output-file "$d/README.md" --output-mode inject "$d" || echo "Skipping $d, no .terraform-docs.yml found"; done'
+            entry: >
+                sh -c 'find modules examples -type f -name ".terraform-docs.yml" -print0 |
+                xargs -0 -I{} sh -c "terraform-docs markdown --config={} --output-file \$(dirname {})/README.md --output-mode inject \$(dirname {})" ||
+                echo "Skipping, no .terraform-docs.yml found"'
             language: system
 
     - repo: https://github.com/golangci/golangci-lint
       rev: v1.56.2
       hooks:
           - id: golangci-lint
-            args: [--config=.golangci.yml]
-            entry: bash -c 'for d in tests/*/integration tests/*/unit; do if [ -d "$d" ]; then echo "Running golangci-lint in $d"; (cd "$d" && golangci-lint
-                run --config=../../../.golangci.yml ./...); fi; done'
+            args: [--config=../../.golangci.yml] # Default config path relative to the test directories.
+            entry: >
+                sh -c 'find tests -type f -name "go.mod" -print0 |
+                xargs -0 -I{} sh -c "module_dir=\$(dirname {}); root_dir=\$(git rev-parse --show-toplevel); echo \"Running golangci-lint in \$module_dir\";
+                (cd \$module_dir && golangci-lint run --config=\$root_dir/.golangci.yml ./...)" || echo "Skipping, no go.mod found"'
+            language: system
