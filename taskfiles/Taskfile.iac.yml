@@ -1,0 +1,34 @@
+---
+version: '3'
+tasks:
+    clean-tf:
+        desc: Clean .terraform directories
+        cmds:
+            - |
+              echo "Working directory: $(pwd)"
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Cleaning .terraform directories if found"
+              echo "============================================================"
+
+              ./scripts/terraform/tf-cleaner.sh --type=terraform --max_depth_flag=3
+        silent: true
+
+    clean-tg:
+        desc: Clean .terragrunt-cache folders
+        cmds:
+            - |
+              echo "Working directory: $(pwd)"
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Cleaning .terraform directories if found"
+              echo "============================================================"
+
+              ./scripts/terraform/tf-cleaner.sh --type=terraform --max_depth_flag=3
+        silent: true
