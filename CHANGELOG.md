@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.3](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.2...v0.1.3) (2024-03-17)
+
+
+### Bug Fixes
+
+* ci linter ([88fa38d](https://github.com/Excoriate/terraform-registry-module-template/commit/88fa38d9f0ebcc0590e4d55069ab1ec7c0c4b5de))
+* ci workflows on github ([f304bc9](https://github.com/Excoriate/terraform-registry-module-template/commit/f304bc96b187a0f6bdbc3e6bcc83d26e742838d4))
+* Update version of various hooks ([#6](https://github.com/Excoriate/terraform-registry-module-template/issues/6)) ([2f92b9f](https://github.com/Excoriate/terraform-registry-module-template/commit/2f92b9ff27bc6e49830cb7c93051439f96dec9ee))
+
+
+### Refactoring
+
+* Update task file to streamline unit and integration testing ([#4](https://github.com/Excoriate/terraform-registry-module-template/issues/4)) ([54638cd](https://github.com/Excoriate/terraform-registry-module-template/commit/54638cd916075befe3724d6cf680c1246d189723))
+
 ## [0.1.2](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.1...v0.1.2) (2023-12-14)
 
 
