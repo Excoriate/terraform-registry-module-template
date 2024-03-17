@@ -43,7 +43,7 @@ jobs:
               id: plan
 #              if: github.event_name == 'pull_request'
               run: |
-                  for f in config/*.tfvars; do
+                  for f in fixtures/*.tfvars; do
                       terraform plan -var-file=$f -no-color -input=false
                   done
               continue-on-error: true
