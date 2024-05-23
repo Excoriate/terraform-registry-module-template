@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.4...v0.1.5) (2024-05-23)
+
+
+### Features
+
+* Add feature flags and resource placeholders ([#9](https://github.com/Excoriate/terraform-registry-module-template/issues/9)) ([801bcc3](https://github.com/Excoriate/terraform-registry-module-template/commit/801bcc3381e5f556d8091e8704d6511906578267))
+* Update AWS plugin versions to 0.31.0 in default and basic configs. ([#12](https://github.com/Excoriate/terraform-registry-module-template/issues/12)) ([4405117](https://github.com/Excoriate/terraform-registry-module-template/commit/44051174dad7321bd2a5be2a9ce9c4c41dca0932))
+
 ## [0.1.4](https://github.com/Excoriate/terraform-registry-module-template/compare/v0.1.3...v0.1.4) (2024-03-17)
 
 
