@@ -7,6 +7,9 @@ yaml-files:
 
 ignore: |
     /.github/METADATA.yaml
+    vendor/
+    node_modules/
+    dist/
 
 rules:
     braces: enable
@@ -14,8 +17,10 @@ rules:
     colons: enable
     commas: enable
     comments:
+        level: error
+        require-starting-space: true
+    document-start:
         level: warning
-    document-start: disable
     empty-lines:
         max: 2
         level: warning
@@ -25,8 +30,9 @@ rules:
     key-duplicates: enable
     line-length:
         max: 120
-        level: warning
+        level: error
     new-line-at-end-of-file: enable
     trailing-spaces: enable
     truthy:
-        level: warning
+        level: error
+        allowed-values: ['true', 'false', 'yes', 'no']

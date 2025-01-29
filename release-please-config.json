@@ -7,65 +7,73 @@
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
         {
-          "section": "Features",
+          "section": "🚀 Features",
           "type": "feat"
         },
         {
-          "section": "Bug Fixes",
+          "section": "🐛 Bug Fixes",
           "type": "fix"
         },
         {
-          "section": "Other",
+          "section": "🔧 Other Changes",
           "type": "chore"
         },
         {
-          "section": "Docs",
+          "section": "📝 Documentation",
           "type": "docs"
         },
         {
-          "section": "Performance",
+          "section": "🚀 Performance Improvements",
           "type": "perf"
         },
         {
           "hidden": true,
-          "section": "Build",
+          "section": "🏗️ Build",
           "type": "build"
         },
         {
-          "section": "Dependency Updates",
+          "section": "⬆️ Dependency Updates",
           "type": "deps"
         },
         {
           "hidden": true,
-          "section": "CI",
+          "section": "🤖 CI",
           "type": "ci"
         },
         {
-          "section": "Refactoring",
+          "section": "♻️ Refactoring",
           "type": "refactor"
         },
         {
           "hidden": true,
-          "section": "Reverts",
+          "section": "⏪ Reverts",
           "type": "revert"
         },
         {
           "hidden": true,
-          "section": "Styling",
+          "section": "💄 Styling",
           "type": "style"
         },
         {
           "hidden": true,
-          "section": "Tests",
+          "section": "✅ Tests",
           "type": "test"
         }
       ],
       "draft": false,
       "extra-files": [
-        "README.md"
+        "README.md",
+        "versions.tf"
       ],
       "prerelease": false,
-      "release-type": "terraform-module"
+      "release-type": "terraform-module",
+      "include-v-in-tag": true,
+      "pull-request-title-pattern": "chore${scope}: release${component} ${version}",
+      "pull-request-header": "# Automated Release Notes",
+      "changelog-host": "https://github.com/your-org/your-repo",
+      "versioning": "default"
     }
-  }
+  },
+  "release-search-depth": 20,
+  "commit-search-depth": 30
 }

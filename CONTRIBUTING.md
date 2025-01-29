@@ -1,121 +1,174 @@
-# Contributing to this Project
+# Contributing to Terraform Module Development
 
-## Welcome Contributors! 🌟
+> [!NOTE]
+> Welcome to our Terraform module contribution guide! We're excited to collaborate with you in building high-quality, reusable infrastructure code.
 
-Thank you for your interest in contributing to our project. We're excited to collaborate with you and appreciate your support in making this project better.
+## 🌟 Why Contribute?
 
-## Code of Conduct
+> [!TIP]
+> By contributing, you're:
+>
+> - Improving infrastructure as code practices
+> - Helping the community build better, more reliable systems
+> - Advancing open-source infrastructure tooling
 
-By participating, you are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md).
+## 📋 Prerequisites
 
-### Reporting Violations
+> [!IMPORTANT]
+> Ensure you have:
+>
+> - Go (version specified in go.mod)
+> - Terraform (version specified in versions.tf)
+> - pre-commit (latest version available)
+> - HashiCorp Terraform CLI
+> - Docker or any other containerized runtime (for local testing, and portability)
 
-If you experience or witness unacceptable behavior, please report it by emailing [project-maintainers@example.com](mailto:project-maintainers@example.com). All complaints will be reviewed and investigated promptly and fairly.
+## 🐛 Reporting Issues
 
-All community leaders are obligated to respect the privacy and security of the reporter of any incident.
+### Bug Reports
 
-## How Can You Contribute?
+> [!WARNING]
+> We use a standardized [Bug Report Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/bug_report.md) to ensure we get all necessary information.
 
-### 🐛 Reporting Bugs
+When reporting a bug:
 
-1. Check the [Issues](../../issues) to ensure the bug hasn't been reported already.
-2. Open a new issue using our bug report template.
-3. Provide:
-   - A clear, descriptive title
-   - Steps to reproduce the issue
-   - Expected vs. actual behavior
-   - Environment details (OS, version, etc.)
+- Use the [Bug Report Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/bug_report.md)
+- Provide all requested details
+- Be clear and concise
+- Include a minimal reproducible example
 
-### 🚀 Suggesting Enhancements
+### Feature Requests
 
-1. Check existing [Issues](../../issues) to avoid duplicates.
-2. Open an issue with our enhancement template.
-3. Clearly describe:
-   - The proposed enhancement
-   - Potential benefits
-   - Implementation considerations
+> [!TIP]
+> We have a [Feature Request Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/feature_request.md) to help structure your suggestions.
 
-## Development Process
+When suggesting enhancements:
 
-### 🍴 Fork & Branch Workflow
+- Use the [Feature Request Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/feature_request.md)
+- Explain your use case thoroughly
+- Provide context and potential implementation approach
+- Consider the module's scope and portability
 
-1. [Fork the repository](../../fork)
-2. Create a feature branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. Make your changes, following our coding standards
+## 🚀 Development Workflow
 
-### 🧪 Testing
+### 1. Fork and Clone
 
-- Run all tests before submitting a pull request
-- Add tests for new functionality
-- Ensure 100% test coverage for new code
+```bash
+# 1. Fork the repository on GitHub
+# 2. Clone your forked repository
+git clone https://github.com/YOUR_GITHUB_USERNAME/terraform-registry-module-template.git
+cd terraform-registry-module-template
 
-### 📝 Commit Guidelines
+# 3. Add the original repository as a remote (optional, but recommended)
+git remote add upstream https://github.com/Excoriate/terraform-registry-module-template.git
+```
 
-- Use clear, descriptive commit messages
-- Follow [Conventional Commits](https://www.conventionalcommits.org/) standard
-- Commits should be atomic and focused
+### 2. Create a Branch
 
-### 🔍 Pull Request Process
+```bash
+# Use conventional branch naming
+git checkout -b feat/your-feature-name
+# or
+git checkout -b fix/issue-description
+```
+
+## 🧪 Testing and Validation
+
+> [!IMPORTANT]
+> Comprehensive testing is crucial:
+
+### Local Testing
+
+```bash
+# Run pre-commit hooks
+pre-commit run --all-files
+
+# Run Terraform validations
+terraform fmt -check
+terraform validate
+
+# Run unit tests
+just go-test
+just tf-lint
+
+# Integration testing
+terratest test ./...
+```
+
+### Continuous Integration
+
+- GitHub Actions will run:
+  - Linting
+  - Unit tests
+  - Integration tests
+  - Security scans
+
+## 📝 Commit Guidelines
+
+> [!TIP]
+> Follow Conventional Commits:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+Examples:
+
+- `feat(module): add new AWS networking configuration`
+- `fix(validation): correct input variable type`
+- `docs: update README with usage examples`
+
+## 🔍 Pull Request Process
 
 1. Update documentation
-2. Add tests for new features
-3. Ensure all CI checks pass
-4. Request a review from maintainers
+2. Add/update tests
+3. Ensure CI checks pass
+4. Request review from maintainers
 
-#### Pull Request Checklist
+### PR Checklist
 
-- [ ] I have read the contribution guidelines
-- [ ] My code follows project style guidelines
-- [ ] I've added/updated tests
-- [ ] Documentation is updated
-- [ ] CI checks are passing
+- [ ] Code follows project style guidelines
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] CI checks passing
+- [ ] Commits are atomic and focused
 
-## Development Setup
+## 🛡️ Security
 
-### Prerequisites
+> [!WARNING]
+> Never commit:
+>
+> - Sensitive information
+> - Credentials
+> - Personal identifiable information
 
-- Go (version specified in go.mod)
-- Terraform (version specified in versions.tf)
-- pre-commit
-- Required development tools listed in README
+Refer to our [SECURITY.md](https://github.com/Excoriate/terraform-registry-module-template/blob/main/SECURITY.md) for responsible disclosure.
 
-### Local Development
+## 📦 Release Process
 
-1. Clone your fork
-2. Install pre-commit hooks:
-   ```bash
-   pre-commit install
-   ```
-3. Run tests:
-   ```bash
-   just go-test
-   just tf-lint
-   ```
+- Semantic Versioning
+- Automated changelog generation
+- Maintainer-managed releases
 
-## Release Process
+## 🤝 Community
 
-- Releases follow [Semantic Versioning](https://semver.org/)
-- Changelog is automatically generated
-- Releases are published by maintainers
+- Open an [Issue](https://github.com/Excoriate/terraform-registry-module-template/issues/new)
+- Respect our [Code of Conduct](https://github.com/Excoriate/terraform-registry-module-template/blob/main/CODE_OF_CONDUCT.md)
 
-## Getting Help
+## 📚 Learning Resources
 
-- Open an [Issue](../../issues/new)
-- Check our [Discussion](../../discussions) forum
-- Reach out to maintainers
+- [Terraform Best Practices](https://www.terraform.io/docs/cloud/guides/recommended-practices/index.html)
+- [Module Development Guide](https://www.terraform.io/docs/modules/index.html)
+- [Contributing to Open Source](https://opensource.guide/how-to-contribute/)
 
-## Attribution
+## 🏆 Attribution
 
-Contributions are made under the [MIT License](LICENSE) unless specified otherwise.
+Contributions are under the [MIT License](https://github.com/Excoriate/terraform-registry-module-template/blob/main/LICENSE)
 
 ---
 
-**Thank you for contributing!** 🎉
-
-[References]
-
-- [GitHub Contributing Guidelines](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/setting-guidelines-for-repository-contributors)
-- [Open Source Guides](https://opensource.guide/how-to-contribute/)
+**Thank you for helping improve our Terraform module!** 🎉

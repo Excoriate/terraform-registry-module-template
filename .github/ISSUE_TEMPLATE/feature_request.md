@@ -1,25 +1,58 @@
 ---
-name: Feature request
-about: Suggest an idea for this project.
-title: ""
-labels: "feature"
-assignees: "Excoriate"
+name: 🚀 Feature Request
+about: Suggest an idea to improve the Terraform module
+title: "feat: "
+labels: ["enhancement"]
+assignees: ["Excoriate"]
 ---
 
-## Describe the Feature
-A clear and concise description of what the bug is.
+## 🌟 Feature Description
 
-## Expected Behavior
-A clear and concise description of what you expected to happen.
+> [!TIP]
+> Provide a clear and concise description of the feature you're proposing.
 
-## Use Case
-Is your feature request related to a problem/challenge you are trying to solve? Please provide some additional context of why this feature or capability will be valuable.
+### Problem Statement
 
-## Describe Ideal Solution
-A clear and concise description of what you want to happen. If you don't know, that's okay.
+> [!NOTE]
+> Is your feature request related to a problem? Describe the pain point.
+>
+> Example: "I'm always frustrated when [...]"
 
-## Alternatives Considered
-Explain what alternative solutions or features you've considered.
+### Proposed Solution
 
-## Additional Context
-Add any other context or screenshots about the feature request here.
+> [!IMPORTANT]
+> Describe the solution you'd like to see implemented.
+>
+> - What specific functionality are you suggesting?
+> - How would this improve the module?
+
+## 🎯 Use Case and Value
+
+> [!TIP]
+> Explain the specific use case and the value this feature would bring:
+
+- Business impact
+- Technical benefits
+- Potential improvements in infrastructure management
+
+## 🔍 Alternatives Considered
+
+> [!NOTE]
+> Have you explored alternative solutions or workarounds?
+>
+> - Describe other approaches you've considered
+> - Why weren't they sufficient?
+
+## 🖼️ Additional Context
+
+> [!TIP]
+> Add any other context, screenshots, or references that might help explain the feature request.
+
+### Checklist
+
+- [ ] I've checked that a similar feature doesn't already exist
+- [ ] I've provided a clear problem statement
+- [ ] I've described the proposed solution
+- [ ] I've explained the use case and value
+
+**Thank you for helping improve our Terraform module!** 🎉
