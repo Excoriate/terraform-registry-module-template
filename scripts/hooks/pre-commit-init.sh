@@ -1,99 +1,98 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2317
+
+# Pre-Commit Hook Management Script
 #
-##################################################################################
-# Script Name: Pre-Commit Hook Manager
-#
-# Author: Alex Torres (github.com/Excoriate), alex_torres@outlook.com
-#
-# Usage: ./script.sh --hook-type=[hook-type]
-#
-# Description: This bash script provides functionality to install pre-commit on the specified git hooks.
-#              It's designed to be used as a simple CLI tool to manage the git hooks.
-#
-# Parameters:
-#    --hook-type: The type of the git hook to manage. Supported values are "commit", "prepush" and "commitmsg".
-#                 The default is "prepush".
-#
-# Examples:
-#    Install pre-commit on commit hook:   ./script.sh --hook-type=commit
-#    Install pre-commit on pre-push hook: ./script.sh --hook-type=prepush
-#    Install pre-commit on commit-msg hook: ./script.sh --hook-type=commitmsg
-#
-# Note: The script assumes that pre-commit is installed in the system. If not, it tries to install it using pip.
-#
-# For further details and support, contact the author.
-#
-##################################################################################
+# This script provides functionality to manage pre-commit hooks for the repository.
+# It follows Google's Bash Style Guide and provides reliable hook management.
+
+# Strict error handling
 set -euo pipefail
-readonly DEFAULT_HOOK_TYPE="prepush"
 
-# Log a message
+# Logging function with timestamp and color
 log() {
-    local -r msg="${1}"
-    echo "${msg}"
+    local -r level="${1}"
+    local -r message="${2}"
+    local -r timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    local color=""
+
+    case "${level}" in
+        INFO)    color="\033[0;32m" ;;  # Green
+        WARNING) color="\033[0;33m" ;;  # Yellow
+        ERROR)   color="\033[0;31m" ;;  # Red
+        *)       color="\033[0m" ;;     # Default
+    esac
+
+    # shellcheck disable=SC2059
+    printf "${color}[${level}] ${timestamp}: ${message}\033[0m\n" >&2
 }
 
-ensure_pre_commit_is_installed(){
-    if ! command -v pre-commit &> /dev/null
-    then
-        log "pre-commit is not installed. Please install it using pip or your package manager."
-        exit 1
-    else
-        log "pre-commit is already installed."
+# Ensure pre-commit is installed
+ensure_pre_commit_installed() {
+    if ! command -v pre-commit &> /dev/null; then
+        log ERROR "pre-commit is not installed. Installing via pip..."
+        if ! pip3 install pre-commit; then
+            log ERROR "Failed to install pre-commit. Please install manually."
+            return 1
+        fi
     fi
+    log INFO "pre-commit is installed and ready."
 }
 
-install_pre_commit_on_commit_hook(){
-    log "Installing pre-commit on commit hooks..."
-    pre-commit install --hook-type pre-commit
+# Install pre-commit hooks
+# Exposed function 1: Initialize repository hooks
+pc_init() {
+    ensure_pre_commit_installed
+
+    log INFO "Installing pre-commit hooks..."
+    if ! pre-commit install; then
+        log ERROR "Failed to install pre-commit hooks"
+        return 1
+    fi
+
+    if ! pre-commit install --hook-type pre-commit; then
+        log ERROR "Failed to install pre-commit hooks for commit stage"
+        return 1
+    fi
+
+    if ! pre-commit install --hook-type pre-push; then
+        log ERROR "Failed to install pre-commit hooks for pre-push stage"
+        return 1
+    fi
+
+    log INFO "All pre-commit hooks installed successfully"
 }
 
-install_pre_commit_on_pre_push_hook(){
-    log "Installing pre-commit on pre-push hooks..."
-    pre-commit install --hook-type pre-push
+# Run pre-commit hooks on all files
+# Exposed function 2: Run hooks across all files
+pc_run() {
+    log INFO "Running pre-commit hooks on all files..."
+    if ! pre-commit run --all-files; then
+        log ERROR "Pre-commit hooks failed on some files"
+        return 1
+    fi
+    log INFO "Pre-commit hooks completed successfully"
 }
 
-install_pre_commit_on_commit_msg_hook(){
-    log "Installing pre-commit on commit-msg hooks..."
-    pre-commit install --hook-type commit-msg
-}
-
-# Main entry point
+# Main function for script execution
 main() {
-    ensure_pre_commit_is_installed
-    local hook_type="${DEFAULT_HOOK_TYPE}"
-    while [ $# -gt 0 ]; do
-        case "$1" in
-        --hook-type=*)
-            hook_type="${1#*=}"
-            shift
+    local command="${1:-}"
+
+    case "${command}" in
+        init)
+            pc_init
+            ;;
+        run)
+            pc_run
             ;;
         *)
-            printf "*************************************\n"
-            printf "* Error: Invalid argument.         *\n"
-            printf "* Expected: --hook-type=[hook-type]*\n"
-            printf "*************************************\n"
+            log ERROR "Invalid command. Use 'init' or 'run'."
             exit 1
-        esac
-    done
-
-    # Print the arguments received
-    log "Hook type: ${hook_type}"
-
-    case "${hook_type}" in
-        commit)
-            install_pre_commit_on_commit_hook
-          ;;
-        prepush)
-            install_pre_commit_on_pre_push_hook
-          ;;
-        commitmsg)
-            install_pre_commit_on_commit_msg_hook
-          ;;
-        *)
-          log "Error: Invalid hook type '${hook_type}'. Valid values are 'commit', 'prepush', 'commitmsg'."
-          exit 1
+            ;;
     esac
 }
 
-main "$@"
+# Allow sourcing for function access or direct script execution
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

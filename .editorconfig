@@ -1,3 +1,8 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# Top-most EditorConfig file
+root = true
+
 # Unix-style newlines with a newline ending every file
 [*]
 charset = utf-8
@@ -7,19 +12,41 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+# Terraform files
 [*.{tf,tfvars}]
 indent_size = 2
 indent_style = space
 
+# Markdown files
 [*.md]
 max_line_length = 0
 trim_trailing_whitespace = false
 
-# Override for Makefile
-[{Makefile, makefile, GNUmakefile, Makefile.*}]
-tab_width = 2
+# YAML files
+[*.{yaml,yml}]
+indent_size = 2
+indent_style = space
+
+# Shell scripts
+[*.sh]
+indent_size = 2
+indent_style = space
+shell_variant = bash
+
+# Go files
+[*.go]
 indent_style = tab
 indent_size = 4
 
+# Makefiles and Justfiles
+[{Makefile,makefile,GNUmakefile,Justfile}]
+indent_style = tab
+tab_width = 4
+
+# Git commit messages
 [COMMIT_EDITMSG]
-max_line_length = 0
+max_line_length = 72
+
+# Configuration files
+[*.{json,yml,yaml,toml,ini}]
+indent_size = 2

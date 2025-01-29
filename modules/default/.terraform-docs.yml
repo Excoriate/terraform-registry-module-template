@@ -1,43 +1,40 @@
 ---
 formatter: markdown table
 
-header-from: main.tf
-# (// FIXME: Remove, refactor or change. (Template)
+recursive:
+  enabled: true
+  path: .
+
+sections:
+  hide: []
+  show: []
+
 content: |-
-    # ☁️ Example module
-    ## Description
-    {{ .Header }}
-    This module is used to demonstrate the how easy is to create a new terraform module. Here you usually describe the module's capabilities:
-    * 🚀 Example capability or feature 1
-    * 🚀 Example capability or feature 2
+  # {{ .Name }}
 
-    ---
-    ## Example
-    Examples of this module's usage are available in the [examples](./examples) folder.
+  {{ .Description }}
 
-    ```hcl
-    {{ include "../../examples/default/basic/main.tf" }}
-    ```
+  ## Overview
 
-    For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
-    ```hcl
-    {{ include "outputs.tf" }}
-    ```
-    ---
+  {{ .Header }}
 
-    ## Module's documentation
-    (This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
-    {{ .Providers }}
+  {{ if .Inputs }}
+  ## Inputs
 
-    {{ .Modules }}
+  {{ .Inputs }}
+  {{ end }}
 
-    {{ .Resources }}
+  {{ if .Outputs }}
+  ## Outputs
 
-    {{ .Requirements }}
+  {{ .Outputs }}
+  {{ end }}
 
-    {{ .Inputs }}
+  {{ if .Resources }}
+  ## Resources
 
-    {{ .Outputs }}
+  {{ .Resources }}
+  {{ end }}
 
 output:
     file: README.md

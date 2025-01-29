@@ -1,78 +1,121 @@
-# Contribution Guidelines
+# Contributing to this Project
 
-First and foremost, we'd like to express our gratitude to you for taking the time to contribute.
-We welcome and appreciate any and all contributions via
-[Pull Requests] along the [GitHub Flow].
+## Welcome Contributors! 🌟
 
-1. [Open a GitHub issue](#open-a-github-issue)
-2. [Fork the repository on GitHub](#fork-the-repository-on-github)
-3. [Install the pre-commit hooks](#install-the-pre-commit-hooks)
-4. [Update the documentation](#update-the-documentation)
-5. [Update the tests](#update-the-tests)
-6. [Update the code](#update-the-code)
-7. [Create a pull request](#create-a-pull-request)
-8. [Merge and release](#merge-and-release)
+Thank you for your interest in contributing to our project. We're excited to collaborate with you and appreciate your support in making this project better.
 
-## Open a GitHub issue
+## Code of Conduct
 
-For bug reports or requests, please submit your issue in the appropriate repository.
+By participating, you are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-We advise that you open an issue and ask the
-[CODEOWNERS](.github/CODEOWNERS) and community prior to starting a contribution.
-This is your chance to ask questions and receive feedback before
-writing (potentially wrong) code. We value the direct contact with our community
-a lot, so don't hesitate to ask any questions.
+### Reporting Violations
 
-## Fork the repository on GitHub
+If you experience or witness unacceptable behavior, please report it by emailing [project-maintainers@example.com](mailto:project-maintainers@example.com). All complaints will be reviewed and investigated promptly and fairly.
 
-[Fork] the repository into your own GitHub account and [create a new branch] as
-described in the [GitHub Flow].
+All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
-## Install the pre-commit hooks
+## How Can You Contribute?
 
-If the repository you're working on ships with a
-[`.pre-commit-config.yaml`][pre-commit-file],
-make sure the necessary hooks have been installed before you begin working
-(e.g. a `pre-commit install`). Also, there's a `script` included in this repository that might help you with that. See [here](DevEx/scripts/hooks/install-pre-commit-hooks-deps.sh).
+### 🐛 Reporting Bugs
 
-## Update the documentation
+1. Check the [Issues](../../issues) to ensure the bug hasn't been reported already.
+2. Open a new issue using our bug report template.
+3. Provide:
+   - A clear, descriptive title
+   - Steps to reproduce the issue
+   - Expected vs. actual behavior
+   - Environment details (OS, version, etc.)
 
-We encourage you to update the documentation before writing any code (please see
-[Readme Driven Development](https://tom.preston-werner.com/2010/08/23/readme-driven-development.html). This ensures the
-documentation stays up to date and allows you to think through the problem fully before you begin implementing any
-changes.
+### 🚀 Suggesting Enhancements
 
-## Update the tests
+1. Check existing [Issues](../../issues) to avoid duplicates.
+2. Open an issue with our enhancement template.
+3. Clearly describe:
+   - The proposed enhancement
+   - Potential benefits
+   - Implementation considerations
 
-We also recommend updating the automated tests before updating any code
-(see [Test Driven Development](https://en.wikipedia.org/wiki/Test-driven_development).
+## Development Process
 
-That means that you should add or update a test case, run all tests and verify
-that the new test fails with a clear error message and then start implementing
-the code changes to get that test to pass.
+### 🍴 Fork & Branch Workflow
 
-All the tests are located in the `tests` folder in every repository, and all of them are made using [Terratest](https://terratest.gruntwork.io/)
+1. [Fork the repository](../../fork)
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. Make your changes, following our coding standards
 
-## Update the code
+### 🧪 Testing
 
-At this point, make your code changes and constantly test again your new test case to make sure that everything working
-properly. Do [commit] early and often and make useful commit messages.
+- Run all tests before submitting a pull request
+- Add tests for new functionality
+- Ensure 100% test coverage for new code
 
-If a backwards incompatible change cannot be avoided, please make sure to call that out when you submit a pull request,
-explaining why the change is absolutely necessary.
+### 📝 Commit Guidelines
 
-## Create a pull request
+- Use clear, descriptive commit messages
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) standard
+- Commits should be atomic and focused
 
-[Create a pull request] with your changes. For it, this repository includes a [pull request template](.github/PULL_REQUEST_TEMPLATE.md) that you can use to help you write a good description of your changes.
+### 🔍 Pull Request Process
 
-## Merge and release
+1. Update documentation
+2. Add tests for new features
+3. Ensure all CI checks pass
+4. Request a review from maintainers
 
-The [CODEOWNERS](.github/CODEOWNERS) of the repository will review your code and provide feedback.
-If everything looks good, they will merge the code and release a new version while following the principles of [Semantic Versioning (SemVer)].
+#### Pull Request Checklist
 
-<!-- References -->
+- [ ] I have read the contribution guidelines
+- [ ] My code follows project style guidelines
+- [ ] I've added/updated tests
+- [ ] Documentation is updated
+- [ ] CI checks are passing
 
-<!-- markdown-link-check-disable -->
-[Pull Requests]: https://github.com/mineiros-io/terraform-aws-dynamodb/pulls
-[pre-commit-file]: https://github.com/mineiros-io/terraform-aws-dynamodb/blob/master/.pre-commit-config.yaml
-<!-- markdown-link-check-enable -->
+## Development Setup
+
+### Prerequisites
+
+- Go (version specified in go.mod)
+- Terraform (version specified in versions.tf)
+- pre-commit
+- Required development tools listed in README
+
+### Local Development
+
+1. Clone your fork
+2. Install pre-commit hooks:
+   ```bash
+   pre-commit install
+   ```
+3. Run tests:
+   ```bash
+   just go-test
+   just tf-lint
+   ```
+
+## Release Process
+
+- Releases follow [Semantic Versioning](https://semver.org/)
+- Changelog is automatically generated
+- Releases are published by maintainers
+
+## Getting Help
+
+- Open an [Issue](../../issues/new)
+- Check our [Discussion](../../discussions) forum
+- Reach out to maintainers
+
+## Attribution
+
+Contributions are made under the [MIT License](LICENSE) unless specified otherwise.
+
+---
+
+**Thank you for contributing!** 🎉
+
+[References]
+
+- [GitHub Contributing Guidelines](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/setting-guidelines-for-repository-contributors)
+- [Open Source Guides](https://opensource.guide/how-to-contribute/)

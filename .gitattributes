@@ -1,2 +1,37 @@
-go.sum merge=union
+# Ensure consistent line endings and text handling
+
+# Golang files
 *.go text eol=lf
+go.sum merge=union
+
+# Terraform files
+*.tf text eol=lf
+*.tfvars text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# YAML files
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Markdown files
+*.md text eol=lf diff=markdown
+
+# JSON files
+*.json text eol=lf
+
+# Configuration files
+.editorconfig text eol=lf
+.gitattributes text eol=lf
+
+# Ignore files for export
+.gitignore export-ignore
+.gitattributes export-ignore
+
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary

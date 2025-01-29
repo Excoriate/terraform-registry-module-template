@@ -1,1 +1,1 @@
-disable=SC1091
+# Disable specific shellcheck warnings
