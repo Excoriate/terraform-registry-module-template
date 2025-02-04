@@ -37,12 +37,12 @@ content: |-
   {{ end }}
 
 output:
-    file: README.md
-    mode: inject
-    template: |-
-        <!-- BEGIN_TF_DOCS -->
-        {{ .Content }}
-        <!-- END_TF_DOCS -->
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
 settings:
-    anchor: true
-    color: true
+  anchor: true
+  color: true

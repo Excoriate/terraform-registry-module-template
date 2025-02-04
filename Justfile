@@ -8,11 +8,13 @@ default:
 
 # 🪝 Initialize pre-commit hooks
 install-hooks:
-    bash scripts/hooks/pre-commit-init.sh init
+    @echo "🧰Installing pre-commit hooks..."
+    @./scripts/hooks/pre-commit-init.sh init
 
 # 🏃 Run pre-commit hooks on all files
-run-hooks
-    bash scripts/hooks/pre-commit-init.sh run
+run-hooks:
+    @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml..."
+    @./scripts/hooks/pre-commit-init.sh run
 
 # 🧹 Clean Terraform and Terragrunt cache directories
 clean-tf:
@@ -24,12 +26,22 @@ help:
     @just --list
 
 # 🧐 Lint YAML files
-yaml-lint:
+lint-yaml:
     yamllint .
 
 # 🐚 Lint shell scripts
 shell-lint:
     find . -type f -name "*.sh" | xargs shellcheck
 
-# 🔍 Comprehensive linting task
-lint: yaml-lint shell-lint
+# 🧹 Fix and Lint YAML files
+fix-yaml:
+    @echo "🔧 Formatting YAML files with yamlfmt..."
+    @yamlfmt .
+    @echo "🕵️ Checking yamllint configuration..."
+    @yamllint --config-file .yamllint.yml --strict .
+    @echo "✅ YAML formatting and linting complete!"
+
+# Start Nix development shell 🚀
+start-devshell:
+    @echo "🌿 Starting Nix Development Shell for AWS Taggy 🏷️"
+    @nix develop . --extra-experimental-features nix-command --extra-experimental-features flakes

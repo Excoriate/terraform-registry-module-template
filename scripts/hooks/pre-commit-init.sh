@@ -44,6 +44,11 @@ ensure_pre_commit_installed() {
 pc_init() {
     ensure_pre_commit_installed
 
+    log INFO "Updating pre-commit hooks to the latest version..."
+    if ! pre-commit autoupdate; then
+        log WARNING "Failed to update pre-commit hooks to the latest version. Continuing with existing hooks."
+    fi
+
     log INFO "Installing pre-commit hooks..."
     if ! pre-commit install; then
         log ERROR "Failed to install pre-commit hooks"
