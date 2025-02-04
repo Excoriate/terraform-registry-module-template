@@ -1,62 +1,64 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "commit-search-depth": 30,
   "packages": {
     ".": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
+      "changelog-host": "https://github.com/your-org/your-repo",
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
         {
-          "section": "🚀 Features",
+          "section": "\ud83d\ude80 Features",
           "type": "feat"
         },
         {
-          "section": "🐛 Bug Fixes",
+          "section": "\ud83d\udc1b Bug Fixes",
           "type": "fix"
         },
         {
-          "section": "🔧 Other Changes",
+          "section": "\ud83d\udd27 Other Changes",
           "type": "chore"
         },
         {
-          "section": "📝 Documentation",
+          "section": "\ud83d\udcdd Documentation",
           "type": "docs"
         },
         {
-          "section": "🚀 Performance Improvements",
+          "section": "\ud83d\ude80 Performance Improvements",
           "type": "perf"
         },
         {
           "hidden": true,
-          "section": "🏗️ Build",
+          "section": "\ud83c\udfd7\ufe0f Build",
           "type": "build"
         },
         {
-          "section": "⬆️ Dependency Updates",
+          "section": "\u2b06\ufe0f Dependency Updates",
           "type": "deps"
         },
         {
           "hidden": true,
-          "section": "🤖 CI",
+          "section": "\ud83e\udd16 CI",
           "type": "ci"
         },
         {
-          "section": "♻️ Refactoring",
+          "section": "\u267b\ufe0f Refactoring",
           "type": "refactor"
         },
         {
           "hidden": true,
-          "section": "⏪ Reverts",
+          "section": "\u23ea Reverts",
           "type": "revert"
         },
         {
           "hidden": true,
-          "section": "💄 Styling",
+          "section": "\ud83d\udc84 Styling",
           "type": "style"
         },
         {
           "hidden": true,
-          "section": "✅ Tests",
+          "section": "\u2705 Tests",
           "type": "test"
         }
       ],
@@ -65,15 +67,13 @@
         "README.md",
         "versions.tf"
       ],
-      "prerelease": false,
-      "release-type": "terraform-module",
       "include-v-in-tag": true,
-      "pull-request-title-pattern": "chore${scope}: release${component} ${version}",
+      "prerelease": false,
       "pull-request-header": "# Automated Release Notes",
-      "changelog-host": "https://github.com/your-org/your-repo",
+      "pull-request-title-pattern": "chore${scope}: release${component} ${version}",
+      "release-type": "terraform-module",
       "versioning": "default"
     }
   },
-  "release-search-depth": 20,
-  "commit-search-depth": 30
+  "release-search-depth": 20
 }
