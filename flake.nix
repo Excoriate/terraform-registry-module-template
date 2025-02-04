@@ -7,18 +7,26 @@
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
-  outputs = { self, nixpkgs, flake-utils, pre-commit-hooks }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      pre-commit-hooks,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
           config = {
             allowUnfree = true;
-            allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [
-              "terraform"
-              "terragrunt"
-              "opentofu"
-            ];
+            allowUnfreePredicate =
+              pkg:
+              builtins.elem (pkgs.lib.getName pkg) [
+                "terraform"
+                "opentofu"
+              ];
           };
         };
 
@@ -33,7 +41,6 @@
           terraform
           terraform-ls
           tflint
-          terragrunt
           opentofu
 
           # Development and utility tools
@@ -52,7 +59,8 @@
           pre-commit
           direnv
         ];
-      in {
+      in
+      {
         # Development shell configuration
         devShells.default = pkgs.mkShell {
           buildInputs = devTools;
@@ -61,15 +69,7 @@
             echo "🚀 Devshell for Terraform Registry Module Template 🛠️"
             echo "Go version: $(go version)"
             echo "Terraform version: $(terraform version)"
-            echo "Terragrunt version: $(terragrunt version)"
             echo "OpenTofu version: $(tofu version)"
-
-            # Setup pre-commit if not already initialized
-            if [ ! -f .pre-commit-config.yaml ]; then
-              pre-commit sample-config > .pre-commit-config.yaml
-            fi
-
-            pre-commit install
           '';
         };
 
