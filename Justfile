@@ -56,7 +56,7 @@ reload-direnv:
     @echo "🔁 Reloading direnv environment..."
     @direnv reload
 
-# �� Run all pre-commit checks using Nix
+# 🔍 Run all pre-commit checks using Nix
 validate:
     @echo "🔍 Running comprehensive validation..."
     @nix develop . --impure --command pre-commit run --all-files
@@ -80,11 +80,27 @@ lint:
 
 # 🔧 Format all files using Nix-managed tools
 format:
-    @echo "🎨 Formatting files..."
-    @nix develop . --impure --command bash -c '
-    yamlfmt .
-    go fmt ./...
-    '
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "🎨 Formatting all files..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --all
+
+# 🐹 Format only Go files
+format-go:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "🐹 Formatting Go files..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --go
+
+# 🌿 Format only Terraform files
+format-terraform:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "🌿 Formatting Terraform files..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform
+
+# 📄 Format only YAML files
+format-yaml:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "📄 Formatting YAML files..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --yaml
 
 # 🧪 Run tests using Nix
 test:
