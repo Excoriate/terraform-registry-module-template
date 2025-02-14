@@ -1,123 +1,182 @@
-# Justfile for Terraform Module Development
-# Load environment variables from .env file
+# 🚀 Terraform Module Development Workflow: Automate setup, formatting, linting, and project management
+#
+# This Justfile provides a comprehensive set of tasks for managing
+# Terraform module development, including:
+# - Environment setup
+# - Code formatting
+# - Linting
+# - Pre-commit hooks
+# - Cleanup utilities
+#
+# Usage:
+#   just <recipe>           # Run a specific task
+#   just                    # Show available tasks
+#   just help               # List all available recipes
+
+# 🌍 Load environment variables from .env file for consistent configuration
 set dotenv-load
 
-# Default task to show available recipes
-default:
-    @just --list
+# 🎯 Default task: Display available recipes when no specific task is specified
+default: help
 
-# 🪝 Initialize pre-commit hooks
-install-hooks:
-    @echo "🧰 Installing pre-commit hooks..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit install
-
-# 🏃 Run pre-commit hooks on all files
-run-hooks:
-    @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit run --all-files
-
-# 🧹 Clean Terraform and Terragrunt cache directories
-clean-tf:
-    find . -type d -name ".terraform" -exec rm -rf {} +
-    find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
-
-# ℹ️ Display available recipes
+# ℹ️ List all available recipes with their descriptions
 help:
     @just --list
 
-# 🧐 Lint YAML files
-lint-yaml:
-    @echo "🕵️ Linting YAML files..."
+# 🔧 Install pre-commit hooks in Nix environment for consistent code quality
+install-hooks-nix:
+    @echo "🧰 Installing pre-commit hooks in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit install
+
+# 🔧 Install pre-commit hooks in local environment for code consistency
+install-hooks:
+    @echo "🧰 Installing pre-commit hooks locally..."
+    @./scripts/hooks/pre-commit-init.sh init
+
+# 🕵️ Run pre-commit hooks across all files in Nix environment
+run-hooks-nix:
+    @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit run --all-files
+
+# 🕵️ Run pre-commit hooks across all files in local environment
+run-hooks:
+    @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml..."
+    @./scripts/hooks/pre-commit-init.sh run
+
+# 🧹 Remove Terraform and Terragrunt cache directories to reset project state
+clean-tf:
+    @echo "🗑️ Cleaning Terraform and Terragrunt cache directories..."
+    @find . -type d -name ".terraform" -exec rm -rf {} +
+    @find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
+
+# 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories
+clean:
+    @echo "🗑️ Performing comprehensive project cleanup..."
+    @find . -type d -name ".terraform" -exec rm -rf {} +
+    @find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
+    @find . -type f -name "*.tfstate" -exec rm -f {} +
+    @find . -type f -name "*.tfstate.backup" -exec rm -f {} +
+
+# 🧐 Format YAML files using yamlfmt in Nix environment
+fix-yaml-nix:
+    @echo "🔧 Formatting YAML files with yamlfmt in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command yamlfmt .
+
+# 🧹 Format and lint YAML files for consistency and quality
+fix-yaml:
+    @echo "🔧 Formatting and linting YAML files..."
+    @yamlfmt .
+    @echo "🕵️ Validating YAML configuration..."
+    @yamllint --config-file .yamllint.yml --strict .
+    @echo "✅ YAML formatting and linting complete!"
+
+# 🕵️ Lint YAML files using yamllint in Nix environment
+lint-yaml-nix:
+    @echo "🕵️ Linting YAML files in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command yamllint .
 
-# 🐚 Lint shell scripts
-lint-shell:
-    @echo "🐚 Linting shell scripts..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'find . -type f -name "*.sh" | xargs shellcheck'
-
-# 🦫 Lint Go files
-lint-go:
-    @echo "🦫 Linting Go files..."
-    @chmod +x ./scripts/utilities/lint-go.sh
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/lint-go.sh
-
-# 🌐 Comprehensive linting
-lint:
-    @echo "🔍 Running comprehensive linting..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '
-    echo "🧐 YAML Linting"
-    yamllint .
-
-    echo "🐚 Shell Script Linting"
-    find . -type f -name "*.sh" | xargs shellcheck
-
-    echo "🦫 Go Linting"
-    golangci-lint run
-
-    echo "✅ Linting complete!"
-    '
-
-# 🧹 Fix and Lint YAML files
-fix-yaml:
-    @echo "🔧 Formatting YAML files with yamlfmt..."
+# 🕵️ Validate YAML files against strict configuration standards
+lint-yaml:
+    @echo "🕵️ Linting YAML files..."
     @yamlfmt .
     @echo "🕵️ Checking yamllint configuration..."
     @yamllint --config-file .yamllint.yml --strict .
     @echo "✅ YAML formatting and linting complete!"
 
-# Start Nix development shell 🚀
-start-devshell:
+# 🐚 Lint shell scripts using shellcheck in Nix environment
+lint-shell-nix:
+    @echo "🐚 Linting shell scripts in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'find . -type f -name "*.sh" | xargs shellcheck'
+
+# 🐚 Perform static analysis on all shell scripts
+lint-shell:
+    @echo "🐚 Linting shell scripts..."
+    @find . -type f -name "*.sh" | xargs shellcheck
+
+# 🦫 Lint Go files using custom script in Nix environment
+lint-go-nix:
+    @echo "🦫 Linting Go files in Nix environment..."
+    @chmod +x ./scripts/utilities/lint-go.sh
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/lint-go.sh
+
+# 🦫 Perform static code analysis on Go files
+lint-go:
+    @echo "🦫 Linting Go files..."
+    @chmod +x ./scripts/utilities/lint-go.sh
+    @./scripts/utilities/lint-go.sh
+
+# 🚀 Launch Nix development shell with project dependencies
+dev:
     @echo "🌿 Starting Nix Development Shell for Terraform Registry Module Template 🏷️"
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes
 
-# 🌍 Allow direnv in the current directory
+# 🔓 Enable direnv for environment variable management
 allow-direnv:
     @echo "🔓 Allowing direnv in the current directory..."
     @direnv allow
 
-# 🔄 Reload direnv environment
+# 🔄 Reload direnv environment configuration
 reload-direnv:
     @echo "🔁 Reloading direnv environment..."
     @direnv reload
 
-# 🔍 Comprehensive validation using pre-commit
-validate:
-    @echo "🔍 Running comprehensive validation..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit run --all-files
-
-# 🧹 Clean project artifacts using Nix
-clean:
-    @echo "🗑️ Cleaning project artifacts..."
-    @nix develop . --impure --command bash -c '
-    find . -type d -name ".terraform" -exec rm -rf {} +
-    find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
-    '
-
-# 🔧 Format all files using Nix-managed tools
-format:
+# 🎨 Format all files using custom script in Nix environment
+format-all-nix:
     @chmod +x ./scripts/utilities/format.sh
-    @echo "🎨 Formatting all files..."
+    @echo "🎨 Formatting all files in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --all
 
-# 🐹 Format only Go files
+# 🎨 Apply consistent formatting across entire project
+format-all:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "🎨 Formatting all files..."
+    @./scripts/utilities/format.sh --all
+
+# 🐹 Format Go files using custom script in Nix environment
+format-go-nix:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "🐹 Formatting Go files in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --go
+
+# 🐹 Apply Go-specific code formatting
 format-go:
     @chmod +x ./scripts/utilities/format.sh
     @echo "🐹 Formatting Go files..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --go
+    @./scripts/utilities/format.sh --go
 
-# 🌿 Format only Terraform files
+# 🌿 Format Terraform files using custom script in Nix environment
+format-terraform-nix:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "🌿 Formatting Terraform files in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform
+
+# 🌿 Apply Terraform-specific code formatting
 format-terraform:
     @chmod +x ./scripts/utilities/format.sh
     @echo "🌿 Formatting Terraform files..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform
+    @./scripts/utilities/format.sh --terraform
 
-# 📄 Format only YAML files
+# 📄 Format YAML files using custom script in Nix environment
+format-yaml-nix:
+    @chmod +x ./scripts/utilities/format.sh
+    @echo "📄 Formatting YAML files in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --yaml
+
+# 📄 Apply YAML-specific file formatting
 format-yaml:
     @chmod +x ./scripts/utilities/format.sh
     @echo "📄 Formatting YAML files..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --yaml
+    @./scripts/utilities/format.sh --yaml
 
-# 🧪 Run tests using Nix
-test:
-    @echo "🚦 Running tests..."
-    @nix develop . --impure --command go test ./...
+root_dir := "."
+modules_dir := "modules"
+examples_dir := "examples"
+module_dir := "."
+
+# 🌿 Run Terraform commands in Nix environment
+run-tf-nix MOD='.' *CMDS='--help':
+    @echo "🏗️ Running Terraform command in Nix environment:"
+    @echo "   Command: terraform {{CMDS}}"
+    @echo "   Working directory: $(realpath {{module_dir}})"
+    @cd {{module_dir}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
+
