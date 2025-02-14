@@ -6,7 +6,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
-func getInputVarsValues(t *testing.T, isEnabled bool) map[string]interface{} {
+func getInputVarsValues(_ *testing.T, isEnabled bool) map[string]interface{} {
 	// randomAwsRegion := aws.GetRandomRegion(t, nil, nil)
 
 	return map[string]interface{}{

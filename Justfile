@@ -8,13 +8,13 @@ default:
 
 # 🪝 Initialize pre-commit hooks
 install-hooks:
-    @echo "🧰Installing pre-commit hooks..."
-    @./scripts/hooks/pre-commit-init.sh init
+    @echo "🧰 Installing pre-commit hooks..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit install
 
 # 🏃 Run pre-commit hooks on all files
 run-hooks:
     @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml..."
-    @./scripts/hooks/pre-commit-init.sh run
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit run --all-files
 
 # 🧹 Clean Terraform and Terragrunt cache directories
 clean-tf:
@@ -27,11 +27,35 @@ help:
 
 # 🧐 Lint YAML files
 lint-yaml:
-    yamllint .
+    @echo "🕵️ Linting YAML files..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command yamllint .
 
 # 🐚 Lint shell scripts
 lint-shell:
+    @echo "🐚 Linting shell scripts..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'find . -type f -name "*.sh" | xargs shellcheck'
+
+# 🦫 Lint Go files
+lint-go:
+    @echo "🦫 Linting Go files..."
+    @chmod +x ./scripts/utilities/lint-go.sh
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/lint-go.sh
+
+# 🌐 Comprehensive linting
+lint:
+    @echo "🔍 Running comprehensive linting..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '
+    echo "🧐 YAML Linting"
+    yamllint .
+
+    echo "🐚 Shell Script Linting"
     find . -type f -name "*.sh" | xargs shellcheck
+
+    echo "🦫 Go Linting"
+    golangci-lint run
+
+    echo "✅ Linting complete!"
+    '
 
 # 🧹 Fix and Lint YAML files
 fix-yaml:
@@ -56,10 +80,10 @@ reload-direnv:
     @echo "🔁 Reloading direnv environment..."
     @direnv reload
 
-# 🔍 Run all pre-commit checks using Nix
+# 🔍 Comprehensive validation using pre-commit
 validate:
     @echo "🔍 Running comprehensive validation..."
-    @nix develop . --impure --command pre-commit run --all-files
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit run --all-files
 
 # 🧹 Clean project artifacts using Nix
 clean:
@@ -67,15 +91,6 @@ clean:
     @nix develop . --impure --command bash -c '
     find . -type d -name ".terraform" -exec rm -rf {} +
     find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
-    '
-
-# 🔍 Lint all files using Nix-managed tools
-lint:
-    @echo "🕵️ Running comprehensive linting..."
-    @nix develop . --impure --command bash -c '
-    yamllint .
-    find . -type f -name "*.sh" | xargs shellcheck
-    golangci-lint run
     '
 
 # 🔧 Format all files using Nix-managed tools

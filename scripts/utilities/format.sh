@@ -4,9 +4,6 @@
 # Fail on any error and treat unset variables as an error
 set -euo pipefail
 
-# Enable enhanced debugging
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 # Logging function
 log() {
     local message="$1"
