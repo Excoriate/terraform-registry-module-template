@@ -221,36 +221,49 @@ lint-tf MOD='':
         cd - > /dev/null; \
     fi
 
+# 📄 Generate Terraform module documentation
 generate-docs MOD='':
     @echo "🔍 Generating Terraform module documentation..."
     @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {}); do \
-            echo "📄 Generating docs for: $dir"; \
-            cd $dir && \
-            terraform-docs markdown . --output-file README.md && \
-            cd - > /dev/null; \
+        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
+            echo "📄 Attempting to generate docs for: $dir"; \
+            if [ -d "$dir" ]; then \
+                cd "$dir" && \
+                echo "   🔧 Current directory: $(pwd)" && \
+                terraform-docs markdown . --output-file README.md || \
+                echo "   ❌ Documentation generation failed for $dir" && \
+                cd - > /dev/null; \
+            else \
+                echo "   ❌ Directory not found: $dir"; \
+            fi \
         done \
     else \
         echo "📄 Generating docs for specified module: {{MOD}}"; \
-        cd {{MOD}} && \
-        terraform-docs markdown . --output-file README.md && \
-        cd - > /dev/null; \
+        cd "{{MOD}}" && \
+        terraform-docs markdown . --output-file README.md || \
+        echo "❌ Documentation generation failed for {{MOD}}"; \
     fi
 
 # 📄 Generate Terraform module documentation in Nix environment
 generate-docs-nix MOD='':
     @echo "🔍 Generating Terraform module documentation in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {}); do \
-            echo "📄 Generating docs for: $dir"; \
-            cd $dir && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md && \
-            cd - > /dev/null; \
+        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
+            echo "📄 Attempting to generate docs for: $dir in Nix environment"; \
+            if [ -d "$dir" ]; then \
+                cd "$dir" && \
+                echo "   🔧 Current directory: $(pwd)" && \
+                nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md || \
+                echo "   ❌ Documentation generation failed for $dir in Nix environment" && \
+                cd - > /dev/null; \
+            else \
+                echo "   ❌ Directory not found: $dir"; \
+            fi \
         done \
     else \
-        echo "📄 Generating docs for specified module: {{MOD}}"; \
-        cd {{MOD}} && \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md && \
-        cd - > /dev/null; \
+        echo "📄 Generating docs for specified module in Nix environment: {{MOD}}"; \
+        cd "{{MOD}}" && \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md || \
+        echo "❌ Documentation generation failed for {{MOD}} in Nix environment"; \
     fi
 

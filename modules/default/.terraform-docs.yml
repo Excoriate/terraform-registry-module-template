@@ -7,34 +7,29 @@ recursive:
 
 sections:
   hide: []
-  show: []
+  show:
+    - inputs
+    - outputs
+    - resources
 
 content: |-
-  # {{ .Name }}
-
-  {{ .Description }}
+  # Terraform Default Module
 
   ## Overview
 
   {{ .Header }}
 
-  {{ if .Inputs }}
-  ## Inputs
+  ## Variables
 
   {{ .Inputs }}
-  {{ end }}
 
-  {{ if .Outputs }}
   ## Outputs
 
   {{ .Outputs }}
-  {{ end }}
 
-  {{ if .Resources }}
   ## Resources
 
   {{ .Resources }}
-  {{ end }}
 
 output:
   file: README.md
@@ -43,6 +38,15 @@ output:
     <!-- BEGIN_TF_DOCS -->
     {{ .Content }}
     <!-- END_TF_DOCS -->
+
 settings:
   anchor: true
   color: true
+  description: true
+  escape: true
+  header: true
+  html: true
+  indent: 2
+  required: true
+  sensitive: true
+  type: true
