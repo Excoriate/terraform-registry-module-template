@@ -15,4 +15,3 @@ output "tags_set" {
   value       = var.tags
   description = "The tags set for the module."
 }
-
