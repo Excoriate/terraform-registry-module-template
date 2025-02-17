@@ -267,5 +267,28 @@ generate-docs-nix MOD='':
         echo "❌ Documentation generation failed for {{MOD}} in Nix environment"; \
     fi
 
+# 🌿 Initialize Terraform configuration
+init-tf-no-backend MOD='.':
+    @echo "🔍 Initializing Terraform configuration in directory: {{MOD}}"
+    @cd {{MOD}} && terraform init -backend=false
+
+# 🌿 Initialize Terraform configuration in Nix environment
+init-tf-no-backend-nix MOD='.':
+    @echo "🔍 Initializing Terraform configuration in Nix environment: directory {{MOD}}"
+    @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "terraform init -backend=false"
+
+# 🌿 Validate Terraform configuration
+validate-tf MOD='.': (init-tf-no-backend MOD)
+    @echo "🔍 Validating Terraform configuration in directory: {{MOD}}"
+    @cd {{MOD}} && \
+    terraform validate
+
+# 🌿 Validate Terraform configuration in Nix environment
+validate-tf-nix MOD='.': (init-tf-no-backend-nix MOD)
+    @echo "🔍 Validating Terraform configuration in Nix environment: directory {{MOD}}"
+    @cd {{MOD}} && \
+    nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "terraform init -backend=false && terraform validate"
+
+
 
 

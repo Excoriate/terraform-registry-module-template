@@ -54,9 +54,24 @@ main() {
 
     # Default to all if no specific format selected
     if [ "$format_all" = true ] || [ "$format_terraform" = true ]; then
-        log "🌿 Formatting Terraform files..."
-        if ! find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; then
-            error_exit "Terraform formatting failed"
+        log "🌿 Searching for Terraform files to format..."
+
+        # Find Terraform files and log directories
+        terraform_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \))
+
+        if [ -z "$terraform_files" ]; then
+            log "ℹ️ No Terraform files found to format."
+        else
+            # Group files by directory and log
+            echo "$terraform_files" | while read -r file; do
+                dir=$(dirname "$file")
+                log "🌿 Found Terraform files in: $dir"
+            done | sort -u
+
+            log "🌿 Formatting Terraform files..."
+            if ! find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; then
+                error_exit "Terraform formatting failed"
+            fi
         fi
     fi
 
