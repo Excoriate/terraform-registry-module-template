@@ -18,14 +18,14 @@ repository:
   # Merge Strategy
   default_branch: main
   allow_squash_merge: true
-  allow_merge_commit: false  # Discourage merge commits in template
+  allow_merge_commit: false # Discourage merge commits in template
   allow_rebase_merge: true
   delete_branch_on_merge: true
 
   # Repository Features
   has_projects: true
   has_wiki: false
-  has_discussions: true  # Enable discussions for template guidance
+  has_discussions: true # Enable discussions for template guidance
 
   # Security Enhancements
   enable_vulnerability_alerts: true
@@ -38,7 +38,7 @@ repository:
     - name: contributors
       permission: push
     - name: template-users
-      permission: pull  # Allow template viewers to read
+      permission: pull # Allow template viewers to read
 
 # Comprehensive Label Strategy
 labels:

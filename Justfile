@@ -204,8 +204,8 @@ run-tofu MOD='.' CMDS='--help':
     @echo "   Working directory: $(realpath {{module_dir}})"
     @cd {{module_dir}} && tofu {{CMDS}}
 
-# 🔍 Lint Terraform files using tflint
-lint-tf MOD='':
+# 🔍 Lint Terraform files using tflint in Nix environment
+lint-tf-nix MOD='':
     @echo "🔍 Discovering and linting Terraform modules..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
@@ -266,4 +266,6 @@ generate-docs-nix MOD='':
         nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md || \
         echo "❌ Documentation generation failed for {{MOD}} in Nix environment"; \
     fi
+
+
 

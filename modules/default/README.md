@@ -1,88 +1,59 @@
 <!-- BEGIN_TF_DOCS -->
+# Terraform Default Module
 
-# ☁️ Example module
+## Overview
+> **Warning:** 🚨 This module is a template and should be customized to fit your specific infrastructure needs.
 
-## Description
+### 🌟 Module Purpose
+This Terraform module provides a flexible and reusable infrastructure component designed to streamline your cloud resource management.
 
-This module is used to demonstrate the how easy is to create a new terraform module. Here you usually describe the module's capabilities:
+### 🔑 Key Features
+- **Customizable Configuration**: Easily adapt the module to your specific requirements
+- **Best Practice Implementations**: Follows industry-standard infrastructure-as-code principles
+- **Comprehensive Input Validation**: Robust variable type and constraint checking
 
-- 🚀 Example capability or feature 1
-- 🚀 Example capability or feature 2
+### 📋 Usage Guidelines
+1. Review the available input variables
+2. Customize the module parameters to match your infrastructure needs
+3. Integrate with your existing Terraform configurations
+4. Validate and test thoroughly before production deployment
 
----
+### 🛠 Recommended Practices
+- Always specify required variables
+- Use meaningful tags for resource tracking
+- Consider environment-specific variations
+- Implement proper access controls
 
-## Example
+### 🚧 Limitations and Considerations
+- Ensure compatibility with your cloud provider
+- Check regional availability of resources
+- Review pricing implications of deployed resources
 
-Examples of this module's usage are available in the [examples](./examples) folder.
 
-```hcl
-module "main_module" {
-  source     = "../../../modules/default"
-  is_enabled = var.is_enabled
-}
-```
 
-For module composition, It's recommended to take a look at the module's `outputs` to understand what's available:
-
-```hcl
-output "is_enabled" {
-  value       = var.is_enabled
-  description = "Whether the module is enabled or not."
-}
-
-output "tags_set" {
-  value       = var.tags
-  description = "The tags set for the module."
-}
-
-/*
--------------------------------------
-Custom outputs
--------------------------------------
-*/
-```
-
----
-
-## Module's documentation
-
-(This documentation is auto-generated using [terraform-docs](https://terraform-docs.io))
-
-## Providers
-
-| Name                                                      | Version |
-| --------------------------------------------------------- | ------- |
-| <a name="provider_random"></a> [random](#provider_random) | 3.4.3   |
-
-## Modules
-
-No modules.
-
-## Resources
-
-| Name                                                                                                              | Type     |
-| ----------------------------------------------------------------------------------------------------------------- | -------- |
-| [random_string.random_text](https://registry.terraform.io/providers/hashicorp/random/3.4.3/docs/resources/string) | resource |
-
-## Requirements
-
-| Name                                                                     | Version  |
-| ------------------------------------------------------------------------ | -------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement_terraform) | >= 1.7.0 |
-| <a name="requirement_random"></a> [random](#requirement_random)          | 3.4.3    |
+## Variables
 
 ## Inputs
 
-| Name                                                            | Description                                                                                                                                              | Type          | Default | Required |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------- | :------: |
-| <a name="input_is_enabled"></a> [is_enabled](#input_is_enabled) | Whether this module will be created or not. It is useful, for stack-composite<br>modules that conditionally includes resources provided by this module.. | `bool`        | n/a     |   yes    |
-| <a name="input_tags"></a> [tags](#input_tags)                   | A map of tags to add to all resources.                                                                                                                   | `map(string)` | `{}`    |    no    |
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_is_enabled"></a> [is\_enabled](#input\_is\_enabled) | Toggle module resource creation.<br/><br/>Use cases:<br/>- Conditional resource provisioning<br/>- Environment-specific deployments<br/>- Cost and resource management<br/><br/>Examples:<pre>hcl<br/># Disable all module resources<br/>is_enabled = false<br/><br/># Enable module resources (default)<br/>is_enabled = true</pre>🔗 References:<br/>- Terraform Variables: https://terraform.io/language/values/variables<br/>- Module Patterns: https://hashicorp.com/blog/terraform-module-composition | `bool` | `true` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Resource tagging for organization and governance.<br/><br/>Key benefits:<br/>- Resource tracking<br/>- Cost allocation<br/>- Compliance management<br/><br/>Best practices:<br/>- Use lowercase, hyphen-separated keys<br/>- Include context (env, project, ownership)<br/><br/>Examples:<pre>hcl<br/>tags = {<br/>  environment = "production"<br/>  project     = "core-infra"<br/>  managed-by  = "terraform"<br/>}</pre>🔗 References:<br/>- AWS Tagging: https://aws.amazon.com/answers/account-management/aws-tagging-strategies/<br/>- Cloud Tagging: https://cloud.google.com/resource-manager/docs/best-practices-labels | `map(string)` | `{}` | no |
 
 ## Outputs
 
-| Name                                                              | Description                           |
-| ----------------------------------------------------------------- | ------------------------------------- |
-| <a name="output_is_enabled"></a> [is_enabled](#output_is_enabled) | Whether the module is enabled or not. |
-| <a name="output_tags_set"></a> [tags_set](#output_tags_set)       | The tags set for the module.          |
+## Outputs
 
+| Name | Description |
+|------|-------------|
+| <a name="output_is_enabled"></a> [is\_enabled](#output\_is\_enabled) | Whether the module is enabled or not. |
+| <a name="output_tags_set"></a> [tags\_set](#output\_tags\_set) | The tags set for the module. |
+
+## Resources
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [random_string.random_text](https://registry.terraform.io/providers/hashicorp/random/3.4.3/docs/resources/string) | resource |
 <!-- END_TF_DOCS -->
