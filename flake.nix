@@ -42,6 +42,7 @@
           terraform-ls
           tflint
           opentofu
+          terraform-docs
 
           # Development and utility tools
           just

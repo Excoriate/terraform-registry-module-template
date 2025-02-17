@@ -200,3 +200,54 @@ run-tofu MOD='.' CMDS='--help':
     @echo "   Command: tofu {{CMDS}}"
     @echo "   Working directory: $(realpath {{module_dir}})"
     @cd {{module_dir}} && tofu {{CMDS}}
+
+# 🔍 Lint Terraform files using tflint
+lint-tf MOD='':
+    @echo "🔍 Discovering and linting Terraform modules..."
+    @if [ -z "{{MOD}}" ]; then \
+        for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
+            echo "🕵️ Linting directory: $dir"; \
+            cd $dir && \
+            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
+            cd - > /dev/null; \
+        done \
+    else \
+        echo "🕵️ Linting specified module: {{MOD}}"; \
+        cd {{MOD}} && \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
+        cd - > /dev/null; \
+    fi
+
+generate-docs MOD='':
+    @echo "🔍 Generating Terraform module documentation..."
+    @if [ -z "{{MOD}}" ]; then \
+        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {}); do \
+            echo "📄 Generating docs for: $dir"; \
+            cd $dir && \
+            terraform-docs markdown . --output-file README.md && \
+            cd - > /dev/null; \
+        done \
+    else \
+        echo "📄 Generating docs for specified module: {{MOD}}"; \
+        cd {{MOD}} && \
+        terraform-docs markdown . --output-file README.md && \
+        cd - > /dev/null; \
+    fi
+
+# 📄 Generate Terraform module documentation in Nix environment
+generate-docs-nix MOD='':
+    @echo "🔍 Generating Terraform module documentation in Nix environment..."
+    @if [ -z "{{MOD}}" ]; then \
+        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {}); do \
+            echo "📄 Generating docs for: $dir"; \
+            cd $dir && \
+            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md && \
+            cd - > /dev/null; \
+        done \
+    else \
+        echo "📄 Generating docs for specified module: {{MOD}}"; \
+        cd {{MOD}} && \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md && \
+        cd - > /dev/null; \
+    fi
+
