@@ -180,3 +180,23 @@ run-tf-nix MOD='.' *CMDS='--help':
     @echo "   Working directory: $(realpath {{module_dir}})"
     @cd {{module_dir}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
+# 🌿 Run Terraform commands
+run-tf MOD='.' CMDS='--help':
+    @echo "🏗️ Running Terraform command:"
+    @echo "   Command: terraform {{CMDS}}"
+    @echo "   Working directory: $(realpath {{module_dir}})"
+    @cd {{module_dir}} && terraform {{CMDS}}
+
+# 🌿 Run OpenTofu commands in Nix environment
+run-tofu-nix MOD='.' CMDS='--help':
+    @echo "🏗️ Running OpenTofu command in Nix environment:"
+    @echo "   Command: tofu {{CMDS}}"
+    @echo "   Working directory: $(realpath {{module_dir}})"
+    @cd {{module_dir}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
+
+# 🌿 Run OpenTofu commands
+run-tofu MOD='.' CMDS='--help':
+    @echo "🏗️ Running OpenTofu command:"
+    @echo "   Command: tofu {{CMDS}}"
+    @echo "   Working directory: $(realpath {{module_dir}})"
+    @cd {{module_dir}} && tofu {{CMDS}}
