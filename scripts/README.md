@@ -10,6 +10,7 @@ This directory contains utility scripts and pre-commit hooks to support the deve
 ## 🛠 Utility Scripts
 
 ### `utilities/format.sh`
+
 A script for formatting code across different languages and configuration files.
 
 **Usage:**
@@ -18,6 +19,7 @@ A script for formatting code across different languages and configuration files.
 ```
 
 ### `utilities/lint-go.sh`
+
 A script for running Go linting checks using golangci-lint.
 
 **Usage:**

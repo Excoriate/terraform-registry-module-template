@@ -38,13 +38,9 @@
 **/.terragrunt-cache/
 .terraform/
 
-# Ignore all .env files
-/.env*
-
 # Nix and direnv specific ignores
 .direnv/
 .envrc.cache
-.env
 .nix-shell/
 shell.nix
 result
