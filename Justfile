@@ -19,6 +19,11 @@ set dotenv-load
 # 🎯 Default task: Display available recipes when no specific task is specified
 default: help
 
+# 📦 Variables for project directories
+TESTS_DIR := 'tests'
+MODULES_DIR := 'modules'
+EXAMPLES_DIR := 'examples'
+
 # ℹ️ List all available recipes with their descriptions
 help:
     @just --list
@@ -52,7 +57,7 @@ clean-tf:
 # 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories
 clean:
     @echo "🗑️ Performing comprehensive project cleanup..."
-    @find . -type d -name ".terraform" -exec rm -rf {} +
+ 	@find . -type d -name ".terraform" -exec rm -rf {} +
     @find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
     @find . -type f -name "*.tfstate" -exec rm -f {} +
     @find . -type f -name "*.tfstate.backup" -exec rm -f {} +
@@ -170,6 +175,11 @@ format-yaml-nix:
     @chmod +x ./scripts/utilities/format.sh
     @echo "📄 Formatting YAML files in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --yaml
+
+# 🌿 Run tests for Terraform module in Nix development environment
+run-tests-nix MOD='default' TYPE='unit':
+    @echo "🏗️ Running tests for Terraform module: {{MOD}} in Nix environment..."
+    @cd tests/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
 
 # 🌿 Run Terraform commands locally with flexible module and command selection
 run-tf MOD='.' CMDS='--help':
@@ -332,8 +342,3 @@ ci-tf-module MOD='.': (format-check-terraform-module MOD) (validate-tf MOD) (lin
 # 🚀 Comprehensive Nix environment CI checks for Terraform modules: formatting, validation, linting, and documentation generation
 ci-tf-module-nix MOD='.': (format-check-terraform-module-nix MOD) (validate-tf-nix MOD) (lint-tf-nix MOD) (generate-docs-nix MOD)
     @echo "✅ Terraform module CI checks completed in Nix environment for: {{MOD}}"
-
-root_dir := "."
-modules_dir := "modules"
-examples_dir := "examples"
-module_dir := "."
