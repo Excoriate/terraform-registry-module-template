@@ -201,38 +201,46 @@ run-tofu MOD='.' CMDS='--help':
     @echo "   Working directory: $(realpath {{module_dir}})"
     @cd {{module_dir}} && tofu {{CMDS}}
 
-# 🐳 Build multi-arch Docker image for Terraform and OpenTofu
-build-docker-multiarch TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0' REGISTRY='local' TAG='latest':
-    @echo "🏗️ Building multi-arch Docker image with Terraform v{{TERRAFORM_VERSION}} and OpenTofu v{{OPENTOFU_VERSION}}..."
-    @docker buildx create --use --name multiarch-builder || true
-    @docker buildx inspect multiarch-builder --bootstrap
+# 🐳 Build Docker image for a specific architecture
+build-docker TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0' ARCH='amd64' REGISTRY='local' TAG='latest':
+    @echo "🏗️ Building Docker image with Terraform v{{TERRAFORM_VERSION}} and OpenTofu v{{OPENTOFU_VERSION}} for {{ARCH}} architecture..."
     @docker buildx build \
-        --platform linux/amd64,linux/arm64 \
+        --platform linux/{{ARCH}} \
         --build-arg TERRAFORM_VERSION={{TERRAFORM_VERSION}} \
         --build-arg OPENTOFU_VERSION={{OPENTOFU_VERSION}} \
-        -t {{REGISTRY}}/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-{{OPENTOFU_VERSION}}-{{TAG}} \
-        --push .
+        --build-arg TARGETARCH={{ARCH}} \
+        --build-arg TARGETPLATFORM=linux/{{ARCH}} \
+        --build-arg TARGETOS=linux \
+        -t {{REGISTRY}}/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-{{OPENTOFU_VERSION}}-{{ARCH}}-{{TAG}} \
+        --load .
+
+# 🐳 Build Docker images for multiple architectures
+build-docker-multiarch TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0' REGISTRY='local' TAG='latest':
+    @echo "🏗️ Building Docker images for multiple architectures..."
+    @just build-docker {{TERRAFORM_VERSION}} {{OPENTOFU_VERSION}} amd64 {{REGISTRY}} {{TAG}}
+    @just build-docker {{TERRAFORM_VERSION}} {{OPENTOFU_VERSION}} arm64 {{REGISTRY}} {{TAG}}
 
 # 🚀 Run Terraform commands in multi-arch Docker container
-run-tf-docker-multiarch MOD='.' CMDS='--help' TERRAFORM_VERSION='1.10.5' ARCH='amd64':
+run-tf-docker-multiarch MOD='.' CMDS='--help' TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0' ARCH='arm64':
     @echo "🐳 Running Terraform command in multi-arch Docker ({{ARCH}}):"
     @echo "   Command: terraform {{CMDS}}"
     @echo "   Working directory: {{MOD}}"
     @docker run --platform linux/{{ARCH}} --rm -it \
         -v "$(realpath {{MOD}}):/workspace" \
         -w /workspace \
-        local/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-1.9.0-latest \
+        local/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-{{OPENTOFU_VERSION}}-{{ARCH}}-latest \
         terraform {{CMDS}}
 
 # 🚀 Run OpenTofu commands in multi-arch Docker container
-run-tofu-docker-multiarch MOD='.' CMDS='--help' OPENTOFU_VERSION='1.9.0' ARCH='amd64':
+run-tofu-docker-multiarch MOD='.' CMDS='--help' TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0' ARCH='arm64':
+    #!/usr/bin/env bash
     @echo "🐳 Running OpenTofu command in multi-arch Docker ({{ARCH}}):"
     @echo "   Command: tofu {{CMDS}}"
     @echo "   Working directory: {{MOD}}"
     @docker run --platform linux/{{ARCH}} --rm -it \
         -v "$(realpath {{MOD}}):/workspace" \
         -w /workspace \
-        local/terraform-opentofu-cli:1.10.5-{{OPENTOFU_VERSION}}-latest \
+        local/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-{{OPENTOFU_VERSION}}-{{ARCH}}-latest \
         tofu {{CMDS}}
 
 # 🔍 Inspect multi-arch Docker image details
