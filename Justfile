@@ -57,6 +57,9 @@ clean:
     @find . -type f -name "*.tfstate" -exec rm -f {} +
     @find . -type f -name "*.tfstate.backup" -exec rm -f {} +
 
+# 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories in Nix environment
+clean-all: clean clean-tf
+
 # 🧐 Format YAML files using yamlfmt in Nix environment
 fix-yaml-nix:
     @echo "🔧 Formatting YAML files with yamlfmt in Nix environment..."
