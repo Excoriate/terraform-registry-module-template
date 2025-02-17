@@ -13,7 +13,8 @@ set -o pipefail
 # set -o xtrace
 
 # Global variables
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
 
 # Log functions
 log() { echo "🦫 $*" >&2; }

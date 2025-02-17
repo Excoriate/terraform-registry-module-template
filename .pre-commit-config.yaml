@@ -15,7 +15,9 @@ repos:
         args:
           - '--allow-missing-credentials'
       - id: check-json
+        exclude: .releaserc.json
       - id: pretty-format-json
+        exclude: .releaserc.json
       - id: check-docstring-first
         args:
           - '--autofix'
@@ -40,6 +42,11 @@ repos:
         name: YAML Lint
         args:
           - '-c=.yamllint.yml'
+        exclude: >
+          (?x)^(
+            .releaserc.json|
+            modules/default/.terraform-docs.yml
+          )$
 
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.25
