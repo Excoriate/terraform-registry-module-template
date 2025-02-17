@@ -200,3 +200,42 @@ run-tofu MOD='.' CMDS='--help':
     @echo "   Command: tofu {{CMDS}}"
     @echo "   Working directory: $(realpath {{module_dir}})"
     @cd {{module_dir}} && tofu {{CMDS}}
+
+# 🐳 Build multi-arch Docker image for Terraform and OpenTofu
+build-docker-multiarch TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0' REGISTRY='local' TAG='latest':
+    @echo "🏗️ Building multi-arch Docker image with Terraform v{{TERRAFORM_VERSION}} and OpenTofu v{{OPENTOFU_VERSION}}..."
+    @docker buildx create --use --name multiarch-builder || true
+    @docker buildx inspect multiarch-builder --bootstrap
+    @docker buildx build \
+        --platform linux/amd64,linux/arm64 \
+        --build-arg TERRAFORM_VERSION={{TERRAFORM_VERSION}} \
+        --build-arg OPENTOFU_VERSION={{OPENTOFU_VERSION}} \
+        -t {{REGISTRY}}/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-{{OPENTOFU_VERSION}}-{{TAG}} \
+        --push .
+
+# 🚀 Run Terraform commands in multi-arch Docker container
+run-tf-docker-multiarch MOD='.' CMDS='--help' TERRAFORM_VERSION='1.10.5' ARCH='amd64':
+    @echo "🐳 Running Terraform command in multi-arch Docker ({{ARCH}}):"
+    @echo "   Command: terraform {{CMDS}}"
+    @echo "   Working directory: {{MOD}}"
+    @docker run --platform linux/{{ARCH}} --rm -it \
+        -v "$(realpath {{MOD}}):/workspace" \
+        -w /workspace \
+        local/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-1.9.0-latest \
+        terraform {{CMDS}}
+
+# 🚀 Run OpenTofu commands in multi-arch Docker container
+run-tofu-docker-multiarch MOD='.' CMDS='--help' OPENTOFU_VERSION='1.9.0' ARCH='amd64':
+    @echo "🐳 Running OpenTofu command in multi-arch Docker ({{ARCH}}):"
+    @echo "   Command: tofu {{CMDS}}"
+    @echo "   Working directory: {{MOD}}"
+    @docker run --platform linux/{{ARCH}} --rm -it \
+        -v "$(realpath {{MOD}}):/workspace" \
+        -w /workspace \
+        local/terraform-opentofu-cli:1.10.5-{{OPENTOFU_VERSION}}-latest \
+        tofu {{CMDS}}
+
+# 🔍 Inspect multi-arch Docker image details
+inspect-docker-multiarch TERRAFORM_VERSION='1.10.5' OPENTOFU_VERSION='1.9.0':
+    @echo "🕵️ Inspecting multi-arch Docker image..."
+    @docker buildx imagetools inspect local/terraform-opentofu-cli:{{TERRAFORM_VERSION}}-{{OPENTOFU_VERSION}}-latest
