@@ -158,26 +158,12 @@ reload-direnv:
 # 🌿 Format Terraform files in Nix development environment
 tf-format-nix:
     @echo "🌿 Discovering Terraform files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-            echo "📄 Found: $file"; \
-        done; \
-        echo "🌿 Formatting Terraform files..."; \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive'
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive
 
 # 🕵️ Check Terraform files formatting in Nix environment without modifying files
 tf-format-check-nix:
     @echo "🕵️ Checking Terraform files formatting in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
-        unformatted_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check); \
-        if [ -n "$$unformatted_files" ]; then \
-            echo "❌ The following files are not correctly formatted:"; \
-            echo "$$unformatted_files"; \
-            echo "🛠️ Run '\''just tf-format-nix'\'' to automatically format these files."; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted."; \
-        fi'
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive
 
 # 🌿 Format Terraform files locally using terraform fmt
 tf-format:
@@ -191,12 +177,17 @@ tf-format:
 # 🕵️ Check Terraform files formatting without modifying files
 tf-format-check:
     @echo "🕵️ Checking Terraform files formatting..."
-    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check
+    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive
+
+# 🌿 Run tests for Terraform module locally
+tf-tests MOD='default' TYPE='unit':
+    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && go test -v
 
 # 🌿 Run tests for Terraform module in Nix development environment
-run-tests-nix MOD='default' TYPE='unit':
-    @echo "🏗️ Running tests for Terraform module: {{MOD}} in Nix environment..."
-    @cd tests/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
+tf-tests-nix MOD='default' TYPE='unit':
+    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} in Nix environment..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
 
 # 🌿 Run Terraform commands locally with flexible module and command selection
 run-tf MOD='.' CMDS='--help':

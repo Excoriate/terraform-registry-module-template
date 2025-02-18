@@ -21,11 +21,3 @@ variable "tags" {
   description = "A map of tags to add to all resources."
   default     = {}
 }
-
-# Add your additional variables here with a brief description, type, and default value if applicable.
-# Example:
-# variable "queue_name" {
-#   type        = string
-#   description = "The name of the SQS queue to be created."
-#   default     = null
-# }
