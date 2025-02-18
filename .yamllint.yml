@@ -50,6 +50,7 @@ ignore: |
   dist/
   .github/stale.yml
   .pre-commit-config.yaml
+  **/.terraform-docs.yml
 
 # Specific overrides for GitHub Actions workflows
 overrides:

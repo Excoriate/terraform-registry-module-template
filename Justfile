@@ -185,29 +185,29 @@ run-tests-nix MOD='default' TYPE='unit':
 run-tf MOD='.' CMDS='--help':
     @echo "🏗️ Running Terraform command:"
     @echo "   Command: terraform {{CMDS}}"
-    @echo "   Working directory: $(realpath {{module_dir}})"
-    @cd {{module_dir}} && terraform {{CMDS}}
+    @echo "   Working directory: $(realpath {{MOD}})"
+    @cd {{MOD}} && terraform {{CMDS}}
 
 # 🌿 Run Terraform commands in Nix development environment with flexible module and command selection
 run-tf-nix MOD='.' *CMDS='--help':
     @echo "🏗️ Running Terraform command in Nix environment:"
     @echo "   Command: terraform {{CMDS}}"
-    @echo "   Working directory: $(realpath {{module_dir}})"
-    @cd {{module_dir}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
+    @echo "   Working directory: $(realpath {{MOD}})"
+    @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run OpenTofu commands locally with flexible module and command selection
 run-tofu MOD='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command:"
     @echo "   Command: tofu {{CMDS}}"
-    @echo "   Working directory: $(realpath {{module_dir}})"
-    @cd {{module_dir}} && tofu {{CMDS}}
+    @echo "   Working directory: $(realpath {{MOD}})"
+    @cd {{MOD}} && tofu {{CMDS}}
 
 # 🌿 Run OpenTofu commands in Nix development environment with flexible module and command selection
 run-tofu-nix MOD='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command in Nix environment:"
     @echo "   Command: tofu {{CMDS}}"
-    @echo "   Working directory: $(realpath {{module_dir}})"
-    @cd {{module_dir}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
+    @echo "   Working directory: $(realpath {{MOD}})"
+    @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
 
 # 🔍 Lint Terraform modules locally using tflint, supporting directory-wide or specific module linting
 lint-tf MOD='':
