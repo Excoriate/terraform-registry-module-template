@@ -296,3 +296,16 @@ tf-docs-generate-nix MOD='':
         nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md || \
         echo "❌ Documentation generation failed for {{MOD}} in Nix environment"; \
     fi
+
+# 📄 Validate Terraform modules locally using terraform validate
+tf-validate MOD='': (tf-cmd MOD 'init -backend=false') (tf-cmd MOD 'validate')
+
+# 📄 Validate Terraform modules in Nix development environment using terraform validate
+tf-validate-nix MOD='': (tf-cmd-nix MOD 'init -backend=false') (tf-cmd-nix MOD 'validate')
+
+# 📄 Plan Terraform modules locally using terraform plan
+tf-plan MOD='': (tf-cmd MOD 'init') (tf-cmd MOD 'plan')
+
+# 📄 Plan Terraform modules in Nix development environment using terraform plan
+tf-plan-nix MOD='': (tf-cmd-nix MOD 'init') (tf-cmd-nix MOD 'plan')
+
