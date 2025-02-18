@@ -18,15 +18,6 @@ A script for formatting code across different languages and configuration files.
 ./utilities/format.sh [options]
 ```
 
-### `utilities/lint-go.sh`
-
-A script for running Go linting checks using golangci-lint.
-
-**Usage:**
-```bash
-./utilities/lint-go.sh [path_to_go_files]
-```
-
 ## 🪝 Hooks
 
 Hooks are used to enforce code quality, formatting, and other development standards before commits.

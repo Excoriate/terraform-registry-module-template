@@ -3,24 +3,16 @@ package unit
 import (
 	"testing"
 
-	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/tf_sources"
+	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/repo"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/require"
 )
-
-var isEnabledVar = map[string]interface{}{
-	"is_enabled": true,
-}
-
-var isDisabledVar = map[string]interface{}{
-	"is_enabled": false,
-}
 
 func TestSanityChecksOnModule(t *testing.T) {
 	// Parallel execution with unique test names
 	t.Parallel()
 
-	dirs, err := tf_sources.NewTFSourcesDir()
+	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	// Enhanced Terraform options with logging and upgrade

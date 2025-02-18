@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/tf_sources"
+	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/repo"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/require"
 )
@@ -11,7 +11,7 @@ import (
 func TestStaticAnalysisOnExamples(t *testing.T) {
 	t.Parallel()
 
-	dirs, err := tf_sources.NewTFSourcesDir()
+	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	// Enhanced Terraform options with logging and upgrade
@@ -42,7 +42,7 @@ func TestStaticAnalysisOnExamples(t *testing.T) {
 func TestPlanOnExamples(t *testing.T) {
 	t.Parallel()
 
-	dirs, err := tf_sources.NewTFSourcesDir()
+	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	// Enhanced Terraform options with logging and upgrade

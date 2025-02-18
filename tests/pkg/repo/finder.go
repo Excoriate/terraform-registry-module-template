@@ -1,5 +1,5 @@
 // Package tf_sources provides functionality to manage Terraform source directories.
-package tf_sources
+package repo
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ type TFSourcesDir struct {
 	examplesDir string // The directory for examples.
 }
 
-// getGitRootDir returns the absolute path to the root directory of the git repository.
-func getGitRootDir() (string, error) {
+// GetGitRootDir returns the absolute path to the root directory of the git repository.
+func GetGitRootDir() (string, error) {
 	// Get the current working directory
 	currentDir, err := filepath.Abs(".")
 	if err != nil {
@@ -57,7 +57,7 @@ func getGitRootDir() (string, error) {
 // NewTFSourcesDir initializes a new TFSourcesDir with the given root directory.
 // It returns a pointer to the TFSourcesDir instance.
 func NewTFSourcesDir() (*TFSourcesDir, error) {
-	rootDir, err := getGitRootDir()
+	rootDir, err := GetGitRootDir()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Git repository root directory: %w", err)

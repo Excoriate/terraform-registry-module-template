@@ -29,22 +29,22 @@ help:
     @just --list
 
 # 🔧 Install pre-commit hooks in Nix environment for consistent code quality
-install-hooks-nix:
+hooks-install-nix:
     @echo "🧰 Installing pre-commit hooks in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit install
 
 # 🔧 Install pre-commit hooks in local environment for code consistency
-install-hooks:
+hooks-install:
     @echo "🧰 Installing pre-commit hooks locally..."
     @./scripts/hooks/pre-commit-init.sh init
 
 # 🕵️ Run pre-commit hooks across all files in Nix environment
-run-hooks-nix:
+hooks-run-nix:
     @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command pre-commit run --all-files
 
 # 🕵️ Run pre-commit hooks across all files in local environment
-run-hooks:
+hooks-run:
     @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml..."
     @./scripts/hooks/pre-commit-init.sh run
 
@@ -66,12 +66,12 @@ clean:
 clean-all: clean clean-tf
 
 # 🧐 Format YAML files using yamlfmt in Nix environment
-fix-yaml-nix:
+yaml-fix-nix:
     @echo "🔧 Formatting YAML files with yamlfmt in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command yamlfmt .
 
 # 🧹 Format and lint YAML files for consistency and quality
-fix-yaml:
+yaml-fix:
     @echo "🔧 Formatting and linting YAML files..."
     @yamlfmt .
     @echo "🕵️ Validating YAML configuration..."
@@ -79,12 +79,12 @@ fix-yaml:
     @echo "✅ YAML formatting and linting complete!"
 
 # 🕵️ Lint YAML files using yamllint in Nix environment
-lint-yaml-nix:
+yaml-lint-nix:
     @echo "🕵️ Linting YAML files in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command yamllint .
 
 # 🕵️ Validate YAML files against strict configuration standards
-lint-yaml:
+yaml-lint:
     @echo "🕵️ Linting YAML files..."
     @yamlfmt .
     @echo "🕵️ Checking yamllint configuration..."
@@ -92,26 +92,24 @@ lint-yaml:
     @echo "✅ YAML formatting and linting complete!"
 
 # 🐚 Lint shell scripts using shellcheck in Nix environment
-lint-shell-nix:
+scripts-lint-nix:
     @echo "🐚 Linting shell scripts in Nix environment..."
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'find . -type f -name "*.sh" | xargs shellcheck'
 
 # 🐚 Perform static analysis on all shell scripts
-lint-shell:
+scripts-lint:
     @echo "🐚 Linting shell scripts..."
     @find . -type f -name "*.sh" | xargs shellcheck
 
 # 🦫 Lint Go files using custom script in Nix environment
-lint-go-nix:
+go-lint-nix:
     @echo "🦫 Linting Go files in Nix environment..."
-    @chmod +x ./scripts/utilities/lint-go.sh
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/lint-go.sh
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci.yml'
 
 # 🦫 Perform static code analysis on Go files
-lint-go:
+go-lint:
     @echo "🦫 Linting Go files..."
-    @chmod +x ./scripts/utilities/lint-go.sh
-    @./scripts/utilities/lint-go.sh
+    @cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci.yml
 
 # 🚀 Launch Nix development shell with project dependencies
 dev:
