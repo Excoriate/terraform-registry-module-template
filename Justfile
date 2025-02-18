@@ -240,33 +240,47 @@ tf-tests-nix MOD='default' TYPE='unit':
     @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} in Nix environment..."
     @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
 
+# 🌿 Run Terraform commands with flexible working directory and command selection
+tf-exec WORKDIR='.' CMDS='--help':
+    @echo "🏗️ Running Terraform command:"
+    @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
+    @echo "📂 Working directory: $(realpath {{WORKDIR}})"
+    @cd "{{WORKDIR}}" && terraform {{CMDS}}
+
+# 🌿 Run Terraform commands in Nix development environment with flexible working directory and command selection
+tf-exec-nix WORKDIR='.' CMDS='--help':
+    @echo "🏗️ Running Terraform command in Nix environment:"
+    @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
+    @echo "📂 Working directory: $(realpath {{WORKDIR}})"
+    @cd "{{WORKDIR}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
+
 # 🌿 Run Terraform commands locally with flexible module and command selection
 tf-cmd MOD='.' CMDS='--help':
     @echo "🏗️ Running Terraform command:"
     @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MOD}})"
-    @cd {{MOD}} && terraform {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
+    @cd "{{MODULES_DIR}}/{{MOD}}" && terraform {{CMDS}}
 
 # 🌿 Run Terraform commands in Nix development environment with flexible module and command selection
 tf-cmd-nix MOD='.' CMDS='--help':
     @echo "🏗️ Running Terraform command in Nix environment:"
     @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MOD}})"
-    @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
+    @cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run OpenTofu commands locally with flexible module and command selection
 tofu-cmd MOD='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command:"
     @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MOD}})"
-    @cd {{MOD}} && tofu {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
+    @cd "{{MODULES_DIR}}/{{MOD}}" && tofu {{CMDS}}
 
 # 🌿 Run OpenTofu commands in Nix development environment with flexible module and command selection
 tofu-cmd-nix MOD='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command in Nix environment:"
     @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MOD}})"
-    @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
+    @cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
 
 # 🔍 Lint Terraform modules locally using tflint, supporting directory-wide or specific module linting
 tf-lint MOD='':
@@ -378,18 +392,14 @@ tf-validate MOD='': (tf-cmd MOD 'init -backend=false') (tf-cmd MOD 'validate')
 # 📄 Validate Terraform modules in Nix development environment using terraform validate
 tf-validate-nix MOD='': (tf-cmd-nix MOD 'init -backend=false') (tf-cmd-nix MOD 'validate')
 
-# 📄 Plan Terraform modules locally using terraform plan
-tf-plan MOD='': (tf-cmd MOD 'init') (tf-cmd MOD 'plan')
-
-# 📄 Plan Terraform modules in Nix development environment using terraform plan
-tf-plan-nix MOD='': (tf-cmd-nix MOD 'init') (tf-cmd-nix MOD 'plan')
-
 # 📄 Run Terraform CI checks locally (only static, like 'fmt', 'lint', 'docs')
 tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) (tf-validate MOD)
 
 # 🌀 Quick feedback loop for development
-tf-dev MOD='' EXAMPLE='basic': (tf-ci-static MOD) (tf-cmd 'examples/{{MOD}}/{{EXAMPLE}}' 'init') (tf-cmd 'examples/{{MOD}}/{{EXAMPLE}}' 'plan')
+tf-dev MOD='' EXAMPLE='basic': (tf-ci-static MOD) (tf-exec 'examples/{{MOD}}/{{EXAMPLE}}' 'init') (tf-exec 'examples/{{MOD}}/{{EXAMPLE}}' 'plan')
 
+# 🌀 Quick feedback loop for development in Nix environment
+tf-dev-nix MOD='' EXAMPLE='basic': (tf-ci-static MOD) (tf-exec-nix 'examples/{{MOD}}/{{EXAMPLE}}' 'init') (tf-exec-nix 'examples/{{MOD}}/{{EXAMPLE}}' 'plan')
 
 
 
