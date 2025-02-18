@@ -49,12 +49,27 @@ hooks-run:
     @./scripts/hooks/pre-commit-init.sh run
 
 # 🧹 Remove Terraform and Terragrunt cache directories to reset project state
-clean-tf:
+clean-tf MOD='':
     @echo "🗑️ Cleaning Terraform and Terragrunt cache directories..."
-    @find . -type d -name ".terraform" -exec rm -rf {} +
-    @find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
-    @find . -type f -name "*.tfstate" -exec rm -f {} +
-    @find . -type f -name "*.tfstate.backup" -exec rm -f {} +
+    @if [ -z "{{MOD}}" ]; then \
+        find . -type d -name ".terraform" -exec rm -rf {} +; \
+        find . -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
+        find . -type f -name "*.tfstate" -exec rm -f {} +; \
+        find . -type f -name "*.tfstate.backup" -exec rm -f {} +; \
+    else \
+        echo "🧹 Cleaning Terraform artifacts for module: {{MOD}}"; \
+        echo "   🔍 Cleaning module directory..."; \
+        find "{{MODULES_DIR}}/{{MOD}}" -type d -name ".terraform" -exec rm -rf {} +; \
+        find "{{MODULES_DIR}}/{{MOD}}" -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
+        find "{{MODULES_DIR}}/{{MOD}}" -type f -name "*.tfstate" -exec rm -f {} +; \
+        find "{{MODULES_DIR}}/{{MOD}}" -type f -name "*.tfstate.backup" -exec rm -f {} +; \
+        \
+        echo "   🔍 Cleaning example directories..."; \
+        find "{{EXAMPLES_DIR}}/{{MOD}}" -type d -name ".terraform" -exec rm -rf {} +; \
+        find "{{EXAMPLES_DIR}}/{{MOD}}" -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
+        find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name "*.tfstate" -exec rm -f {} +; \
+        find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name "*.tfstate.backup" -exec rm -f {} +; \
+    fi
 
 # 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories
 clean:
@@ -155,38 +170,64 @@ reload-direnv:
     @echo "🔁 Reloading direnv environment..."
     @direnv reload
 
-# 🌿 Format Terraform files in Nix development environment
-tf-format-nix:
-    @echo "🌿 Discovering Terraform files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive
+# 🌿 Format Terraform files locally using terraform fmt
+tf-format MOD='':
+    @echo "🌿 Discovering Terraform files..."
+    @if [ -z "{{MOD}}" ]; then \
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "📄 Found: $file"; \
+        done; \
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
+    else \
+        echo "📂 Formatting Terraform files in directory: {{{{MODULES_DIR}}/{{MOD}}}}"; \
+        cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
+        cd - > /dev/null; \
+        cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
+        cd - > /dev/null; \
+    fi
 
-# 🕵️ Check Terraform files formatting in Nix environment without modifying files
+# 🌿 Format Terraform files in Nix development environment
+tf-format-nix MOD='':
+    @echo "🌿 Discovering Terraform files in Nix environment..."
+    @if [ -z "{{MOD}}" ]; then \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
+    else \
+        echo "📂 Formatting Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
+        cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
+        cd - > /dev/null; \
+        echo "📂 Formatting Terraform files in directory: {{EXAMPLES_DIR}}/{{MOD}}"; \
+        cd "{{EXAMPLES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
+        cd - > /dev/null; \
+    fi
+
+# 🌿 Format Terraform files in Nix development environment
 tf-format-check-nix MOD='':
-    @echo "🕵️ Checking Terraform files formatting in Nix environment..."
+    @echo "🌿 Discovering Terraform files in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
         nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive; \
     else \
-        echo "📂 Checking formatting in directory: {{MOD}}"; \
-        cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive; \
+        echo "📂 Formatting Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
+        cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive; \
+        cd - > /dev/null; \
+        echo "📂 Formatting Terraform files in directory: {{EXAMPLES_DIR}}/{{MOD}}"; \
+        cd "{{EXAMPLES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive; \
+        cd - > /dev/null; \
     fi
 
 # 🌿 Format Terraform files locally using terraform fmt
-tf-format:
-    @echo "🌿 Discovering Terraform files..."
-    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "📄 Found: $file"; \
-    done
-    @echo "🌿 Formatting Terraform files..."
-    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive
-
-# 🕵️ Check Terraform files formatting without modifying files
 tf-format-check MOD='':
-    @echo "🕵️ Checking Terraform files formatting..."
+    @echo "🌿 Discovering Terraform files..."
     @if [ -z "{{MOD}}" ]; then \
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "📄 Found: $file"; \
+        done; \
         find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive; \
     else \
-        echo "📂 Checking formatting in directory: {{MOD}}"; \
-        cd {{MOD}} && terraform fmt -check -recursive; \
+        echo "📂 Formatting Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
+        cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive; \
+        cd - > /dev/null; \
+        cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive; \
+        cd - > /dev/null; \
     fi
 
 # 🌿 Run tests for Terraform module locally
