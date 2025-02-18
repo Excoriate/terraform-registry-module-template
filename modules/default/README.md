@@ -55,5 +55,5 @@ This Terraform module provides a flexible and reusable infrastructure component 
 
 | Name | Type |
 |------|------|
-| [random_string.random_text](https://registry.terraform.io/providers/hashicorp/random/3.4.3/docs/resources/string) | resource |
+| [random_string.random_text](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
 <!-- END_TF_DOCS -->

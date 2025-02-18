@@ -190,35 +190,35 @@ tf-tests-nix MOD='default' TYPE='unit':
     @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
 
 # 🌿 Run Terraform commands locally with flexible module and command selection
-run-tf MOD='.' CMDS='--help':
+tf-cmd MOD='.' CMDS='--help':
     @echo "🏗️ Running Terraform command:"
-    @echo "   Command: terraform {{CMDS}}"
-    @echo "   Working directory: $(realpath {{MOD}})"
+    @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
+    @echo "📂 Working directory: $(realpath {{MOD}})"
     @cd {{MOD}} && terraform {{CMDS}}
 
 # 🌿 Run Terraform commands in Nix development environment with flexible module and command selection
-run-tf-nix MOD='.' *CMDS='--help':
+tf-cmd-nix MOD='.' CMDS='--help':
     @echo "🏗️ Running Terraform command in Nix environment:"
-    @echo "   Command: terraform {{CMDS}}"
-    @echo "   Working directory: $(realpath {{MOD}})"
+    @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
+    @echo "📂 Working directory: $(realpath {{MOD}})"
     @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run OpenTofu commands locally with flexible module and command selection
-run-tofu MOD='.' CMDS='--help':
+tofu-cmd MOD='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command:"
-    @echo "   Command: tofu {{CMDS}}"
-    @echo "   Working directory: $(realpath {{MOD}})"
+    @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
+    @echo "📂 Working directory: $(realpath {{MOD}})"
     @cd {{MOD}} && tofu {{CMDS}}
 
 # 🌿 Run OpenTofu commands in Nix development environment with flexible module and command selection
-run-tofu-nix MOD='.' CMDS='--help':
+tofu-cmd-nix MOD='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command in Nix environment:"
-    @echo "   Command: tofu {{CMDS}}"
-    @echo "   Working directory: $(realpath {{MOD}})"
+    @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
+    @echo "📂 Working directory: $(realpath {{MOD}})"
     @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
 
 # 🔍 Lint Terraform modules locally using tflint, supporting directory-wide or specific module linting
-lint-tf MOD='':
+tf-lint MOD='':
     @echo "🔍 Discovering and linting Terraform modules..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
@@ -235,7 +235,7 @@ lint-tf MOD='':
     fi
 
 # 🔍 Lint Terraform modules in Nix development environment using tflint, supporting directory-wide or specific module linting
-lint-tf-nix MOD='':
+tf-lint-nix MOD='':
     @echo "🔍 Discovering and linting Terraform modules in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
@@ -252,7 +252,7 @@ lint-tf-nix MOD='':
     fi
 
 # 📄 Generate Terraform module documentation locally using terraform-docs, supporting multiple modules
-generate-docs MOD='':
+tf-docs-generate MOD='':
     @echo "🔍 Generating Terraform module documentation..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
@@ -275,7 +275,7 @@ generate-docs MOD='':
     fi
 
 # 📄 Generate Terraform module documentation in Nix development environment using terraform-docs, supporting multiple modules
-generate-docs-nix MOD='':
+tf-docs-generate-nix MOD='':
     @echo "🔍 Generating Terraform module documentation in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
@@ -296,58 +296,3 @@ generate-docs-nix MOD='':
         nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform-docs markdown . --output-file README.md || \
         echo "❌ Documentation generation failed for {{MOD}} in Nix environment"; \
     fi
-
-# 🌿 Initialize Terraform configuration locally without backend configuration
-init-tf-no-backend MOD='.':
-    @echo "🔍 Initializing Terraform configuration without backend in directory: {{MOD}}"
-    @cd {{MOD}} && terraform init -backend=false
-
-# 🌿 Initialize Terraform configuration in Nix development environment without backend configuration
-init-tf-no-backend-nix MOD='.':
-    @echo "🔍 Initializing Terraform configuration without backend in Nix environment: {{MOD}}"
-    @cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "terraform init -backend=false"
-
-# 🌿 Validate Terraform configuration locally after initialization
-validate-tf MOD='.': (init-tf-no-backend MOD)
-    @echo "🔍 Validating Terraform configuration in directory: {{MOD}}"
-    @cd {{MOD}} && \
-    terraform validate
-
-# 🌿 Validate Terraform configuration in Nix development environment after initialization
-validate-tf-nix MOD='.': (init-tf-no-backend-nix MOD)
-    @echo "🔍 Validating Terraform configuration in Nix environment: {{MOD}}"
-    @cd {{MOD}} && \
-    nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "terraform init -backend=false && terraform validate"
-
-# 🔍 Format Terraform module files locally using terraform fmt
-format-terraform-module MOD='.':
-	@echo "🔍 Formatting Terraform module files in directory: {{MOD}}"
-	@cd {{MOD}} && \
-	terraform fmt -recursive
-
-# 🔍 Format Terraform module files in Nix development environment using terraform fmt
-format-terraform-module-nix MOD='.':
-	@echo "🔍 Formatting Terraform module files in Nix environment: {{MOD}}"
-	@cd {{MOD}} && \
-	nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "terraform fmt -recursive"
-
-# 🔍 Check Terraform module files formatting locally without modifying files
-format-check-terraform-module MOD='.':
-	@echo "🔍 Checking Terraform module files formatting in directory: {{MOD}}"
-	@cd {{MOD}} && \
-	terraform fmt -recursive -check
-
-# 🔍 Check Terraform module files formatting in Nix development environment without modifying files
-format-check-terraform-module-nix MOD='.':
-	@echo "🔍 Checking Terraform module files formatting in Nix environment: {{MOD}}"
-	@cd {{MOD}} && \
-	nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "terraform fmt -recursive -check"
-
-# 🚀 Comprehensive local CI checks for Terraform modules: formatting, validation, linting, and documentation generation
-ci-tf-module MOD='.': (format-check-terraform-module MOD) (validate-tf MOD) (lint-tf MOD) (generate-docs MOD)
-    @echo "✅ Terraform module CI checks completed for: {{MOD}}"
-
-# 🚀 Comprehensive Nix environment CI checks for Terraform modules: formatting, validation, linting, and documentation generation
-ci-tf-module-nix MOD='.': (format-check-terraform-module-nix MOD) (validate-tf-nix MOD) (lint-tf-nix MOD) (generate-docs-nix MOD)
-    @echo "✅ Terraform module CI checks completed in Nix environment for: {{MOD}}"
-
