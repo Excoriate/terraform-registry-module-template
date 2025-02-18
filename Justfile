@@ -161,9 +161,14 @@ tf-format-nix:
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive
 
 # 🕵️ Check Terraform files formatting in Nix environment without modifying files
-tf-format-check-nix:
+tf-format-check-nix MOD='':
     @echo "🕵️ Checking Terraform files formatting in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive
+    @if [ -z "{{MOD}}" ]; then \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive; \
+    else \
+        echo "📂 Checking formatting in directory: {{MOD}}"; \
+        cd {{MOD}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check -recursive; \
+    fi
 
 # 🌿 Format Terraform files locally using terraform fmt
 tf-format:
@@ -175,9 +180,14 @@ tf-format:
     @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive
 
 # 🕵️ Check Terraform files formatting without modifying files
-tf-format-check:
+tf-format-check MOD='':
     @echo "🕵️ Checking Terraform files formatting..."
-    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive
+    @if [ -z "{{MOD}}" ]; then \
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive; \
+    else \
+        echo "📂 Checking formatting in directory: {{MOD}}"; \
+        cd {{MOD}} && terraform fmt -check -recursive; \
+    fi
 
 # 🌿 Run tests for Terraform module locally
 tf-tests MOD='default' TYPE='unit':
@@ -308,4 +318,13 @@ tf-plan MOD='': (tf-cmd MOD 'init') (tf-cmd MOD 'plan')
 
 # 📄 Plan Terraform modules in Nix development environment using terraform plan
 tf-plan-nix MOD='': (tf-cmd-nix MOD 'init') (tf-cmd-nix MOD 'plan')
+
+# 📄 Run Terraform CI checks locally (only static, like 'fmt', 'lint', 'docs')
+tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) (tf-validate MOD)
+
+# 🌀 Quick feedback loop for development
+tf-dev MOD='' EXAMPLE='basic': (tf-ci-static MOD) (tf-cmd 'examples/{{MOD}}/{{EXAMPLE}}' 'init') (tf-cmd 'examples/{{MOD}}/{{EXAMPLE}}' 'plan')
+
+
+
 
