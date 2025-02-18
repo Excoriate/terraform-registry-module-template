@@ -396,10 +396,18 @@ tf-validate-nix MOD='': (tf-cmd-nix MOD 'init -backend=false') (tf-cmd-nix MOD '
 tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) (tf-validate MOD)
 
 # 🌀 Quick feedback loop for development
-# tf-dev MOD='default' EXAMPLE='basic': (tf-ci-static MOD) (tf-cmd MOD 'init') (tf-exec '{{EXAMPLES_DIR}}/{{MOD}}/{{EXAMPLE}}' 'init')
+tf-dev MOD='default' EXAMPLE='basic':
+    @just tf-ci-static "{{MOD}}"
+    @just tf-cmd "{{MOD}}" 'init'
+    @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'init'
 
 # 🌀 Quick feedback loop for development in Nix environment
-# tf-dev-nix WORKDIR='default' EXAMPLE='basic': (tf-ci-static MOD) (tf-exec-nix WORKDIR 'examples/{{MOD}}/{{EXAMPLE}}' 'init') (tf-exec-nix WORKDIR 'examples/{{MOD}}/{{EXAMPLE}}' 'plan')
+tf-dev-nix MOD='default' EXAMPLE='basic':
+    @just tf-ci-static-nix "{{MOD}}"
+    @just tf-cmd-nix "{{MOD}}" 'init'
+    @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+
+
 
 
 
