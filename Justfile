@@ -53,14 +53,14 @@ clean-tf:
     @echo "🗑️ Cleaning Terraform and Terragrunt cache directories..."
     @find . -type d -name ".terraform" -exec rm -rf {} +
     @find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
+    @find . -type f -name "*.tfstate" -exec rm -f {} +
+    @find . -type f -name "*.tfstate.backup" -exec rm -f {} +
 
 # 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories
 clean:
-    @echo "🗑️ Performing comprehensive project cleanup..."
- 	@find . -type d -name ".terraform" -exec rm -rf {} +
-    @find . -type d -name ".terragrunt-cache" -exec rm -rf {} +
-    @find . -type f -name "*.tfstate" -exec rm -f {} +
-    @find . -type f -name "*.tfstate.backup" -exec rm -f {} +
+    @echo "🗑️ Performing comprehensive project cleanup for general purposes..."
+    @find . -name ".DS_Store" -exec rm -f {} +
+    @find . -name "*.log" -exec rm -f {} +
 
 # 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories in Nix environment
 clean-all: clean clean-tf
