@@ -111,6 +111,35 @@ go-lint:
     @echo "🦫 Linting Go files..."
     @cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci.yml
 
+# 🐹 Format Go files in Nix environment using gofmt
+go-format-nix:
+    @echo "🐹 Formatting Go files in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'find . -type f -name "*.go" -not -path "*/vendor/*" -exec gofmt -w {} +'
+
+# 🐹 Format Go files locally within the tests directory
+go-format:
+    @echo "🐹 Formatting Go files in tests directory..."
+    @cd tests && \
+    echo "📋 Go files to be formatted:" && \
+    find . -type f -name "*.go" -not -path "*/vendor/*" | tee /dev/tty | xargs gofmt -w
+
+# 🐹 Tidy Go files in Nix environment
+go-tidy-nix:
+    @echo "🐹 Tidying Go files in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd tests/ && go mod tidy'
+
+# 🐹 Tidy Go files locally within the tests directory
+go-tidy:
+    @echo "🐹 Tidying Go files in tests directory..."
+    @cd tests && go mod tidy
+
+# 🐹 Comprehensive CI checks for Go files
+go-ci: (go-tidy) (go-format) (go-lint)
+    @echo "✅ Go files CI checks completed"
+
+go-ci-nix: (go-tidy-nix) (go-format-nix) (go-lint-nix)
+    @echo "✅ Go files CI checks completed in Nix environment"
+
 # 🚀 Launch Nix development shell with project dependencies
 dev:
     @echo "🌿 Starting Nix Development Shell for Terraform Registry Module Template 🏷️"
@@ -126,53 +155,43 @@ reload-direnv:
     @echo "🔁 Reloading direnv environment..."
     @direnv reload
 
-# 🎨 Format all files using custom script in Nix environment
-format-all-nix:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "🎨 Formatting all files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --all
+# 🌿 Format Terraform files in Nix development environment
+tf-format-nix:
+    @echo "🌿 Discovering Terraform files in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "📄 Found: $file"; \
+        done; \
+        echo "🌿 Formatting Terraform files..."; \
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive'
 
-# 🎨 Apply consistent formatting across entire project
-format-all:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "🎨 Formatting all files..."
-    @./scripts/utilities/format.sh --all
+# 🕵️ Check Terraform files formatting in Nix environment without modifying files
+tf-format-check-nix:
+    @echo "🕵️ Checking Terraform files formatting in Nix environment..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
+        unformatted_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check); \
+        if [ -n "$$unformatted_files" ]; then \
+            echo "❌ The following files are not correctly formatted:"; \
+            echo "$$unformatted_files"; \
+            echo "🛠️ Run '\''just tf-format-nix'\'' to automatically format these files."; \
+            exit 1; \
+        else \
+            echo "✅ All Terraform files are correctly formatted."; \
+        fi'
 
-# 🐹 Format Go files locally using custom script
-format-go:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "🐹 Formatting Go files..."
-    @./scripts/utilities/format.sh --go
-
-# 🐹 Format Go files in Nix development environment using custom script
-format-go-nix:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "🐹 Formatting Go files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --go
-
-# 🌿 Format Terraform files locally using custom script
-format-terraform:
-    @chmod +x ./scripts/utilities/format.sh
+# 🌿 Format Terraform files locally using terraform fmt
+tf-format:
+    @echo "🌿 Discovering Terraform files..."
+    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+        echo "📄 Found: $file"; \
+    done
     @echo "🌿 Formatting Terraform files..."
-    @./scripts/utilities/format.sh --terraform
+    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive
 
-# 🌿 Format Terraform files in Nix development environment using custom script
-format-terraform-nix:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "🌿 Formatting Terraform files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform
-
-# 📄 Format YAML files locally using custom script
-format-yaml:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "📄 Formatting YAML files..."
-    @./scripts/utilities/format.sh --yaml
-
-# 📄 Format YAML files in Nix development environment using custom script
-format-yaml-nix:
-    @chmod +x ./scripts/utilities/format.sh
-    @echo "📄 Formatting YAML files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --yaml
+# 🕵️ Check Terraform files formatting without modifying files
+tf-format-check:
+    @echo "🕵️ Checking Terraform files formatting..."
+    @find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check
 
 # 🌿 Run tests for Terraform module in Nix development environment
 run-tests-nix MOD='default' TYPE='unit':
@@ -340,3 +359,4 @@ ci-tf-module MOD='.': (format-check-terraform-module MOD) (validate-tf MOD) (lin
 # 🚀 Comprehensive Nix environment CI checks for Terraform modules: formatting, validation, linting, and documentation generation
 ci-tf-module-nix MOD='.': (format-check-terraform-module-nix MOD) (validate-tf-nix MOD) (lint-tf-nix MOD) (generate-docs-nix MOD)
     @echo "✅ Terraform module CI checks completed in Nix environment for: {{MOD}}"
+
