@@ -279,10 +279,18 @@ tf-lint MOD='':
             cd - > /dev/null; \
         done \
     else \
-        echo "🕵️ Linting specified module: {{MOD}}"; \
-        cd {{MOD}} && \
+        echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
+        cd "{{MODULES_DIR}}/{{MOD}}" && \
         tflint --recursive && \
         cd - > /dev/null; \
+        \
+        echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
+        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
+            echo "   📂 Linting example directory: $example_dir"; \
+            cd "$example_dir" && \
+            tflint --recursive && \
+            cd - > /dev/null; \
+        done; \
     fi
 
 # 🔍 Lint Terraform modules in Nix development environment using tflint, supporting directory-wide or specific module linting
@@ -296,10 +304,18 @@ tf-lint-nix MOD='':
             cd - > /dev/null; \
         done \
     else \
-        echo "🕵️ Linting specified module: {{MOD}}"; \
-        cd {{MOD}} && \
+        echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
+        cd "{{MODULES_DIR}}/{{MOD}}" && \
         nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
         cd - > /dev/null; \
+        \
+        echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
+        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
+            echo "   📂 Linting example directory: $example_dir"; \
+            cd "$example_dir" && \
+            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
+            cd - > /dev/null; \
+        done; \
     fi
 
 # 📄 Generate Terraform module documentation locally using terraform-docs, supporting multiple modules
