@@ -395,6 +395,9 @@ tf-validate-nix MOD='': (tf-cmd-nix MOD 'init -backend=false') (tf-cmd-nix MOD '
 # 📄 Run Terraform CI checks locally (only static, like 'fmt', 'lint', 'docs')
 tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) (tf-validate MOD)
 
+# 📄 Run Terraform CI checks in Nix development environment
+tf-ci-static-nix MOD='': (tf-format-check-nix MOD) (tf-lint-nix MOD) (tf-docs-generate-nix MOD) (tf-validate-nix MOD)
+
 # 🌀 Quick feedback loop for development
 tf-dev MOD='default' EXAMPLE='basic':
     @just tf-ci-static "{{MOD}}"
