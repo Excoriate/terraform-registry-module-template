@@ -1,51 +1,93 @@
 ---
 repository:
-    name: go-terradagger
-    description: TerraDagger is a Go package for managing your infrastructure-as-code through containers.
-    topics: example, devops, tooling, ecs, sre, cli
-    default_branch: main
-    allow_squash_merge: true
-    allow_merge_commit: true
-    allow_rebase_merge: true
-    delete_branch_on_merge: true
-    has_projects: true
-    has_wiki: false
-    enable_vulnerability_alerts: true
-    enable_automated_security_fixes: true
-    teams:
-        - name: maintainers
-          permission: admin
-        - name: contributors
-          permission: push
+  name: terraform-registry-module-template
+  description: A comprehensive template repository for Terraform modules with best practices and GitHub workflow integrations.
+
+  # Template Repository Configuration - CRITICAL NEW ADDITION
+  is_template: true
+
+  # Enhanced Discoverability
+  topics:
+    - terraform
+    - infrastructure-as-code
+    - module-template
+    - devops
+    - github-template
+    - terraform-module
+
+  # Merge Strategy
+  default_branch: main
+  allow_squash_merge: true
+  allow_merge_commit: false # Discourage merge commits in template
+  allow_rebase_merge: true
+  delete_branch_on_merge: true
+
+  # Repository Features
+  has_projects: true
+  has_wiki: false
+  has_discussions: true # Enable discussions for template guidance
+
+  # Security Enhancements
+  enable_vulnerability_alerts: true
+  enable_automated_security_fixes: true
+
+  # Team Access
+  teams:
+    - name: maintainers
+      permission: admin
+    - name: contributors
+      permission: push
+    - name: template-users
+      permission: pull # Allow template viewers to read
+
+# Comprehensive Label Strategy
 labels:
-    - name: bug
-      color: CC0000
-      description: Something is not working fine 🐛.
-    - name: feature
-      color: '#336699'
-      description: New functionality 🚀.
-    - name: Help Wanted
-      new_name: help wanted 🙏
-    - name: documentation
-      color: 0075ca
-      description: Improvements or additions to documentation 📚.
+  - name: template/new-module
+    color: '#0075ca'
+    description: Indicates a new module creation from this template 🧩
+  - name: template/enhancement
+    color: '#84b6eb'
+    description: Suggestions for template improvement 🚀
+  - name: bug
+    color: '#CC0000'
+    description: Something is not working fine 🐛
+  - name: feature
+    color: '#336699'
+    description: New functionality 🚀
+  - name: documentation
+    color: '#0075ca'
+    description: Improvements or additions to documentation 📚
+  - name: help-wanted
+    color: '#008672'
+    description: Community contributions welcome 🤝
+
+# Enhanced Branch Protection
 branches:
-    - name: main
-      protection:
-          required_pull_request_reviews:
-              required_approving_review_count: 1
-              dismiss_stale_reviews: true
-              require_code_owner_reviews: true
-              dismissal_restrictions: {}
-              code_owner_approval: true
-              required_conversation_resolution: true
-          required_status_checks:
-              strict: true
-              contexts:
-                  - DCO
-          enforce_admins: false
-          required_linear_history: true
-          restrictions:
-              users: [Excoriate]
-              apps: []
-              teams: []
+  - name: main
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        dismissal_restrictions: {}
+        code_owner_approval: true
+        required_conversation_resolution: true
+
+      required_status_checks:
+        strict: true
+        contexts:
+          - "Template Validation"
+          - "Lint Code Base"
+          - "Verify Module Structure"
+
+      enforce_admins: false
+      required_linear_history: true
+      restrictions:
+        users: [Excoriate]
+        teams: [maintainers]
+
+# Template-Specific Repository Metadata
+repository_config:
+  template_generation_date: 2024-01-15
+  template_version: "1.0.0"
+  recommended_terraform_version: ">= 1.5.0"

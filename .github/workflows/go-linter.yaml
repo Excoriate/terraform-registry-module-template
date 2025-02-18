@@ -1,0 +1,102 @@
+---
+name: 🦫 Go Code Quality Checks
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/**'
+      - '.golangci.yml'
+      - 'go.mod'
+      - 'go.sum'
+  pull_request:
+    types: [opened, edited, synchronize]
+    paths:
+      - 'tests/**'
+      - '.golangci.yml'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  GO_VERSION: '1.21'
+  TEST_ROOT: tests
+
+jobs:
+  detect-modules:
+    name: 🔍 Detect Go Modules
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📋 Set Module Matrix
+        id: set-matrix
+        run: |
+          DIRS=$(find ${{ env.TEST_ROOT }} -type f -name 'go.mod' -exec dirname {} \;)
+          MATRIX_JSON=$(echo "$DIRS" | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "matrix=${MATRIX_JSON}" >> $GITHUB_OUTPUT
+
+  go-quality-checks:
+    name: 🧪 Go Code Quality
+    needs: detect-modules
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.detect-modules.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: 🧹 Go Mod Tidy
+        working-directory: ${{ matrix.dir }}
+        run: |
+          echo "🔄 Tidying Go module dependencies..."
+          go mod tidy
+          git diff --exit-code || (echo "❌ go.mod/go.sum files were modified during tidy" && exit 1)
+
+      - name: 🎨 Go Format Check
+        working-directory: ${{ matrix.dir }}
+        run: |
+          echo "✨ Checking Go code formatting..."
+          gofmt_output=$(gofmt -l .)
+          if [ -n "$gofmt_output" ]; then
+            echo "❌ Formatting issues found in files:"
+            echo "$gofmt_output"
+            exit 1
+          fi
+
+      - name: 🕵️ Go Linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          working-directory: ${{ matrix.dir }}
+          args: --config .golangci.yml
+          skip-cache: true
+
+  summary:
+    name: 🏁 Quality Check Summary
+    needs: [detect-modules, go-quality-checks]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📊 Workflow Status
+        run: |
+          echo "🦫 Go Code Quality Checks Complete!"
+          echo "✅ Modules Scanned: ${{ needs.detect-modules.outputs.matrix }}"
+          echo "🔍 Detailed results available in job logs."
+
+        # Conditional status check
+        if: |
+          needs.go-quality-checks.result == 'success'

@@ -1,86 +1,70 @@
 ---
 run:
-    tests: false
-    timeout: 240s
-    skip-dirs-use-default: true
-    skip-dirs:
-        - ^vendor$
-        - ^go/pkg/mod/*
-        - ../../../../go/pkg/mod/*
-        - ../../../../.gobrew/*
-        - .*_test\.go$
-    skip-files:
-        - .*\.pb\.go
-        - .*_generated\.go
+  timeout: 10m
+
+# Linter settings
 linters-settings:
-    depguard:
-        rules:
-            Rule not allowed packages:
-                files: [.*]
-                deny:
-                    - pkg: notexist
-                      desc: notexist is not allowed or blacklisted
-    govet:
-        check-shadowing: true
-    gocyclo:
-        min-complexity: 15
-    maligned:
-        suggest-new: true
-    goconst:
-        min-len: 5
-        min-occurrences: 3
-    gocritic:
-        settings:
-            rangeValCopy:
-                sizeThreshold: 1024
-        enabled-tags:
-            - diagnostic
-            - experimental
-            - opinionated
-            - performance
-            - style
-        disabled-checks:
-            - singleCaseSwitch
-            - hugeParam
-            - appendCombine
-            - commentedOutCode
-    funlen:
-        lines: 140
-        statements: 52
+  govet:
+    enable-all: true
+  gocyclo:
+    min-complexity: 20
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+      - style
+    disabled-checks:
+      - hugeParam
+      - commentedOutCode
+
+# Enabled linters
 linters:
-    disable-all: true
-    enable:
-        - bodyclose
-        - unused
-        - dogsled
-        - dupl
-        - errcheck
-        - funlen
-        - goconst
-        - gocritic
-        - gofmt
-        - gosec
-        - gosimple
-        - nakedret
-        - exportloopref
-        - staticcheck
-        - stylecheck
-        - typecheck
-        - unconvert
-        - unparam
-        - whitespace
-        - govet
-        - revive
-        - depguard
+  disable-all: false
+  enable:
+    # Core linters for reliability
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+
+    # Style and complexity linters
+    - gofmt
+    - gocyclo
+    - goconst
+    - gocritic
+    - revive
+
+    # Security linters (important for Terratest)
+    - gosec
+    - bodyclose
+
+# Issue handling rules
 issues:
-    max-issues-per-linter: 0
-    max-same-issues: 0
-    exclude-rules:
-        - linters:
-              - typecheck
-          text: unicode/utf8
-        - linters:
-              - gosec
-          text: G306
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - gocritic
+    - linters:
+        - staticcheck
+      text: "SA1019:"
+  exclude-dirs:
+    - vendor
+    - go/pkg/mod
+  exclude-files:
+    - '.*\.pb\.go'
+    - '.*_generated\.go'
+
+# Output configuration
 output:
-    format: line-number
+  sort-results: true
+  print-issued-lines: true
+  print-linter-name: true

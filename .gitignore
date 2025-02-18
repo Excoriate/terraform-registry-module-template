@@ -38,5 +38,15 @@
 **/.terragrunt-cache/
 .terraform/
 
-# Ignore all .env files
-/.env*
+# Nix and direnv specific ignores
+.direnv/
+.envrc.cache
+.nix-shell/
+shell.nix
+result
+result-*
+*.drv
+
+# Nix flake specific
+.flake-registry.json
+flake.lock.old

@@ -1,33 +1,86 @@
 ---
-name: Bug report
-about: Create a bug report to help us improve.
-title: ""
-labels: "bug"
-assignees: "Excoriate"
+name: 🐞 Bug Report
+about: Create a detailed bug report to help improve the Terraform module
+title: "bug: "
+labels: ["bug"]
+assignees: ["Excoriate"]
 ---
 
-Found a bug? Maybe just reach me out through [Email](alex@ideaup.cl) would be better.
+## 🔍 Bug Description
 
-## Describe the Bug
-A clear and concise description of what the bug is.
+> [!WARNING]
+> Provide a clear and concise description of the bug you encountered.
 
-## Expected Behavior
-A clear and concise description of what you expected to happen.
+### Expected Behavior
 
-## Steps to Reproduce
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Run '....'
-3. Enter '....'
-4. See error
+> [!NOTE]
+> Describe what you expected to happen:
+>
+> - What was the intended outcome?
+> - How should the module have behaved?
 
-## Screenshots
-If applicable, add screenshots or logs to help explain your problem.
+### Actual Behavior
 
-## Environment (please complete the following information):
-Anything that will help us triage the bug will help. Here are some ideas:
-- OS: [e.g. Linux, OSX, WSL, etc]
-- Version [e.g. 0.0.2]
+> [!IMPORTANT]
+> Describe what actually happened:
+>
+> - What went wrong?
+> - What unexpected results did you observe?
 
-## Additional Context
-Add any other context about the problem here.
+## 🔬 Steps to Reproduce
+
+> [!TIP]
+> Provide detailed steps to reproduce the bug:
+
+1. Initialize Terraform with '...'
+2. Run module with configuration '....'
+3. Execute command '....'
+4. Observe the error/unexpected behavior
+
+### Minimal Reproducible Example
+
+> [!WARNING]
+> Include a minimal code snippet or Terraform configuration that demonstrates the issue:
+
+```hcl
+# Your minimal reproducible example here
+```
+
+## 🌍 Environment Details
+
+> [!IMPORTANT]
+> Provide context about your environment:
+
+- **Terraform Version**:
+- **Provider Version(s)**:
+- **Operating System**:
+- **Module Version**:
+- **Additional Tools/Versions**:
+
+## 📋 Diagnostic Information
+
+> [!TIP]
+> Include any relevant diagnostic information:
+
+- Error messages (full logs preferred)
+- Screenshot of the error
+- Output of `terraform init`, `terraform plan`, or other relevant commands
+
+## 🖼️ Additional Context
+
+> [!NOTE]
+> Add any other context about the problem:
+>
+> - When did you first notice this issue?
+> - Does it happen consistently or intermittently?
+> - Any recent changes that might have introduced the bug?
+
+### Checklist
+
+- [ ] I've checked existing issues for duplicates
+- [ ] I've provided a clear description of the bug
+- [ ] I've included steps to reproduce
+- [ ] I've shared relevant environment details
+- [ ] I've added diagnostic information
+
+**Thank you for helping improve our Terraform module!** 🐛
