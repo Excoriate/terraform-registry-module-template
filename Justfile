@@ -409,8 +409,3 @@ tf-dev-nix MOD='default' EXAMPLE='basic':
     @just tf-ci-static-nix "{{MOD}}"
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
-
-
-
-
-
