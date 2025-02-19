@@ -65,6 +65,12 @@ jobs:
         with:
           tflint_version: ${{ env.TFLINT_VERSION }}
 
+      - name: 🗂️ Cache TFLint Plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('modules/${{ matrix.module }}/.tflint.hcl') }}
+
       - name: 🧰 Setup Terraform Docs
         run: |
           curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
@@ -88,8 +94,11 @@ jobs:
         working-directory: modules/${{ matrix.module }}
         run: |
           echo "🕵️ Running TFLint for module: ${{ matrix.module }}"
+          tflint --version
           tflint --init
-          tflint --config=.tflint.hcl --recursive
+          tflint -f compact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: 📄 Terraform Docs Validation
         working-directory: modules/${{ matrix.module }}
