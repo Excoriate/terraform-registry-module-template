@@ -84,6 +84,7 @@ jobs:
         working-directory: modules/${{ matrix.module }}
         run: |
           echo "🕵️ Running TFLint for module: ${{ matrix.module }}"
+          tflint --init
           tflint --config=.tflint.hcl --recursive
 
       - name: 📄 Terraform Docs Validation
