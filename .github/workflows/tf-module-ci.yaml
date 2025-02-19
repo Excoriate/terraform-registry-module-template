@@ -72,7 +72,7 @@ jobs:
           fi
 
           echo "🔬 Generating Terraform Docs to validate template..."
-          terraform-docs markdown table --output-file README.md.new --output-mode replace
+          terraform-docs markdown . --output-file README.md.new
 
           # Compare generated docs with existing README.md
           if ! diff README.md README.md.new; then
