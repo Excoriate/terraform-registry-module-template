@@ -95,7 +95,18 @@ jobs:
             echo "❌ Missing README.md file in module: ${{ matrix.module }}"
             exit 1
           fi
-          echo "✅ README.md found for module: ${{ matrix.module }}"
+
+          echo "🔬 Generating Terraform Docs to validate template..."
+          terraform-docs markdown table --output-file README.md.new --output-mode replace
+
+          # Compare generated docs with existing README.md
+          if ! diff README.md README.md.new; then
+            echo "❌ README.md is out of sync with module configuration"
+            echo "   Please run 'terraform-docs markdown table' to update documentation"
+            exit 1
+          fi
+
+          echo "✅ README.md validation passed for module: ${{ matrix.module }}"
 
       - name: ��️ Terraform Initialization
         working-directory: modules/${{ matrix.module }}

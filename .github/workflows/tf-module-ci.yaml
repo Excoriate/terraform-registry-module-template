@@ -63,7 +63,18 @@ jobs:
             echo "❌ Missing README.md file in module: ${{ inputs.module_name }}"
             exit 1
           fi
-          echo "✅ README.md found for module: ${{ inputs.module_name }}"
+
+          echo "🔬 Generating Terraform Docs to validate template..."
+          terraform-docs markdown table --output-file README.md.new --output-mode replace
+
+          # Compare generated docs with existing README.md
+          if ! diff README.md README.md.new; then
+            echo "❌ README.md is out of sync with module configuration"
+            echo "   Please run 'terraform-docs markdown table' to update documentation"
+            exit 1
+          fi
+
+          echo "✅ README.md validation passed for module: ${{ inputs.module_name }}"
 
       - name: 🏗️ Terraform Initialization
         working-directory: modules/${{ inputs.module_name }}
@@ -93,7 +104,7 @@ jobs:
       - name: 🔍 Discover Example Implementations
         id: discover-examples
         run: |
-          EXAMPLES=$(find examples/${{ inputs.module_name }} -maxdepth 1 -type d -not -path '*/\.*' | sed 's|examples/'"${{ inputs.module_name }}"'/||' | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          EXAMPLES=$(find examples/${{ inputs.module_name }} -maxdepth 2 -type d -not -path '*/\.*' | sed 's|examples/'"${{ inputs.module_name }}"'/||' | grep -v "^$" | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "examples=${EXAMPLES}" >> $GITHUB_OUTPUT
           echo "🌟 Discovered Examples: ${EXAMPLES}"
 
