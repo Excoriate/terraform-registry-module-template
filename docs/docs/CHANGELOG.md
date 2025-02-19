@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.1.0...v1.1.1) (2025-02-19)
+
+
+### 🔧 Maintenance
+
+* **docs:** release 1.1.0 ([#20](https://github.com/Excoriate/terraform-registry-module-template/issues/20)) ([9cfb286](https://github.com/Excoriate/terraform-registry-module-template/commit/9cfb2869725808a58259153fe87519132cdd569b))
+
 ## [1.1.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.0.0...v1.1.0) (2025-02-19)
 
 
