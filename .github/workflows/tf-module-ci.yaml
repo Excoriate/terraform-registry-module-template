@@ -36,6 +36,13 @@ jobs:
         with:
           tflint_version: ${{ env.TFLINT_VERSION }}
 
+      - name: 🧰 Setup Terraform Docs
+        run: |
+          curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+          tar -xzf terraform-docs.tar.gz
+          chmod +x terraform-docs
+          sudo mv terraform-docs /usr/local/bin/
+
       - name: 🌿 Module Preparation
         working-directory: modules/${{ inputs.module_name }}
         run: |
@@ -52,17 +59,29 @@ jobs:
         working-directory: modules/${{ inputs.module_name }}
         run: |
           echo "🕵️ Running TFLint for module: ${{ inputs.module_name }}"
+          tflint --init
           tflint --config=.tflint.hcl --recursive
 
       - name: 📄 Terraform Docs Validation
         working-directory: modules/${{ inputs.module_name }}
         run: |
-          echo "📝 Checking module documentation..."
+          echo "📝 Checking required documentation files..."
+
+          # Step 1: Verify README.md exists
           if [ ! -f README.md ]; then
             echo "❌ Missing README.md file in module: ${{ inputs.module_name }}"
             exit 1
           fi
-          echo "✅ README.md found for module: ${{ inputs.module_name }}"
+          echo "✅ README.md found"
+
+          # Step 2: Verify .terraform-docs.yml exists
+          if [ ! -f .terraform-docs.yml ]; then
+            echo "❌ Missing .terraform-docs.yml file in module: ${{ inputs.module_name }}"
+            exit 1
+          fi
+          echo "✅ .terraform-docs.yml found"
+
+          echo "✅ All required documentation files are present"
 
       - name: 🏗️ Terraform Initialization
         working-directory: modules/${{ inputs.module_name }}
@@ -92,7 +111,8 @@ jobs:
       - name: 🔍 Discover Example Implementations
         id: discover-examples
         run: |
-          EXAMPLES=$(find examples/${{ inputs.module_name }} -maxdepth 1 -type d -not -path '*/\.*' | sed 's|examples/'"${{ inputs.module_name }}"'/||' | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          # Find all directories under the example module directory
+          EXAMPLES=$(find "examples/${{ inputs.module_name }}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "examples=${EXAMPLES}" >> $GITHUB_OUTPUT
           echo "🌟 Discovered Examples: ${EXAMPLES}"
 
@@ -108,8 +128,11 @@ jobs:
             if [ -n "$EXAMPLE" ]; then
               echo "🔍 Validating example: $EXAMPLE"
 
+              EXAMPLE_PATH="examples/${{ inputs.module_name }}/${EXAMPLE}"
+              echo "📂 Validating directory: ${EXAMPLE_PATH}"
+
               # Change to example directory
-              cd "examples/${{ inputs.module_name }}/$EXAMPLE"
+              cd "${EXAMPLE_PATH}"
 
               # Terraform fmt check
               echo "✨ Checking Terraform formatting..."
@@ -135,11 +158,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Setup Go
-        uses: actions/setup-go@v4
+      - name: 🛠️ Setup Go and Terraform
+        uses: actions/setup-go@v5
         with:
           go-version: '1.21'
           cache: false
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
 
       - name: 🔍 Discover Test Directories
         id: discover-tests
@@ -171,8 +200,27 @@ jobs:
         working-directory: tests/modules/${{ inputs.module_name }}/unit
         run: |
           echo "🚀 Running Unit Tests for module: ${{ inputs.module_name }}"
+          echo "🔍 Current PATH: $PATH"
+          echo "🔍 Terraform version:"
+          terraform version
+          echo "🔍 Which terraform:"
+          which terraform
+
+          # Clean up any existing provider cache
+          rm -rf .terraform
+          rm -f .terraform.lock.hcl
+
+          # Ensure Go dependencies are up to date
           go mod tidy
-          go test -v ./...
+
+          # Run tests with verbose output and additional logging
+          go test -v -timeout 30m ./... 2>&1 | tee test_output.log
+
+          # Check test output for any errors
+          if grep -q "FAIL" test_output.log; then
+            echo "❌ Tests failed. See detailed output above."
+            exit 1
+          fi
 
       - name: 🌐 Run Integration Tests
         if: steps.discover-tests.outputs.integration_tests_exist == 'true'

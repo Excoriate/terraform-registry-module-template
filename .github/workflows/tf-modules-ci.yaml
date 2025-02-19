@@ -66,7 +66,11 @@ jobs:
           tflint_version: ${{ env.TFLINT_VERSION }}
 
       - name: 🧰 Setup Terraform Docs
-        uses: terraform-docs/gh-actions@v1
+        run: |
+          curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+          tar -xzf terraform-docs.tar.gz
+          chmod +x terraform-docs
+          sudo mv terraform-docs /usr/local/bin/
 
       - name: 🌿 Module Preparation
         working-directory: modules/${{ matrix.module }}
@@ -84,19 +88,31 @@ jobs:
         working-directory: modules/${{ matrix.module }}
         run: |
           echo "🕵️ Running TFLint for module: ${{ matrix.module }}"
+          tflint --init
           tflint --config=.tflint.hcl --recursive
 
       - name: 📄 Terraform Docs Validation
         working-directory: modules/${{ matrix.module }}
         run: |
-          echo "📝 Checking module documentation..."
+          echo "📝 Checking required documentation files..."
+
+          # Step 1: Verify README.md exists
           if [ ! -f README.md ]; then
             echo "❌ Missing README.md file in module: ${{ matrix.module }}"
             exit 1
           fi
-          echo "✅ README.md found for module: ${{ matrix.module }}"
+          echo "✅ README.md found"
 
-      - name: ��️ Terraform Initialization
+          # Step 2: Verify .terraform-docs.yml exists
+          if [ ! -f .terraform-docs.yml ]; then
+            echo "❌ Missing .terraform-docs.yml file in module: ${{ matrix.module }}"
+            exit 1
+          fi
+          echo "✅ .terraform-docs.yml found"
+
+          echo "✅ All required documentation files are present"
+
+      - name: 🚀 Terraform Initialization
         working-directory: modules/${{ matrix.module }}
         run: |
           echo "🚀 Initializing Terraform module..."
