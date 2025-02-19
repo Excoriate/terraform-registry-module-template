@@ -6,7 +6,7 @@
 
 ## 📂 Top-Level Directory Structure
 
-### `/modules` 
+### `/modules`
 **Rule**: Primary location for Terraform module implementations.
 - Contains modular, reusable Terraform configurations
 - Each subdirectory represents a distinct module (e.g., `default`)

@@ -1,0 +1,125 @@
+---
+name: 📚 Terraform Modules CI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'modules/**'
+      - '.github/workflows/tf-modules-ci.yaml'
+      - '.tflint.hcl'
+      - '.terraform-docs.yml'
+  pull_request:
+    types: [opened, edited, synchronize]
+    paths:
+      - 'modules/**'
+      - '.github/workflows/tf-modules-ci.yaml'
+      - '.tflint.hcl'
+      - '.terraform-docs.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  TERRAFORM_VERSION: '1.10.0'
+  TFLINT_VERSION: 'latest'
+  TERRAFORM_DOCS_VERSION: 'latest'
+
+jobs:
+  detect-modules:
+    name: 🔍 Detect Terraform Modules
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📋 Set Module Matrix
+        id: set-matrix
+        run: |
+          # Dynamically find all modules with a main.tf file
+          MODULES=$(find modules -maxdepth 2 -type f -name "main.tf" -exec dirname {} \; | sed 's|modules/||' | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "matrix=${MODULES}" >> $GITHUB_OUTPUT
+
+  terraform-module-validation:
+    name: 🌐 Terraform Module Validation
+    needs: detect-modules
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.detect-modules.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: 🔧 Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+      - name: 🧰 Setup Terraform Docs
+        uses: terraform-docs/gh-actions@v1
+
+      - name: 🌿 Module Preparation
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "🔍 Validating module: ${{ matrix.module }}"
+          echo "📂 Current directory: $(pwd)"
+
+      - name: 🧹 Terraform Format Check
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "✨ Checking Terraform code formatting..."
+          terraform fmt -check -recursive
+
+      - name: 🔍 TFLint Validation
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "🕵️ Running TFLint for module: ${{ matrix.module }}"
+          tflint --config=.tflint.hcl --recursive
+
+      - name: 📄 Terraform Docs Validation
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "📝 Checking module documentation..."
+          if [ ! -f README.md ]; then
+            echo "❌ Missing README.md file in module: ${{ matrix.module }}"
+            exit 1
+          fi
+          echo "✅ README.md found for module: ${{ matrix.module }}"
+
+      - name: ��️ Terraform Initialization
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "🚀 Initializing Terraform module..."
+          terraform init -backend=false
+
+      - name: 🧪 Terraform Validation
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "🔬 Validating Terraform module configuration..."
+          terraform validate
+
+  summary:
+    name: 🏁 Module Validation Summary
+    needs: [detect-modules, terraform-module-validation]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📊 Workflow Status
+        run: |
+          echo "🌿 Terraform Module Validation Complete!"
+          echo "✅ Modules Validated: ${{ needs.detect-modules.outputs.matrix }}"
+          echo "🔍 Detailed results available in job logs."
+
+        # Conditional status check
+        if: |
+          needs.terraform-module-validation.result == 'success'
