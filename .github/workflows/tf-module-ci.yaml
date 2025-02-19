@@ -206,6 +206,10 @@ jobs:
           echo "🔍 Which terraform:"
           which terraform
 
+          # Clean up any existing provider cache
+          rm -rf .terraform
+          rm -f .terraform.lock.hcl
+
           # Ensure Go dependencies are up to date
           go mod tidy
 
