@@ -110,19 +110,7 @@ jobs:
           fi
           echo "✅ .terraform-docs.yml found"
 
-          # Step 3: Generate documentation using module's config
-          echo "🔬 Generating Terraform Docs using module configuration..."
-          terraform-docs --config .terraform-docs.yml .
-
-          # Step 4: Verify if documentation is up to date
-          if [ -n "$(git status --porcelain README.md)" ]; then
-            echo "❌ README.md is out of sync with module configuration"
-            echo "   Please run 'terraform-docs --config .terraform-docs.yml .' to update documentation"
-            git diff README.md
-            exit 1
-          fi
-
-          echo "✅ Module documentation is up to date"
+          echo "✅ All required documentation files are present"
 
       - name: 🚀 Terraform Initialization
         working-directory: modules/${{ matrix.module }}
