@@ -30,3 +30,35 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Documentation References
+
+- **Tests** (`/tests`):
+  - [Testing Overview and Guidelines](/tests/README.md)
+  - Comprehensive infrastructure testing using Terratest
+  - Includes unit, integration, and validation tests
+
+- **Scripts** (`/scripts`):
+  - [Development Utilities and Workflow](/scripts/README.md)
+  - Helper scripts for Git hooks, repository maintenance
+  - Standardized development process automation
+
+- **Modules** (`/modules`):
+  - [Module Development Guidelines](/modules/README.md)
+  - [Terraform Modules StyleGuide](/docs/terraform-modules-styleguide.md)
+  - Reusable, well-structured Terraform module implementations
+
+- **Examples** (`/examples`):
+  - [Module Usage Examples](/examples/README.md)
+  - Practical configurations demonstrating module usage
+  - Progressive complexity from basic to advanced scenarios
+
+- **Docs** (`/docs`):
+  - [Developer Guide](/docs/developer-guide.md)
+  - [Terraform StyleGuide](/docs/terraform-styleguide.md)
+  - [Project Roadmap](/docs/ROADMAP.md)
+  - Comprehensive project documentation and future plans
+
+**📘 Additional Resources:**
+- [Contribution Guidelines](CONTRIBUTING.md)
+- [Terraform Registry Module Best Practices](/docs/terraform-modules-styleguide.md)

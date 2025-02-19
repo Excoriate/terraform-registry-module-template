@@ -31,7 +31,7 @@
 ```
 
 ### Rule: Provider Configuration Guidelines
-- If it's a child module, don't create the `providers.tf` file. 
+- If it's a child module, don't create the `providers.tf` file.
 - If it's an example module in the `examples/` directory, create the `providers.tf` file, as these are considered root modules.
 
 ## Styleguide: Module-Specific Variable Management Rules
@@ -51,16 +51,16 @@
 variable "is_enabled" {
     description = <<-EOT
         Enforce global module resource creation toggle with comprehensive configuration control.
-        
+
         Mandatory Purpose:
         - Provide centralized mechanism for dynamic module resource provisioning
         - Enable fine-grained module infrastructure management
         - Support complex deployment scenarios
-        
+
         Behavioral Enforcement:
         - true: Provision ALL resources defined in the module
         - false: PREVENT all resource creation, enabling strict "dry run" mode
-        
+
         Strategic Deployment Use Cases:
         - Environment-specific infrastructure deployment
         - Temporary module service suspension
@@ -74,23 +74,23 @@ variable "is_enabled" {
 variable "tags" {
     description = <<-EOT
         Enforce comprehensive tagging mechanism for uniform module resource management and governance.
-        
+
         Mandatory Purpose:
         - Implement consistent module resource labeling
         - Enable advanced module resource tracking and cost allocation
         - Support organizational compliance and governance requirements
-        
+
         Tagging Strategy Enforcement:
         - Keys: Mandate descriptive, standardized naming convention
         - Values: Provide specific context, metadata, or organizational information
-        
+
         Required Organizational Tags:
         - Environment: Deployment stage (dev, staging, prod)
         - Project: Specific project or application name
         - ManagedBy: Infrastructure management method (Terraform)
         - CostCenter: Organizational financial tracking identifier
         - Owner: Team or department responsible for the module
-        
+
         Validation Rules:
         - Enforce alphanumeric tag keys
         - Allow underscores and hyphens for enhanced readability
@@ -118,7 +118,7 @@ locals {
 
 resource "aws_instance" "servers" {
     for_each = local.create_resources ? var.instance_configurations : {}
-    
+
     # Strict module resource configuration enforcement
     instance_type = each.value.type
     tags = merge(var.tags, {

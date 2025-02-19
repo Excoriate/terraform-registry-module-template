@@ -57,21 +57,21 @@ resource "azurerm_virtual_network" "vnet" { ... }
 variable "instance_type" {
     description = <<-EOT
         Strictly defines the EC2 instance type for server provisioning with comprehensive configuration controls.
-        
+
         Mandatory Considerations:
         - Directly impacts application performance and infrastructure cost
         - Enforce selection from predefined instance families
-        
+
         Allowed Instance Families:
         - t3: Burstable, cost-effective for variable workloads
         - m5: General-purpose, balanced compute and memory
         - c5: Compute-optimized for high-performance computing
-        
+
         Deployment Type Recommendations:
         - Development: Mandate smaller, cost-effective instances (t3.micro)
         - Staging: Require medium-sized instances with balanced resources (m5.large)
         - Production: Select instances precisely matching workload requirements
-        
+
         Validation Enforcement:
         - Prevent selection of unsupported or incompatible instance types
     EOT
