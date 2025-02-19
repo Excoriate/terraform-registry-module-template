@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "modules/default": {
+      "release-type": "terraform",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "changelog-path": "modules/default/CHANGELOG.md",
+      "include-v-in-tag": true,
+      "extra-files": [
+        "modules/default/versions.tf",
+        "modules/default/README.md",
+        "modules/default/variables.tf",
+        "modules/default/outputs.tf"
+      ],
+      "release-labels": ["module/default", "terraform"],
+      "pull-request-title-pattern": "chore(module/default): release ${version}",
+      "versioning-strategy": "default"
+    },
+    "docs": {
+      "release-type": "simple",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "changelog-path": "docs/CHANGELOG.md",
+      "include-v-in-tag": true,
+      "extra-files": [
+        "docs/README.md",
+        "docs/developer-guide.md",
+        "docs/terraform-styleguide.md",
+        "docs/terraform-modules-styleguide.md"
+      ],
+      "release-labels": ["documentation", "docs"],
+      "pull-request-title-pattern": "chore(docs): release ${version}"
+    }
+  },
+  "changelog-sections": [
+    {"type": "feat", "section": "✨ Features"},
+    {"type": "fix", "section": "🐛 Bug Fixes"},
+    {"type": "docs", "section": "📝 Documentation"},
+    {"type": "test", "section": "🧪 Tests"},
+    {"type": "chore", "section": "🔧 Maintenance"},
+    {"type": "ci", "section": "🤖 CI/CD"},
+    {"type": "refactor", "section": "♻️ Refactoring"},
+    {"type": "perf", "section": "🚀 Performance Improvements"},
+    {"type": "build", "section": "🏗️ Build System"}
+  ],
+  "release-search-depth": 20,
+  "commit-search-depth": 30,
+  "include-v-in-tag": true,
+  "separate-pull-requests": true,
+  "pull-request-header": "Automated Release PR: Streamlining our Terraform Module Template 🚀",
+  "group-pull-request-title-pattern": "chore: release ${versions}",
+  "bootstrap-sha": "",
+  "last-release-sha": "",
+  "versioning-strategy": {
+    "terraform": {
+      "bump-patch-for-minor-pre-major": true,
+      "bump-minor-pre-major": true
+    },
+    "go": {
+      "bump-patch-for-minor-pre-major": true,
+      "bump-minor-pre-major": true
+    }
+  }
+}
