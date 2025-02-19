@@ -15,9 +15,19 @@ repos:
         args:
           - '--allow-missing-credentials'
       - id: check-json
-        exclude: .releaserc.json
+        exclude: >
+          (?x)^(
+            .release-please-manifest\.json|
+            release-please-config\.json|
+            .releaserc\.json
+          )$
       - id: pretty-format-json
-        exclude: .releaserc.json
+        exclude: >
+          (?x)^(
+            .release-please-manifest\.json|
+            release-please-config\.json|
+            .releaserc\.json
+          )$
       - id: check-docstring-first
         args:
           - '--autofix'
