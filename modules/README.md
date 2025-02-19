@@ -23,9 +23,6 @@ This directory contains Terraform modules that encapsulate infrastructure compon
 ├── README.md            # Comprehensive module documentation
 ├── .terraform-docs.yml  # Terraform documentation generation config
 ├── .tflint.hcl          # TFLint configuration for static analysis
-└── examples/            # Usage examples
-    ├── basic/           # Minimal configuration example
-    └── complete/        # Full-featured configuration example
 ```
 
 ## 🛠 Documentation and Linting Tools
