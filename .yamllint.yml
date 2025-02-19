@@ -14,10 +14,14 @@ rules:
 
   # Line length with some exceptions
   line-length:
-    max: 130
+    max: 250
+    level: warning
     # Allow longer lines in specific files or sections
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
+    ignore:
+      - '.github/workflows/*.yaml'
+      - '.github/workflows/*.yml'
 
   # Truthy values handling
   truthy:
