@@ -16,6 +16,20 @@ jobs:
       contents: read # Needed for checking out the repository
       pull-requests: read # Needed for reading prs
     steps:
+      - name: Validate Branch Name
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # Validate branch name follows conventional commit patterns
+          if [[ ! "$PR_HEAD_REF" =~ ^(feat|fix|build|chore|ci|docs|perf|refactor|revert|style|test|deps)([/-].*)?$ ]]; then
+            echo "❌ Branch name does not follow conventional commit format"
+            echo "Valid formats: type/description or type-description"
+            echo "Examples: feat/add-login, fix-authentication-bug"
+            exit 1
+          fi
+          echo "✅ Branch name validated successfully"
+
       - name: Validate Pull Request
         uses: amannn/action-semantic-pull-request@c3cd5d1ea3580753008872425915e343e351ab54 # v5.2.0
         env:
@@ -45,14 +59,11 @@ jobs:
           # merge commit, and it's easy to commit this by mistake. Enable this option
           # to also validate the commit message for one commit PRs.
           validateSingleCommit: true
-          # yamllint disable-line rule:comments-indentation
-          # Configure additional validation for the subject based on a regex.
-
-          # This ensures the subject doesn't start with an uppercase character.
+          # Custom header pattern to support branch-style titles
+          headerPattern: '^([\w-]+)[/|-](.+)$'
+          headerPatternCorrespondence: type, subject
+          # Ensure the type is one of the allowed conventional commit types
           subjectPattern: ^(?![A-Z]).+$
-          # If `subjectPattern` is configured, you can use this property to override
-          # the default error message that is shown when the pattern doesn't match.
-          # The variables `subject` and `title` can be used within the message.
           subjectPatternError: |-
             The subject "{subject}" found in the pull request title "{title}"
             didn't match the configured pattern. Please ensure that the subject
