@@ -1,6 +1,7 @@
 <h1 align="center">
   <img alt="logo" src="https://forum.huawei.com/enterprise/en/data/attachment/forum/202204/21/120858nak5g1epkzwq5gcs.png" width="224px"/><br/>
 
+[![🧼 Pre-commit Hooks](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/pre-commit.yml) [![📚 Terraform Modules CI](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/tf-modules-ci.yaml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/tf-modules-ci.yaml) [![🦫 Go Code Quality Checks](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/go-linter.yaml/badge.svg)](https://github.com/Excoriate/terraform-registry-module-template/actions/workflows/go-linter.yaml)
 ---
 
 ## Terraform Registry Module Template
