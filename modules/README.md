@@ -78,11 +78,11 @@ just tf-lint MOD=default
 ## 🔍 Key Module Conventions
 
 ### Documentation Best Practices
-- **Comprehensive Descriptions**: 
+- **Comprehensive Descriptions**:
   - Detailed variable descriptions
   - Clear output explanations
   - Usage examples in README
-- **Automatic Generation**: 
+- **Automatic Generation**:
   - Use Terraform Docs for consistent documentation
   - Keep documentation close to the code
 
