@@ -15,99 +15,130 @@
 ## 📋 Prerequisites
 
 > [!IMPORTANT]
-> Ensure you have:
+> Ensure you have the following tools installed:
 >
-> - Go (version specified in go.mod)
-> - Terraform (version specified in versions.tf)
-> - pre-commit (latest version available)
+> - Go (version specified in `go.mod`)
+> - Terraform (version specified in `versions.tf`)
+> - pre-commit (latest version)
 > - HashiCorp Terraform CLI
-> - Docker or any other containerized runtime (for local testing, and portability)
+> - Docker or compatible containerized runtime
+> - Just (task runner)
+> - Nix (optional, for development environment)
 
-## 🐛 Reporting Issues
+## 🛠 Development Environment Setup
 
-### Bug Reports
+1. **Fork and Clone**
+   ```bash
+   # 1. Fork the repository on GitHub
+   # 2. Clone your forked repository
+   git clone https://github.com/YOUR_GITHUB_USERNAME/terraform-registry-module-template.git
+   cd terraform-registry-module-template
 
-> [!WARNING]
-> We use a standardized [Bug Report Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/bug_report.md) to ensure we get all necessary information.
+   # 3. Add the original repository as a remote
+   git remote add upstream https://github.com/Excoriate/terraform-registry-module-template.git
+   ```
 
-When reporting a bug:
+2. **Install Pre-commit Hooks**
+   ```bash
+   pre-commit install
+   pre-commit install --hook-type commit-msg
+   ```
 
-- Use the [Bug Report Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/bug_report.md)
-- Provide all requested details
-- Be clear and concise
-- Include a minimal reproducible example
+## 🌳 Repository Structure Guidelines
 
-### Feature Requests
+### Module Development
 
-> [!TIP]
-> We have a [Feature Request Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/feature_request.md) to help structure your suggestions.
+- **Location**: All modules are in the `/modules` directory
+- **Mandatory Files for Each Module**:
+  ```
+  /modules/[module-name]/
+  ├── main.tf              # Primary resource definitions
+  ├── locals.tf            # Complex computations and transformations
+  ├── data.tf              # External data source retrieval
+  ├── variables.tf         # Input variable definitions
+  ├── outputs.tf           # Module output definitions
+  ├── versions.tf          # Provider and Terraform version constraints
+  ├── providers.tf         # Optional provider configurations
+  ├── README.md            # Comprehensive module documentation
+  ├── .terraform-docs.yml  # Terraform documentation generation config
+  └── .tflint.hcl          # TFLint configuration for static analysis
+  ```
 
-When suggesting enhancements:
+### Examples and Testing
 
-- Use the [Feature Request Template](https://github.com/Excoriate/terraform-registry-module-template/blob/main/.github/ISSUE_TEMPLATE/feature_request.md)
-- Explain your use case thoroughly
-- Provide context and potential implementation approach
-- Consider the module's scope and portability
-
-## 🚀 Development Workflow
-
-### 1. Fork and Clone
-
-```bash
-# 1. Fork the repository on GitHub
-# 2. Clone your forked repository
-git clone https://github.com/YOUR_GITHUB_USERNAME/terraform-registry-module-template.git
-cd terraform-registry-module-template
-
-# 3. Add the original repository as a remote (optional, but recommended)
-git remote add upstream https://github.com/Excoriate/terraform-registry-module-template.git
-```
-
-### 2. Create a Branch
-
-```bash
-# Use conventional branch naming
-git checkout -b feat/your-feature-name
-# or
-git checkout -b fix/issue-description
-```
+- Create examples in the `/examples` directory
+- Write tests in the `/tests` directory using Terratest
+- Ensure comprehensive test coverage
 
 ## 🧪 Testing and Validation
 
 > [!IMPORTANT]
 > Comprehensive testing is crucial:
 
-### Local Testing
+### Local Testing Workflow
 
 ```bash
 # Run pre-commit hooks
-pre-commit run --all-files
+just hooks-run
 
 # Run Terraform validations
-terraform fmt -check
-terraform validate
+just tf-validate
 
-# Run unit tests
-just go-test
+# Run Terraform linters
 just tf-lint
 
-# Integration testing
-terratest test ./...
+# Run Go tests
+just go-ci
+
+# Run Terraform CI static checks
+just tf-ci-static
 ```
 
 ### Continuous Integration
 
-- GitHub Actions will run:
-  - Linting
+- GitHub Actions will automatically run:
+  - Linting checks
   - Unit tests
   - Integration tests
   - Security scans
 
-## 📝 Commit Guidelines
+### Development Workflow
 
-> [!TIP]
-> Follow Conventional Commits:
+```bash
+# Quick development feedback loop for a specific module
+just tf-dev                   # Uses default module and basic example
+just tf-dev MOD=your-module   # Specify a different module
+```
 
+### Nix Development Environment
+
+If you're using Nix, use the `-nix` variants of the commands:
+
+```bash
+# Nix-based commands
+just hooks-run-nix
+just tf-validate-nix
+just tf-lint-nix
+just go-ci-nix
+just tf-ci-static-nix
+just tf-dev-nix
+```
+
+## 📝 Commit and Branch Guidelines
+
+### Branch Naming
+
+- Use descriptive, lowercase branch names
+- Prefix with type of change:
+  - `feat/`: New feature
+  - `fix/`: Bug fix
+  - `docs/`: Documentation updates
+  - `refactor/`: Code refactoring
+  - `test/`: Adding or updating tests
+
+### Commit Message Convention
+
+Follow Conventional Commits format:
 ```
 <type>[optional scope]: <description>
 
@@ -117,7 +148,6 @@ terratest test ./...
 ```
 
 Examples:
-
 - `feat(module): add new AWS networking configuration`
 - `fix(validation): correct input variable type`
 - `docs: update README with usage examples`
@@ -126,7 +156,7 @@ Examples:
 
 1. Update documentation
 2. Add/update tests
-3. Ensure CI checks pass
+3. Ensure all CI checks pass
 4. Request review from maintainers
 
 ### PR Checklist
@@ -137,7 +167,7 @@ Examples:
 - [ ] CI checks passing
 - [ ] Commits are atomic and focused
 
-## 🛡️ Security
+## 🛡️ Security Considerations
 
 > [!WARNING]
 > Never commit:
@@ -146,7 +176,7 @@ Examples:
 > - Credentials
 > - Personal identifiable information
 
-Refer to our [SECURITY.md](https://github.com/Excoriate/terraform-registry-module-template/blob/main/SECURITY.md) for responsible disclosure.
+Refer to our [SECURITY.md](SECURITY.md) for responsible disclosure.
 
 ## 📦 Release Process
 
@@ -154,10 +184,10 @@ Refer to our [SECURITY.md](https://github.com/Excoriate/terraform-registry-modul
 - Automated changelog generation
 - Maintainer-managed releases
 
-## 🤝 Community
+## 🤝 Community Guidelines
 
 - Open an [Issue](https://github.com/Excoriate/terraform-registry-module-template/issues/new)
-- Respect our [Code of Conduct](https://github.com/Excoriate/terraform-registry-module-template/blob/main/CODE_OF_CONDUCT.md)
+- Respect our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## 📚 Learning Resources
 
@@ -167,7 +197,7 @@ Refer to our [SECURITY.md](https://github.com/Excoriate/terraform-registry-modul
 
 ## 🏆 Attribution
 
-Contributions are under the [MIT License](https://github.com/Excoriate/terraform-registry-module-template/blob/main/LICENSE)
+Contributions are under the [MIT License](LICENSE)
 
 ---
 

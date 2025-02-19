@@ -39,6 +39,22 @@ ensure_pre_commit_installed() {
     log INFO "pre-commit is installed and ready."
 }
 
+# Verify hook installation
+verify_hook_installation() {
+    local hook_types=("pre-commit" "pre-push")
+    local git_dir
+    git_dir=$(git rev-parse --git-dir)
+
+    for hook_type in "${hook_types[@]}"; do
+        if [ ! -f "${git_dir}/hooks/${hook_type}" ]; then
+            log ERROR "Hook ${hook_type} not installed correctly"
+            return 1
+        fi
+    done
+
+    log INFO "All Git hooks verified successfully"
+}
+
 # Install pre-commit hooks
 # Exposed function 1: Initialize repository hooks
 pc_init() {
@@ -65,7 +81,18 @@ pc_init() {
         return 1
     fi
 
-    log INFO "All pre-commit hooks installed successfully"
+    # Verify hook installation
+    if ! verify_hook_installation; then
+        log ERROR "Hook verification failed. Please check your Git configuration."
+        return 1
+    fi
+
+    # Configure Git to always run hooks
+    if ! git config --global core.hooksPath .git/hooks; then
+        log WARNING "Could not set global hooks path. Hooks might not run automatically."
+    fi
+
+    log INFO "All pre-commit hooks installed and verified successfully"
 }
 
 # Run pre-commit hooks on all files

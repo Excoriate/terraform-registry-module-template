@@ -18,23 +18,23 @@ jobs:
     name: 🧰 Run Pre-commit Hooks
     runs-on: ubuntu-latest
     steps:
-    - name: 📥 Checkout Code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: 🔧 Install Pre-commit
-      run: |
-        pip install pre-commit
-        pre-commit install
+      - name: 🔧 Install Pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit install
 
-    - name: 🧹 Run Pre-commit Hooks
-      run: pre-commit run --all-files
+      - name: 🧹 Run Pre-commit Hooks
+        run: pre-commit run --all-files
 
   pr-validation:
     name: ✅ PR Validation
@@ -42,11 +42,11 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-    - name: 🎉 PR Ready to Merge
-      run: |
-        if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
-          echo "❌ Some pre-commit checks failed. Please review and fix."
-          exit 1
-        else
-          echo "✅ All pre-commit checks passed successfully!"
-        fi
+      - name: 🎉 PR Ready to Merge
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ Some pre-commit checks failed. Please review and fix."
+            exit 1
+          else
+            echo "✅ All pre-commit checks passed successfully!"
+          fi
