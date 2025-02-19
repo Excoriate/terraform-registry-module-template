@@ -111,7 +111,8 @@ jobs:
       - name: 🔍 Discover Example Implementations
         id: discover-examples
         run: |
-          EXAMPLES=$(find examples/${{ inputs.module_name }} -maxdepth 2 -type d -not -path '*/\.*' | sed 's|examples/'"${{ inputs.module_name }}"'/||' | grep -v "^$" | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          # Find all directories under the example module directory
+          EXAMPLES=$(find "examples/${{ inputs.module_name }}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n") | map(select(. != ""))')
           echo "examples=${EXAMPLES}" >> $GITHUB_OUTPUT
           echo "🌟 Discovered Examples: ${EXAMPLES}"
 
@@ -127,8 +128,11 @@ jobs:
             if [ -n "$EXAMPLE" ]; then
               echo "🔍 Validating example: $EXAMPLE"
 
+              EXAMPLE_PATH="examples/${{ inputs.module_name }}/${EXAMPLE}"
+              echo "📂 Validating directory: ${EXAMPLE_PATH}"
+
               # Change to example directory
-              cd "examples/${{ inputs.module_name }}/$EXAMPLE"
+              cd "${EXAMPLE_PATH}"
 
               # Terraform fmt check
               echo "✨ Checking Terraform formatting..."
