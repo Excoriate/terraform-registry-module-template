@@ -8,6 +8,14 @@
 # Test binary, built with `go test -c`
 *.test
 
+# AI.
+*.ai
+*.aider.*
+*.cursor
+
+# Mac
+.DS_Store
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 *.out.tmp
