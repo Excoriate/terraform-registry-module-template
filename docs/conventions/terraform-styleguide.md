@@ -48,37 +48,21 @@ resource "azurerm_virtual_network" "vnet" { ... }
 **Mandatory Requirements**:
 - Define all variables exclusively in `variables.tf`, never in `main.tf`
 - Construct meaningful, descriptive variable names
-- Provide comprehensive descriptions with examples and registry references
+- Provide comprehensive descriptions that explain the purpose, impact, and usage of the variable
 - Implement strict type constraints, explicitly avoiding `any` type
 - Apply validation blocks for enhanced input control
+- Use `is_*_enabled` naming convention for feature flags
 
 #### Rule: Variable Definition Example
 ```hcl
-variable "instance_type" {
-    description = <<-EOT
-        Strictly defines the EC2 instance type for server provisioning with comprehensive configuration controls.
+variable "log_group_retention_days" {
+    type        = number
+    description = "Determines how long CloudWatch Logs retains log events in the specified log group. This setting helps manage storage costs while ensuring compliance with data retention requirements. The retention period can be set from 1 day to 10 years (3650 days). Common retention periods are 30 days for operational logs, 90 days for compliance, or longer for audit purposes. After the specified period, CloudWatch Logs automatically deletes expired log events."
+    default     = 30
 
-        Mandatory Considerations:
-        - Directly impacts application performance and infrastructure cost
-        - Enforce selection from predefined instance families
-
-        Allowed Instance Families:
-        - t3: Burstable, cost-effective for variable workloads
-        - m5: General-purpose, balanced compute and memory
-        - c5: Compute-optimized for high-performance computing
-
-        Deployment Type Recommendations:
-        - Development: Mandate smaller, cost-effective instances (t3.micro)
-        - Staging: Require medium-sized instances with balanced resources (m5.large)
-        - Production: Select instances precisely matching workload requirements
-
-        Validation Enforcement:
-        - Prevent selection of unsupported or incompatible instance types
-    EOT
-    type        = string
     validation {
-        condition     = can(regex("^(t3|m5|c5)\\.", var.instance_type))
-        error_message = "Reject instance types not from t3, m5, or c5 series. Ensure strict workload compatibility."
+        condition     = contains([0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653], var.log_group_retention_days)
+        error_message = "Log group retention days must be one of [0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]."
     }
 }
 ```
@@ -93,17 +77,22 @@ variable "instance_type" {
 - Embed context and function within the resource name
 
 ### Rule: Conditional Resource Creation
-**Requirement**: Utilize `for_each` and `locals` for managing complex, dynamic resource generation:
+**Requirement**: Utilize `is_*_enabled` flags in locals for managing complex, dynamic resource generation:
 
 ```hcl
 locals {
-    # Enforce resource creation based on environment
-    create_resources = var.environment != "prod"
+    # Feature flags for resource creation
+    is_kms_key_enabled    = var.is_enabled
+    is_log_group_enabled  = var.is_enabled
+    is_s3_bucket_enabled  = var.is_enabled
 }
 
-resource "aws_instance" "development_servers" {
-    for_each = local.create_resources ? var.server_configs : {}
-    # Strict resource configuration
+resource "aws_kms_key" "this" {
+    count = local.is_kms_key_enabled ? 1 : 0
+
+    description             = local.kms_key_description
+    deletion_window_in_days = var.kms_key_deletion_window
+    enable_key_rotation     = true
 }
 ```
 
