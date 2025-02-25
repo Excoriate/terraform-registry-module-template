@@ -33,18 +33,23 @@ We utilize [Terratest](https://github.com/gruntwork-io/terratest), a Go-based te
 
 ```text
 tests/
-├── README.md               # This documentation
+├── README.md               # Testing documentation
 ├── go.mod                  # Go module dependencies
 ├── go.sum                  # Dependency lockfile
 ├── pkg/                    # Shared testing utilities
-│   └── testutils/          # Common testing helper functions
+│   └── repo/               # Repository path utilities
+│       └── finder.go       # Path resolution functions
 └── modules/                # Module-specific test suites
-    └── <module_name>/
+    └── <module_name>/      # Tests for specific module
+        ├── target/         # Use-case specific test suite
+        │   └── <use-case-name>/    # Use-case specific test suite
+        │   └── main.tf         # Terraform configuration for the use-case
         ├── unit/           # Unit test suite
-        │   ├── main_test.go
-        │   └── examples_test.go
-        └── integration/    # Integration test suite
-            ├── main_test.go
+        │   ├── module_test.go    # Tests for the module itself
+        │   └── examples_test.go  # Tests for the module's examples
+        │   └── features_test.go  # Tests for the module's features. These tests runs against the target module(s)
+        └── integration/    # Integration test suite (when needed)
+            ├── module_test.go
             └── examples_test.go
 ```
 
