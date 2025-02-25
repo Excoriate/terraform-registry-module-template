@@ -56,10 +56,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Docs** (`/docs`):
   - [Developer Guide](/docs/developer-guide.md)
-  - [Terraform StyleGuide](/docs/conventions/terraform-styleguide.md)
+  - Terraform StyleGuide:
+    - [Code Guidelines](/docs/terraform-styleguide/terraform-styleguide-code.md)
+    - [Modules Guidelines](/docs/terraform-styleguide/terraform-styleguide-modules.md)
+    - [Examples Guidelines](/docs/terraform-styleguide/terraform-styleguide-examples.md)
+    - [Terratest Guidelines](/docs/terraform-styleguide/terraform-styleguide-terratest.md)
   - [Project Roadmap](/docs/ROADMAP.md)
   - Comprehensive project documentation and future plans
 
 **📘 Additional Resources:**
 - [Contribution Guidelines](CONTRIBUTING.md)
-- [Terraform Registry Module Best Practices](/docs/conventions/terraform-modules-styleguide.md)
+- [Terraform Registry Module Best Practices](/docs/terraform-styleguide/terraform-styleguide-modules.md)
