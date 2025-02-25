@@ -213,6 +213,7 @@ An example of well-crafted test names, and test functions are:
 
 ```go
 // Compliant Names
+
 // TestDefaultModuleWithEnabledFlag verifies that the default module behaves correctly
 // when the enabled flag is set. It checks that all expected resources are created
 // and that the module initializes without errors.

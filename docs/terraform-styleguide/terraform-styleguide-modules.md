@@ -286,7 +286,7 @@ locals {
 
 resource "aws_kms_key" "this" {
     count = local.is_encryption_enabled ? 1 : 0
-
+    
     deletion_window_in_days = local.kms_key_config.deletion_window_in_days
     enable_key_rotation    = local.kms_key_config.enable_key_rotation
 }
@@ -376,7 +376,6 @@ resource "aws_kms_key" "this" {
 
     deletion_window_in_days = local.kms_key_config.deletion_window_in_days
     enable_key_rotation    = local.kms_key_config.enable_key_rotation
-
     tags = local.tags
 }
 ```
@@ -685,3 +684,4 @@ tests/
     └── fixtures/
         └── terraform.tfvars
 ```
+
