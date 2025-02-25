@@ -40,7 +40,7 @@ This document provides comprehensive guidelines for implementing tests for Terra
 
 - The tests targets are always two:
   1. The module's configuration, and its features, by testing the examples in the `examples/[module-name]/[example-type]/*.tf` modules (e.g. `basic`, `complete`, `minimal`, etc.).
-  2. Unit tests that validate particular features, or behaviors, of the module. The sources of these tests are located in the `tests/[module-name]/target` directory. If this directory does not exist, create it, and call it `target/[use-case-name]`. 
+  2. Unit tests that validate particular features, or behaviors, of the module. The sources of these tests are located in the `tests/[module-name]/target` directory. If this directory does not exist, create it, and call it `target/[use-case-name]`.
 - Keep tests simple, readable, and maintainable. Use the [terratest](https://terratest.gruntwork.io/) framework to its fullest extent.
 
 ## Styleguide: Test Structure Rules
@@ -213,24 +213,24 @@ An example of well-crafted test names, and test functions are:
 
 ```go
 // Compliant Names
-// TestDefaultModuleWithEnabledFlag verifies that the default module behaves correctly 
-// when the enabled flag is set. It checks that all expected resources are created 
+// TestDefaultModuleWithEnabledFlag verifies that the default module behaves correctly
+// when the enabled flag is set. It checks that all expected resources are created
 // and that the module initializes without errors.
 func TestDefaultModuleWithEnabledFlag(t *testing.T) { ... }
 
-// TestBasicExampleStaticAnalysis ensures that the basic example configuration passes 
-// static analysis checks. This includes verifying that the Terraform code is valid 
+// TestBasicExampleStaticAnalysis ensures that the basic example configuration passes
+// static analysis checks. This includes verifying that the Terraform code is valid
 // and adheres to best practices.
 func TestBasicExampleStaticAnalysis(t *testing.T) { ... }
 
 // Non-Compliant Names (Avoid)
-// TestFunction1 is a placeholder test function that does not provide any meaningful 
-// context about what is being tested. It should be avoided in favor of more descriptive 
+// TestFunction1 is a placeholder test function that does not provide any meaningful
+// context about what is being tested. It should be avoided in favor of more descriptive
 // test names that clearly indicate the purpose of the test.
 func TestFunction1(t *testing.T) { ... }
 
-// TestBasic is a vague test function name that does not specify what aspect of the 
-// module or functionality is being tested. It is important to use descriptive names 
+// TestBasic is a vague test function name that does not specify what aspect of the
+// module or functionality is being tested. It is important to use descriptive names
 // to improve test readability and maintainability.
 func TestBasic(t *testing.T) { ... }
 ```

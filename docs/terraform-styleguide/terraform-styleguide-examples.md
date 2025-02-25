@@ -75,7 +75,7 @@ This document provides comprehensive guidelines for creating example modules in 
 
 ### Rule: Naming Conventions for examples
 
-- ALWAYS call the module in the `main.tf` file of the example implementation `examples/[module-name]/[example-name]/main.tf` `this`.  
+- ALWAYS call the module in the `main.tf` file of the example implementation `examples/[module-name]/[example-name]/main.tf` `this`.
 
 ```hcl
 module "this" {

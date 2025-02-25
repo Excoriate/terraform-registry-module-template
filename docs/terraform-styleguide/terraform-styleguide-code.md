@@ -107,7 +107,7 @@ A good comment example:
 - Define all variables exclusively in `variables.tf`, never in `main.tf` or in any other file.
 - You MUST creat a complete description of the variable should be verbose. It should explain the purpose, impact, and usage of the variable, its default values, what they mean in the context of the module and the resource(s) they are used in, and how they can be overridden or extended.
 - Implement strict type constraints, explicitly avoiding `any` type.
-- Apply validation blocks for enhanced input control. Ensure the validations are clear, simple, and reliable. Avoid at all cost flaky, complex, unnecesary or ambiguous validations. 
+- Apply validation blocks for enhanced input control. Ensure the validations are clear, simple, and reliable. Avoid at all cost flaky, complex, unnecesary or ambiguous validations.
 - Use `is_SOMETHINGHERE_enabled` naming convention for feature flags for specific resources, or particular features provided by the module.
 - Reserve the `is_enabled` variable for the module's activation/deactivation flag.
 - Create all the input variables with idiomatic names. By just reading the variable name, you can understand what it does, and what it expects as input.
@@ -135,11 +135,11 @@ variable "log_group_configuration" {
     })
     description = <<-DESC
     This variable configures the CloudWatch Logs retention policy for the module's log group. It controls the retention period, and the encryption configuration for the log group. The retention period can be set from 1 day to 10 years (3650 days). Common retention periods are 30 days for operational logs, 90 days for compliance, or longer for audit purposes. After the specified period, CloudWatch Logs automatically deletes expired log events.
-    
+
     **RETENTION PERIOD CONSTRAINTS**:
     - Minimum: 1 day
     - Maximum: 10 years (3650 days)
-    
+
     **RECOMMENDED RETENTION STRATEGIES**:
     - Operational Logs: 30 days
     - Compliance Logs: 90 days
@@ -261,4 +261,3 @@ variable "tags" {
     default     = {}
 }
 ```
-
