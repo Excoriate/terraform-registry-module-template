@@ -230,16 +230,6 @@ tf-format-check MOD='':
         cd - > /dev/null; \
     fi
 
-# 🌿 Run tests for Terraform module locally
-tf-tests MOD='default' TYPE='unit':
-    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
-    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && go test -v
-
-# 🌿 Run tests for Terraform module in Nix development environment
-tf-tests-nix MOD='default' TYPE='unit':
-    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} in Nix environment..."
-    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
-
 # 🌿 Run Terraform commands with flexible working directory and command selection
 tf-exec WORKDIR='.' CMDS='--help':
     @echo "🏗️ Running Terraform command:"
@@ -409,3 +399,33 @@ tf-dev-nix MOD='default' EXAMPLE='basic':
     @just tf-ci-static-nix "{{MOD}}"
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+
+# 🌿 Run tests for Terraform module locally with enhanced flexibility
+tf-tests MOD='default' TYPE='unit':
+    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && \
+    echo "🔍 Executing tests in directory: $(pwd)" && \
+    echo "📋 Test Types: $(ls *_test.go | tr '\n' ' ')" && \
+    go test -v -race -timeout 30m ./...
+
+# 🌿 Run tests for Terraform module in Nix development environment with enhanced flexibility
+tf-tests-nix MOD='default' TYPE='unit':
+    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} in Nix environment..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && \
+    echo "🔍 Executing tests in directory: $(pwd)" && \
+    echo "📋 Test Types: $(ls *_test.go | tr '\n' ' ')" && \
+    nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m ./...
+
+# 🌿 Run specific test function in a module
+tf-test-func MOD='default' TYPE='unit' FUNC='':
+    @echo "🏗️ Running specific test function for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && \
+    echo "🔍 Executing test function: {{FUNC}}" && \
+    go test -v -race -timeout 30m -run "{{FUNC}}"
+
+# 🌿 Run specific test function in a module using Nix
+tf-test-func-nix MOD='default' TYPE='unit' FUNC='':
+    @echo "🏗️ Running specific test function for Terraform module in Nix environment: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && \
+    echo "🔍 Executing test function: {{FUNC}}" && \
+    nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m -run "{{FUNC}}"
