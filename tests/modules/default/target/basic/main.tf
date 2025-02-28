@@ -32,16 +32,8 @@ provider "aws" {
 module "this" {
   source = "../../../../../modules/default"
 
-  # Enable the module
-  is_enabled = true
-
-  # Add descriptive tags for tracking and management
-  tags = {
-    environment = "testing"
-    module      = "default"
-    purpose     = "terratest-validation"
-    managed-by  = "terraform"
-  }
+  is_enabled = var.is_enabled
+  tags       = var.tags
 }
 
 # Optional: Output module results for verification

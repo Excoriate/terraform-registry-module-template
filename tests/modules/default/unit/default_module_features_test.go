@@ -19,7 +19,7 @@ func TestDefaultModuleFeatureEnabled(t *testing.T) {
 
 	// Prepare Terraform options for target configuration
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetTargetDir("default/basic"),
+		TerraformDir: dirs.GetTargetDir("default", "basic"),
 		Vars: map[string]interface{}{
 			"is_enabled": true,
 		},
@@ -52,7 +52,7 @@ func TestDefaultModuleFeatureDisabled(t *testing.T) {
 
 	// Prepare Terraform options with module disabled
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetTargetDir("default/basic"),
+		TerraformDir: dirs.GetTargetDir("default", "basic"),
 		Vars: map[string]interface{}{
 			"is_enabled": false,
 		},
