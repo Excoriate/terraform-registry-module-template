@@ -19,9 +19,6 @@ func TestPlanningOnTargetWhenModuleDisabled(t *testing.T) {
 	terraformOptions := &terraform.Options{
 		TerraformDir: dirs.GetTargetDir("default", "disabled_module"),
 		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": false,
-		},
 	}
 
 	t.Logf("🔍 Terraform Target Directory: %s", terraformOptions.TerraformDir)
@@ -51,9 +48,6 @@ func TestOutputsOnTargetWhenModuleDisabled(t *testing.T) {
 	terraformOptions := &terraform.Options{
 		TerraformDir: dirs.GetTargetDir("default", "disabled_module"),
 		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": false,
-		},
 	}
 
 	t.Logf("🔍 Terraform Target Directory: %s", terraformOptions.TerraformDir)

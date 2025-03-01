@@ -22,7 +22,7 @@ output "is_enabled" {
 # Output the module's tags (should be empty when disabled)
 output "tags" {
   description = "The tags applied to resources (should be empty when disabled)"
-  value       = module.this.tags
+  value       = module.this.tags_set
 }
 
 terraform {
@@ -31,7 +31,7 @@ terraform {
   required_providers {
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.0"
+      version = "3.6.2"
     }
   }
 }
