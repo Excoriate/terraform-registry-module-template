@@ -400,26 +400,74 @@ tf-dev-nix MOD='default' EXAMPLE='basic':
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
 
-# 🌿 Run tests for Terraform module locally with enhanced flexibility and build tags
-tf-tests MOD='default' TYPE='unit' TAGS='readonly':
-    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
-    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && \
-    echo "🔍 Executing tests in directory: $(pwd)" && \
-    echo "📋 Test Types: $(ls *_test.go | tr '\n' ' ')" && \
-    if [ -z "{{TAGS}}" ]; then \
-        go test -v -race -timeout 30m ./...; \
+# 🧪 Run unit tests with readonly tag (no resource creation)
+test-unit-readonly MOD='':
+    @echo "🧪 Running unit tests with readonly tag..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v -tags "unit,readonly" ./...; \
     else \
-        go test -v -race -timeout 30m -tags "{{TAGS}}" ./...; \
+        cd {{TESTS_DIR}} && go test -v -tags "unit,readonly" ./modules/{{MOD}}/unit/...; \
     fi
 
-# 🌿 Run tests for Terraform module in Nix development environment with enhanced flexibility and build tags
-tf-tests-nix MOD='default' TYPE='unit' TAGS='':
-    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} in Nix environment..."
-    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && \
-    echo "🔍 Executing tests in directory: $(pwd)" && \
-    echo "📋 Test Types: $(ls *_test.go | tr '\n' ' ')" && \
-    if [ -z "{{TAGS}}" ]; then \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m ./...; \
+# 🧪 Run unit tests with integration tag (full lifecycle)
+test-unit-integration MOD='':
+    @echo "🧪 Running unit tests with integration tag..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v -tags "unit,integration" ./...; \
     else \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m -tags "{{TAGS}}" ./...; \
+        cd {{TESTS_DIR}} && go test -v -tags "unit,integration" ./modules/{{MOD}}/unit/...; \
+    fi
+
+# 🧪 Run example tests with readonly tag (no resource creation)
+test-examples-readonly MOD='':
+    @echo "🧪 Running example tests with readonly tag..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v -tags "examples,readonly" ./...; \
+    else \
+        cd {{TESTS_DIR}} && go test -v -tags "examples,readonly" ./modules/{{MOD}}/examples/...; \
+    fi
+
+# 🧪 Run example tests with integration tag (full lifecycle)
+test-examples-integration MOD='':
+    @echo "🧪 Running example tests with integration tag..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v -tags "examples,integration" ./...; \
+    else \
+        cd {{TESTS_DIR}} && go test -v -tags "examples,integration" ./modules/{{MOD}}/examples/...; \
+    fi
+
+# 🧪 Run all readonly tests (unit and examples)
+test-readonly MOD='':
+    @echo "🧪 Running all readonly tests..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v -tags "readonly" ./...; \
+    else \
+        cd {{TESTS_DIR}} && go test -v -tags "readonly" ./modules/{{MOD}}/...; \
+    fi
+
+# 🧪 Run all integration tests (unit and examples)
+test-integration MOD='':
+    @echo "🧪 Running all integration tests..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v -tags "integration" ./...; \
+    else \
+        cd {{TESTS_DIR}} && go test -v -tags "integration" ./modules/{{MOD}}/...; \
+    fi
+
+# 🧪 Run all tests for a specific module or all modules
+test-all MOD='':
+    @echo "🧪 Running all tests..."
+    @if [ -z "{{MOD}}" ]; then \
+        cd {{TESTS_DIR}} && go test -v ./...; \
+    else \
+        cd {{TESTS_DIR}} && go test -v ./modules/{{MOD}}/...; \
+    fi
+
+# 🧪 Run all tests in Nix environment
+test-all-nix MOD='':
+    @echo "🧪 Running all tests in Nix environment..."
+    @if [ -z "{{MOD}}" ]; then \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd {{TESTS_DIR}} && go test -v ./...'; \
+    else \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd {{TESTS_DIR}} && go test -v ./modules/{{MOD}}/...'; \
     fi
