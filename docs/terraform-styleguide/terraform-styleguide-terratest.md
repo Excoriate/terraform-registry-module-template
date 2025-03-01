@@ -45,7 +45,7 @@ This document provides comprehensive guidelines for implementing tests for Terra
 
 There are two types of tests based on **their scope**:
 
-1. **Unit Tests**: These tests are used to test the module's configuration and individual features. They are always located in the `tests/[module-name]/unit` directory, and always use the terraform configuration in the `tests/modules/[module-name]/target/[use-case-name]/main.tf` file. 
+1. **Unit Tests**: These tests are used to test the module's configuration and individual features. They are always located in the `tests/[module-name]/unit` directory, and always use the terraform configuration in the `tests/modules/[module-name]/target/[use-case-name]/main.tf` file.
 2. **Examples(s) Tests**: These tests are meant to test the example(s) implementation of the module. They are always located in the `tests/[module-name]/examples` directory, and always use the terraform configuration in the `tests/modules/[module-name]/examples/[example-name]` to execute the terratest tests.
 
 ### Rule: Build Tags
@@ -61,7 +61,7 @@ The test targets are the sources of the terraform configuration files (or module
 
 - ALWAYS, with no exception, acknowledge the following test targets:
 
-| Test Target (target is where the *.tf files and the modules are located)                                   | Description                                                  | 
+| Test Target (target is where the *.tf files and the modules are located)                                   | Description                                                  |
 |-----------------------------------------------|--------------------------------------------------------------|
 | `modules/[module-name]`                       | The main module being tested. Only run tests against this target for static analysis, and read-only tests (terraform init, terraform validate, etc.).                               |
 | `examples/[module-name]/[example-name]`                | Example implementation of the module that shows different use-cases, and scenarios of the module. |
@@ -246,7 +246,7 @@ func TestInitializationOnModuleWhenUpgradeEnabled(t *testing.T) {
 	t.Log("✅ Terraform Init Output:\n", initOutput)
 }
 
-// TestValidationOnExamplesWhenBasicConfigurationLoaded ensures that the basic example 
+// TestValidationOnExamplesWhenBasicConfigurationLoaded ensures that the basic example
 // configuration passes Terraform validation checks, verifying its structural integrity.
 func TestValidationOnExamplesWhenBasicConfigurationLoaded(t *testing.T) {
 	t.Parallel()
@@ -277,7 +277,7 @@ func TestValidationOnExamplesWhenBasicConfigurationLoaded(t *testing.T) {
 	t.Log("✅ Terraform fmt Output:\n", fmtOutput)
 }
 
-// TestPlanningOnExamplesWhenModuleEnabled verifies the Terraform plan generation 
+// TestPlanningOnExamplesWhenModuleEnabled verifies the Terraform plan generation
 // for the basic example when the module is explicitly enabled.
 func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
 	t.Parallel()
@@ -329,7 +329,7 @@ func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
 - INCLUDE detailed logging for troubleshooting
 
 ```go
-// TestPlanningOnExamplesWhenModuleEnabled verifies the Terraform plan generation 
+// TestPlanningOnExamplesWhenModuleEnabled verifies the Terraform plan generation
 // for the basic example when the module is explicitly enabled.
 func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
     // Enable parallel execution
