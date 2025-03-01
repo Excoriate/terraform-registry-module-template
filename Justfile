@@ -445,3 +445,179 @@ tf-test-func-nix MOD='default' TYPE='unit' FUNC='' TAGS='':
     else \
         nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m -tags "{{TAGS}}" -run "{{FUNC}}"; \
     fi
+
+# 🧪 Run unit tests for a specific module with readonly tag
+tf-tests-unit-ro MOD='default':
+    @echo "🏗️ Running readonly unit tests for Terraform module: {{MOD}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    echo "🔍 Executing tests in directory: $(pwd)" && \
+    go test -v -race -timeout 30m -tags "unit,readonly" ./
+
+# 🧪 Run integration unit tests for a specific module
+tf-tests-integration MOD='default':
+    @echo "🏗️ Running integration unit tests for Terraform module: {{MOD}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    echo "🔍 Executing tests in directory: $(pwd)" && \
+    go test -v -race -timeout 30m -tags "unit,integration" ./
+
+# 🧪 Run all unit tests for a specific module (both readonly and integration)
+tf-tests-unit MOD='default':
+    @echo "🏗️ Running all unit tests for Terraform module: {{MOD}}..."
+    @just tf-tests-unit-ro {{MOD}}
+    @just tf-tests-integration {{MOD}}
+
+# 🧪 Run readonly example tests for a Terraform module
+tf-tests-example-ro MOD='default':
+    @echo "🏗️ Running readonly example tests for Terraform module: {{MOD}}..."
+    @echo "🔍 Executing tests in directory: {{TESTS_DIR}}/modules/{{MOD}}/examples"
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/examples && \
+    if [ -n "$(find . -name '*_readonly_test.go' 2>/dev/null)" ]; then \
+        go test -v -tags=example,readonly ./...; \
+    else \
+        echo "No example readonly test files found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run integration example tests for a Terraform module
+tf-tests-example-integration MOD='default':
+    @echo "🏗️ Running integration example tests for Terraform module: {{MOD}}..."
+    @echo "🔍 Executing tests in directory: {{TESTS_DIR}}/modules/{{MOD}}/examples"
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/examples && \
+    if [ -n "$(find . -name '*_integration_test.go' 2>/dev/null)" ]; then \
+        go test -v -tags=example,integration ./...; \
+    else \
+        echo "No example integration test files found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run all example tests for a Terraform module
+tf-tests-example MOD='default':
+    @echo "🏗️ Running all example tests for Terraform module: {{MOD}}..."
+    @if [ -d "{{TESTS_DIR}}/modules/{{MOD}}/examples" ]; then \
+        just tf-tests-example-ro {{MOD}} && just tf-tests-example-integration {{MOD}}; \
+    else \
+        echo "No examples directory found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run all tests for a specific module in Nix environment (unit and example, both readonly and integration)
+tf-tests-all-nix MOD='default':
+    @echo "🏗️ Running all tests for Terraform module in Nix environment: {{MOD}}..."
+    @just tf-tests-unit-nix {{MOD}}
+    @just tf-tests-example-nix {{MOD}}
+
+# 🧪 Generate documentation for unit tests of a Terraform module
+tf-tests-unit-docs MOD='default':
+    @echo "📄 Generating documentation for unit tests of Terraform module: {{MOD}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    echo "📋 Test Files: $(ls *_readonly_test.go 2>/dev/null || echo 'No unit test files found')" && \
+    (go doc -all 2>/dev/null || echo "⚠️ Unable to generate documentation. This may be due to build constraints or missing Go files.")
+
+# 🧪 Generate documentation for integration tests of a Terraform module
+tf-tests-integration-docs MOD='default':
+    @echo "📄 Generating documentation for integration tests of Terraform module: {{MOD}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    if [ -n "$(find . -name '*_integration_test.go' 2>/dev/null)" ]; then \
+        echo "📋 Integration Test Files: $(ls *_integration_test.go)" && \
+        (go doc -all 2>/dev/null || echo "⚠️ Unable to generate documentation. This may be due to build constraints or missing Go files."); \
+    else \
+        echo "No integration test files found"; \
+    fi
+
+# 🧪 Create a cheat sheet for unit tests
+tf-tests-unit-cheatsheet MOD='default':
+    @echo "📋 Creating cheat sheet for unit tests of Terraform module: {{MOD}}..."
+    @echo "Available unit tests for module {{MOD}}:"
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    grep -h "^func Test" *.go | sed 's/func \(Test[^(]*\).*/\1/' | sort
+
+# 🧪 Create a cheat sheet for integration tests
+tf-tests-integration-cheatsheet MOD='default':
+    @echo "📋 Creating cheat sheet for integration tests of Terraform module: {{MOD}}..."
+    @echo "Available integration tests for module {{MOD}}:"
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    if ls *_integration_test.go 1>/dev/null 2>&1; then \
+        grep -h "^func Test" *_integration_test.go | sed 's/func \(Test[^(]*\).*/\1/' | sort; \
+    else \
+        echo "No integration test files found"; \
+    fi
+
+# 🧪 Create a cheat sheet for all tests (unit, integration, and example tests)
+tf-tests-all-cheatsheet MOD='default':
+    @echo "📋 Creating comprehensive cheat sheet for all tests of Terraform module: {{MOD}}..."
+    @echo "=== UNIT TESTS ==="
+    @just tf-tests-unit-cheatsheet {{MOD}}
+    @echo "\n=== INTEGRATION TESTS ==="
+    @just tf-tests-integration-cheatsheet {{MOD}}
+    @echo "\n=== EXAMPLE TESTS ==="
+    @echo "Example tests in directory: {{TESTS_DIR}}/modules/{{MOD}}/examples"
+    @if [ -d "{{TESTS_DIR}}/modules/{{MOD}}/examples" ]; then \
+        echo "Readonly example tests:"; \
+        find {{TESTS_DIR}}/modules/{{MOD}}/examples -name "*_readonly_test.go" -exec grep -l "^func Test" {} \; | sort | xargs -r -n 1 basename | sed 's/_readonly_test.go//' || echo "No readonly example tests found"; \
+        echo "\nIntegration example tests:"; \
+        find {{TESTS_DIR}}/modules/{{MOD}}/examples -name "*_integration_test.go" -exec grep -l "^func Test" {} \; | sort | xargs -r -n 1 basename | sed 's/_integration_test.go//' || echo "No integration example tests found"; \
+    else \
+        echo "No examples directory found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run a comprehensive test suite with documentation and cheat sheets
+tf-tests-full MOD='default':
+    @echo "🏗️ Running comprehensive test suite for Terraform module: {{MOD}}..."
+    @just tf-tests-all-cheatsheet {{MOD}}
+    @just tf-tests-unit-docs {{MOD}}
+    @just tf-tests-integration-docs {{MOD}}
+    @just tf-tests-all {{MOD}}
+
+# 🧪 Run all tests for a specific module (unit and example, both readonly and integration)
+tf-tests-all MOD='default':
+    @echo "🏗️ Running all tests for Terraform module: {{MOD}}..."
+    @just tf-tests-unit {{MOD}}
+    @just tf-tests-example {{MOD}}
+
+# 🧪 Run unit tests with readonly tag for a specific module in Nix environment
+tf-tests-unit-ro-nix MOD='default':
+    @echo "🏗️ Running readonly unit tests for Terraform module in Nix environment: {{MOD}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    echo "🔍 Executing tests in directory: $(pwd)" && \
+    nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m -tags "unit,readonly" ./
+
+# 🧪 Run integration unit tests for a specific module in Nix environment
+tf-tests-integration-nix MOD='default':
+    @echo "🏗️ Running integration unit tests for Terraform module in Nix environment: {{MOD}}..."
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/unit && \
+    echo "🔍 Executing tests in directory: $(pwd)" && \
+    nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v -race -timeout 30m -tags "unit,integration" ./
+
+# 🧪 Run readonly example tests for a Terraform module in a Nix environment
+tf-tests-example-ro-nix MOD='default':
+    @echo "🏗️ Running readonly example tests for Terraform module in Nix environment: {{MOD}}..."
+    @echo "🔍 Executing tests in directory: {{TESTS_DIR}}/modules/{{MOD}}/examples"
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/examples && \
+    if [ -n "$(find . -name '*_readonly_test.go' 2>/dev/null)" ]; then \
+        nix develop --command go test -v -tags=example,readonly ./...; \
+    else \
+        echo "No example readonly test files found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run integration example tests for a Terraform module in a Nix environment
+tf-tests-example-integration-nix MOD='default':
+    @echo "🏗️ Running integration example tests for Terraform module in Nix environment: {{MOD}}..."
+    @echo "🔍 Executing tests in directory: {{TESTS_DIR}}/modules/{{MOD}}/examples"
+    @cd {{TESTS_DIR}}/modules/{{MOD}}/examples && \
+    if [ -n "$(find . -name '*_integration_test.go' 2>/dev/null)" ]; then \
+        nix develop --command go test -v -tags=example,integration ./...; \
+    else \
+        echo "No example integration test files found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run all example tests for a Terraform module in a Nix environment
+tf-tests-example-nix MOD='default':
+    @echo "🏗️ Running all example tests for Terraform module in Nix environment: {{MOD}}..."
+    @if [ -d "{{TESTS_DIR}}/modules/{{MOD}}/examples" ]; then \
+        just tf-tests-example-ro-nix {{MOD}} && just tf-tests-example-integration-nix {{MOD}}; \
+    else \
+        echo "No examples directory found for module {{MOD}}"; \
+    fi
+
+# 🧪 Run all unit tests for a specific module in Nix environment (both readonly and integration)
+tf-tests-unit-nix MOD='default':
+    @echo "🏗️ Running all unit tests for Terraform module in Nix environment: {{MOD}}..."
+    @just tf-tests-unit-ro-nix {{MOD}}
+    @just tf-tests-integration-nix {{MOD}}
