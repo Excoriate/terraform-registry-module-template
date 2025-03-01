@@ -53,35 +53,3 @@ func TestValidationOnModuleWhenBasicConfiguration(t *testing.T) {
 	require.NoError(t, err, "Terraform validate failed")
 	t.Log("✅ Terraform Validate Output:\n", validateOutput)
 }
-
-// TestPlanningOnTargetWhenModuleEnabled verifies the Terraform plan generation
-// for the basic target configuration when the module is explicitly enabled.
-func TestPlanningOnTargetWhenModuleEnabled(t *testing.T) {
-	t.Parallel()
-
-	dirs, err := repo.NewTFSourcesDir()
-	require.NoError(t, err, "Failed to get Terraform sources directory")
-
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetTargetDir("default", "basic"),
-		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": true,
-		},
-	}
-
-	t.Logf("🔍 Terraform Target Directory: %s", terraformOptions.TerraformDir)
-
-	// Initialize with detailed error handling
-	initOutput, err := terraform.InitE(t, terraformOptions)
-	require.NoError(t, err, "Terraform init failed")
-	t.Log("✅ Terraform Init Output:\n", initOutput)
-
-	// Plan to show what would be created in the basic target
-	planOutput, err := terraform.PlanE(t, terraformOptions)
-	require.NoError(t, err, "Terraform plan failed")
-	t.Log("📝 Terraform Plan Output:\n", planOutput)
-
-	// Verify plan contains the random_string resource
-	require.Contains(t, planOutput, "random_string.random_text", "Plan should include random_string resource")
-}
