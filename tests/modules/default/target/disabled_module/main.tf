@@ -24,3 +24,14 @@ output "tags" {
   description = "The tags applied to resources (should be empty when disabled)"
   value       = module.this.tags
 }
+
+terraform {
+  required_version = ">= 1.10.0"
+
+  required_providers {
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
+}
