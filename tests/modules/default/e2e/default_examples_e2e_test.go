@@ -19,7 +19,7 @@ func TestDefaultExamplesE2EBasicDeployment(t *testing.T) {
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetExamplesDir("default/basic"),
+		TerraformDir: dirs.GetExamplesDir("default"),
 		Upgrade:      true,
 		Vars: map[string]interface{}{
 			"is_enabled": true,

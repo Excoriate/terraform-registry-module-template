@@ -21,7 +21,7 @@ func TestDefaultModuleE2EDeploymentEnabled(t *testing.T) {
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetModulesTargetDir("default/basic"),
+		TerraformDir: dirs.GetTargetDir("default", "basic"),
 		Vars: map[string]interface{}{
 			"is_enabled": true,
 		},
@@ -47,7 +47,7 @@ func TestDefaultModuleE2EDeploymentEnabled(t *testing.T) {
 	t.Log("✅ Terraform Apply Output:\n", applyOutput)
 
 	// Verify outputs
-	isEnabled := terraform.Output(t, terraformOptions, "module_is_enabled")
+	isEnabled := terraform.Output(t, terraformOptions, "is_enabled")
 	require.Equal(t, "true", isEnabled, "Module should be enabled")
 }
 
@@ -60,7 +60,7 @@ func TestDefaultModuleE2ETargetBasicDeployment(t *testing.T) {
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetTargetDir("default/basic"),
+		TerraformDir: dirs.GetTargetDir("default", "basic"),
 		Upgrade:      true,
 		Vars: map[string]interface{}{
 			"is_enabled": true,
@@ -76,7 +76,7 @@ func TestDefaultModuleE2ETargetBasicDeployment(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 
 	// Verify outputs
-	isEnabled := terraform.Output(t, terraformOptions, "module_is_enabled")
+	isEnabled := terraform.Output(t, terraformOptions, "is_enabled")
 	require.Equal(t, "true", isEnabled, "Module should be enabled")
 }
 
@@ -89,7 +89,7 @@ func TestDefaultModuleE2ETargetEnabledKeysDeployment(t *testing.T) {
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetModulesTargetDir("default/enabled_keys"),
+		TerraformDir: dirs.GetTargetDir("default", "enabled_keys"),
 		Upgrade:      true,
 	}
 
@@ -113,7 +113,7 @@ func TestDefaultModuleE2ETargetEnabledKeysDeployment(t *testing.T) {
 	assert.Equal(t, "true", isEnabled, "Module should be enabled")
 
 	// Verify tags were applied correctly
-	tags := terraform.OutputMap(t, terraformOptions, "tags")
+	tags := terraform.OutputMap(t, terraformOptions, "tags_set")
 	assert.Contains(t, tags, "Environment", "Tags should contain Environment")
 	assert.Contains(t, tags, "Terraform", "Tags should contain Terraform")
 	assert.Contains(t, tags, "Module", "Tags should contain Module")
@@ -128,7 +128,7 @@ func TestDefaultModuleE2ETargetDisabledConfiguration(t *testing.T) {
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetModulesTargetDir("default/disabled_configuration"),
+		TerraformDir: dirs.GetTargetDir("default", "disabled_configuration"),
 		Upgrade:      true,
 	}
 
