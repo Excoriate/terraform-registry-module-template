@@ -1,3 +1,5 @@
+//go:build unit && readonly
+
 package unit
 
 import (
