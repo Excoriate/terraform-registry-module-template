@@ -207,6 +207,9 @@ jobs:
       - name: 🧪 Run Unit Tests (Readonly)
         if: steps.discover-tests.outputs.unit_tests_exist == 'true'
         working-directory: tests
+        env:
+          TF_PLUGIN_CACHE_DIR: ""
+          TERRAFORM_PLUGIN_DIR: "/tmp/terraform-plugin-dir-unit"
         run: |
           echo "🚀 Running Readonly Unit Tests for module: ${{ inputs.module_name }}"
           echo "🔍 Current PATH: $PATH"
@@ -215,15 +218,22 @@ jobs:
           echo "🔍 Which terraform:"
           which terraform
 
-          # Clean up any existing provider cache
-          rm -rf .terraform
-          rm -f .terraform.lock.hcl
+          # Create clean plugin directory
+          mkdir -p "$TERRAFORM_PLUGIN_DIR"
+
+          # Export to make it available to terratest subprocesses
+          export TF_CLI_ARGS_init="-plugin-dir=$TERRAFORM_PLUGIN_DIR"
+
+          # Clean up any existing provider cache in test directories
+          find "./modules/${{ inputs.module_name }}" -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find "./modules/${{ inputs.module_name }}" -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
 
           # Ensure Go dependencies are up to date
           go mod tidy
 
           # Run tests with verbose output and additional logging
-          go test -v -tags 'readonly,unit' -timeout 30m ./modules/${{ inputs.module_name }}/unit/... 2>&1 | tee test_output.log
+          # -count=1 ensures tests aren't cached
+          go test -v -tags 'readonly,unit' -timeout 30m -count=1 -parallel 1 ./modules/${{ inputs.module_name }}/unit/... 2>&1 | tee test_output.log
 
           # Check test output for any errors
           if grep -q "FAIL" test_output.log; then
@@ -236,14 +246,27 @@ jobs:
         # The "false" condition disables this step since integration tests usually require cloud credentials
         # Remove "false" condition when you want to run integration tests in CI
         working-directory: tests
+        env:
+          TF_PLUGIN_CACHE_DIR: ""
+          TERRAFORM_PLUGIN_DIR: "/tmp/terraform-plugin-dir-unit-integration"
         run: |
           echo "🚀 Running Integration Unit Tests for module: ${{ inputs.module_name }}"
+
+          # Create clean plugin directory
+          mkdir -p "$TERRAFORM_PLUGIN_DIR"
+
+          # Export to make it available to terratest subprocesses
+          export TF_CLI_ARGS_init="-plugin-dir=$TERRAFORM_PLUGIN_DIR"
+
+          # Clean up any existing provider cache in test directories
+          find "./modules/${{ inputs.module_name }}" -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find "./modules/${{ inputs.module_name }}" -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
 
           # Ensure Go dependencies are up to date
           go mod tidy
 
           # Run tests with verbose output and additional logging
-          go test -v -tags 'integration,unit' -timeout 30m ./modules/${{ inputs.module_name }}/unit/... 2>&1 | tee test_output_integration.log
+          go test -v -tags 'integration,unit' -timeout 30m -count=1 -parallel 1 ./modules/${{ inputs.module_name }}/unit/... 2>&1 | tee test_output_integration.log
 
           # Check test output for any errors
           if grep -q "FAIL" test_output_integration.log; then
@@ -254,20 +277,54 @@ jobs:
       - name: 🌐 Run Examples Tests (Readonly)
         if: steps.discover-tests.outputs.examples_tests_exist == 'true'
         working-directory: tests
+        env:
+          TF_PLUGIN_CACHE_DIR: ""
+          TERRAFORM_PLUGIN_DIR: "/tmp/terraform-plugin-dir-examples"
         run: |
           echo "🚀 Running Readonly Examples Tests for module: ${{ inputs.module_name }}"
+
+          # Create clean plugin directory
+          mkdir -p "$TERRAFORM_PLUGIN_DIR"
+
+          # Export to make it available to terratest subprocesses
+          export TF_CLI_ARGS_init="-plugin-dir=$TERRAFORM_PLUGIN_DIR"
+
+          # Clean up any existing provider cache in test directories
+          find "./modules/${{ inputs.module_name }}" -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find "./modules/${{ inputs.module_name }}" -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+
           go mod tidy
-          go test -v -tags 'readonly,examples' ./modules/${{ inputs.module_name }}/examples/...
+
+          # -count=1 ensures tests aren't cached
+          # -parallel 1 runs tests sequentially to avoid provider conflicts
+          go test -v -tags 'readonly,examples' -count=1 -parallel 1 ./modules/${{ inputs.module_name }}/examples/...
 
       - name: 🌐 Run Examples Tests (Integration)
         if: steps.discover-tests.outputs.examples_tests_exist == 'true' && false
         # The "false" condition disables this step since integration tests usually require cloud credentials
         # Remove "false" condition when you want to run integration tests in CI
         working-directory: tests
+        env:
+          TF_PLUGIN_CACHE_DIR: ""
+          TERRAFORM_PLUGIN_DIR: "/tmp/terraform-plugin-dir-examples-integration"
         run: |
           echo "🚀 Running Integration Examples Tests for module: ${{ inputs.module_name }}"
+
+          # Create clean plugin directory
+          mkdir -p "$TERRAFORM_PLUGIN_DIR"
+
+          # Export to make it available to terratest subprocesses
+          export TF_CLI_ARGS_init="-plugin-dir=$TERRAFORM_PLUGIN_DIR"
+
+          # Clean up any existing provider cache in test directories
+          find "./modules/${{ inputs.module_name }}" -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find "./modules/${{ inputs.module_name }}" -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+
           go mod tidy
-          go test -v -tags 'integration,examples' ./modules/${{ inputs.module_name }}/examples/...
+
+          # -count=1 ensures tests aren't cached
+          # -parallel 1 runs tests sequentially to avoid provider conflicts
+          go test -v -tags 'integration,examples' -count=1 -parallel 1 ./modules/${{ inputs.module_name }}/examples/...
 
   summary:
     name: 🏁 Validation Summary
