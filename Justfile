@@ -400,20 +400,127 @@ tf-dev-nix MOD='default' EXAMPLE='basic':
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
 
-# 🧪 Run unit tests with readonly tag (no resource creation). The parameters are MOD (module name), TAGS (tags to run), TYPE (type of tests to run).
-test-unit-readonly MOD='' TAGS='unit,readonly' TYPE='unit':
+# 🧪 Run unit tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running unit tests with readonly tag..."
-    @if [ -z "{{MOD}}" ]; then \
-        cd {{TESTS_DIR}} && go test -v -tags "{{TAGS}}" ./...; \
-    else \
-        cd {{TESTS_DIR}} && go test -v -tags "{{TAGS}}" ./modules/{{MOD}}/{{TYPE}}/...; \
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
     fi
 
-# 🧪 Run example tests with readonly tag (no resource creation)
-test-examples-readonly MOD='':
-    @echo "🧪 Running example tests with readonly tag..."
-    @if [ -z "{{MOD}}" ]; then \
-        cd {{TESTS_DIR}} && go test -v -tags "examples,readonly" ./...; \
+    @cd {{TESTS_DIR}} && \
+    if [ -z "{{MOD}}" ]; then \
+        go test \
+            -v \
+            -tags "{{TAGS}}" \
+            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+            -timeout="{{TIMEOUT}}" \
+            ./...; \
     else \
-        cd {{TESTS_DIR}} && go test -v -tags "examples,readonly" ./modules/{{MOD}}/examples/...; \
+        go test \
+            -v \
+            -tags "{{TAGS}}" \
+            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+            -timeout="{{TIMEOUT}}" \
+            "./modules/{{MOD}}/{{TYPE}}/..."; \
     fi
+
+# 🧪 Run unit tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running unit tests with readonly tag in Nix environment..."
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
+    fi
+
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
+    if [ -z '{{MOD}}' ]; then \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            ./...; \
+    else \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            './modules/{{MOD}}/{{TYPE}}/...'; \
+    fi"
+
+# 🧪 Run example tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
+	@echo "🧪 Running example tests with readonly tag..."
+	@echo "📋 Configuration:"
+	@echo "   🔍 Module: {{MOD}}"
+	@echo "   🏷️  Tags: {{TAGS}}"
+	@echo "   📂 Test Type: {{TYPE}}"
+	@echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+	@if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+		echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+		exit 1; \
+	fi
+
+	@cd {{TESTS_DIR}} && \
+	if [ -z "{{MOD}}" ]; then \
+		go test \
+			-v \
+			-tags "{{TAGS}}" \
+			$(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+			-timeout="{{TIMEOUT}}" \
+			./...; \
+	else \
+		go test \
+			-v \
+			-tags "{{TAGS}}" \
+			$(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+			-timeout="{{TIMEOUT}}" \
+			"./modules/{{MOD}}/{{TYPE}}/..."; \
+	fi
+
+
+# 🧪 Run example tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+test-examples-nix MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running example tests with readonly tag in Nix environment..."
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
+    fi
+
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
+    if [ -z '{{MOD}}' ]; then \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            ./...; \
+    else \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            './modules/{{MOD}}/{{TYPE}}/...'; \
+    fi"
