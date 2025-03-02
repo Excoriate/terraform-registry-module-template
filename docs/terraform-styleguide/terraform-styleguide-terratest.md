@@ -391,32 +391,16 @@ func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
 - ALWAYS inspect with `just` the commands that are available, and the options that can be used. For test executions, there are the following commands that are available:
 
 ```bash
-# Run unit tests for a specific module
-just tf-tests-unit default
+# 🧪 Run unit tests  - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-unit
 
-# Run read-only unit tests for a specific module
-just tf-tests-unit-ro default
+# 🧪 Run unit tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-unit-nix
 
-# Run integration tests for a specific module
-just tf-tests-integration default
+# 🧪 Run example tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-examples
 
-# Generate documentation for unit tests
-just tf-tests-unit-docs default
+# 🧪 Run example tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-examples-nix
 
-# Generate documentation for integration tests
-just tf-tests-integration-docs default
-
-# Create a cheat sheet for unit tests
-just tf-tests-unit-cheatsheet default
-
-# Create a cheat sheet for integration tests
-just tf-tests-integration-cheatsheet default
-
-# Run a comprehensive test suite with documentation and cheat sheets
-just tf-tests-full default
-
-# Run tests in Nix environment
-just tf-tests-unit-nix default
-just tf-tests-unit-ro-nix default
-just tf-tests-integration-nix default
 ```

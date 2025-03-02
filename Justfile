@@ -158,6 +158,7 @@ go-tidy:
 go-ci: (go-tidy) (go-format) (go-lint)
     @echo "✅ Go files CI checks completed"
 
+# 🐹 Comprehensive CI checks for Go files in Nix environment
 go-ci-nix: (go-tidy-nix) (go-format-nix) (go-lint-nix)
     @echo "✅ Go files CI checks completed in Nix environment"
 
@@ -407,7 +408,7 @@ tf-dev-nix MOD='default' EXAMPLE='basic':
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
 
 # 🧪 Run unit tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
+tf-test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running unit tests with readonly tag..."
     @echo "📋 Configuration:"
     @echo "   🔍 Module: {{MOD}}"
@@ -442,7 +443,7 @@ test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT=
     fi
 
 # 🧪 Run unit tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
+tf-test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running unit tests with readonly tag in Nix environment..."
     @echo "📋 Configuration:"
     @echo "   🔍 Module: {{MOD}}"
@@ -512,7 +513,7 @@ test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='tr
     fi
 
 # 🧪 Run example tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-test-examples-nix MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
+tf-test-examples-nix MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running example tests with readonly tag in Nix environment..."
     @echo "📋 Configuration:"
     @echo "   🔍 Module: {{MOD}}"

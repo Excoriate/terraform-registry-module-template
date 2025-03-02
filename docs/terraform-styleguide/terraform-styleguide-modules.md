@@ -95,20 +95,35 @@
 The tests standard structure is described as follows:
 
 ```text
-tests
-├── README.md
-├── go.mod
-├── go.sum
-├── modules
-│   └── default
-│       └── unit
-│           ├── examples_test.go
-│           └── module_test.go
-└── pkg
-    └── repo
-        └── finder.go
-
+tests/
+├── README.md               # Testing documentation
+├── go.mod                  # Go module dependencies
+├── go.sum                  # Dependency lockfile
+├── pkg/                    # Shared testing utilities
+│   └── repo/               # Repository path utilities
+│       └── finder.go       # Path resolution functions
+│   └── helper/             # Helper utilities
+│       └── resources.go    # Resources utilities
+│       └── terraform.go    # Terraform utilities
+└── modules/                # Module-specific test suites
+    └── <module_name>/      # Tests for specific module
+        ├── target/         # Use-case specific test suite
+        │   ├── basic/      # Basic use-case configuration
+        │   │   └── main.tf # Terraform configuration for basic use-case
+        │   ├── specific_use_case/  # Specific use-case depending on the module's configuration, and capabilities
+        │   │   └── main.tf # Terraform configuration for specific use-case
+        │   └── disabled_module/  # Specific use-case for disabled configuration
+        │       └── main.tf # Terraform configuration for disabled configuration use-case
+        ├── unit/           # Unit test suite
+        │   └── target_specific_use_case_ro_unit_test.go          # Read-only unit test for specific configuration
+        │   └── target_specific_use_case_integration_test.go      # End-to-end integration test for specific use-case
+        └── examples/    # Examples test suite, with e2e tests
+            ├── example_complete_integration_test.go                # End-to-end integration test for complete example
+            ├── example_basic_ro_test.go                            # Read-only unit test for basic example
+            └── example_disabled_configuration_integration_test.go  # End-to-end integration test for disabled configuration example
 ```
+
+For more details, and a complete specification about how to write Terratest tests on this repo, and its modules, please refer to [Terratest Guideline](terraform-styleguide-terratest.md)
 
 The example standard structure is described as follows:
 
@@ -625,62 +640,6 @@ rule "terraform_unused_required_providers" {
 
 ### Rules: Always, tests, and examples
 
-- EVERY module in the `modules/[module-name]/` directory MUST have a corresponding unit test in the `tests/modules/[module-name]/unit/` directory. Tests are written in Go (and terratest), and are located in the `tests/modules/[module-name]/` directory.
+- EVERY module in the `modules/[module-name]/` directory MUST have a corresponding test in the `tests/modules/[module-name]/unit/` directory, and another one in the `tests/modules/[module-name]/examples/` directory. ALWAYS follow these [guildelines](terraform-styleguide-terratest.md) for the tests.
 
-```text
-tests/
-├── README.md               # Testing documentation
-├── go.mod                  # Go module dependencies
-├── go.sum                  # Dependency lockfile
-├── pkg/                    # Shared testing utilities
-│   └── repo/               # Repository path utilities
-│       └── finder.go       # Path resolution functions
-└── modules/                # Module-specific test suites
-    └── <module_name>/      # Tests for specific module
-        ├── target/         # Use-case specific test suite
-        │   └── <use-case-name>/    # Use-case specific test suite
-        │   └── main.tf         # Terraform configuration for the use-case
-        ├── unit/           # Unit test suite
-        │   ├── module_test.go    # Tests for the module itself
-        │   └── examples_test.go  # Tests for the module's examples
-        │   └── features_test.go  # Tests for the module's features. These tests runs against the target module(s)
-        └── integration/    # Integration test suite (when needed)
-            ├── module_test.go
-            └── examples_test.go
-```
-
-- EVERY module in the `modules/[module-name]/` directory MUST at least a `basic` example in the `examples/[module-name]/basic/` directory.
-
-```text
-/examples/[module-name]/
-├── basic/ # by default is basic, but can me complete, or my_use_case
-│   ├── main.tf            # Minimal, foundational module usage
-│   ├── variables.tf       # Example input variables
-│   ├── outputs.tf         # Example outputs
-│   ├── versions.tf        # Provider and Terraform version constraints
-│   ├── providers.tf       # Provider configurations
-│   ├── .terraform-docs.yml # Documentation generation configuration
-│   ├── .tflint.hcl        # Terraform linting rules
-│   └── fixtures/
-│       └── terraform.tfvars  # Predefined variable configurations
-├── complete/              # Comprehensive, feature-rich example
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   ├── versions.tf
-│   ├── providers.tf
-│   ├── .terraform-docs.yml # Documentation generation configuration
-│   ├── .tflint.hcl        # Terraform linting rules
-│   └── fixtures/
-│       └── terraform.tfvars
-└── [specific-use-case]/   # Optional specialized examples
-    ├── main.tf
-    ├── variables.tf
-    ├── outputs.tf
-    ├── versions.tf
-    ├── providers.tf
-│   ├── .terraform-docs.yml # Documentation generation configuration
-│   ├── .tflint.hcl        # Terraform linting rules
-    └── fixtures/
-        └── terraform.tfvars
-```
+- EVERY module in the `modules/[module-name]/` directory MUST at least a `basic` example in the `examples/[module-name]/basic/` directory, as the starting point. For more information about the guidelines for writing examples, see the [examples section](terraform-styleguide-examples.md).
