@@ -141,6 +141,7 @@ examples
         ├── providers.tf
         ├── variables.tf
         └── versions.tf
+        ├── Makefile
         ├── .terraform-docs.yml
         └── .tflint.hcl
     └── complete
