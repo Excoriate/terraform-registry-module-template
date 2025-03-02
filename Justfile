@@ -478,7 +478,7 @@ tf-test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' T
     fi"
 
 # 🧪 Run example tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
+tf-test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running example tests with readonly tag..."
     @echo "📋 Configuration:"
     @echo "   🔍 Module: {{MOD}}"

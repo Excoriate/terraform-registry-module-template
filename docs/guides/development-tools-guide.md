@@ -77,10 +77,12 @@ Before getting started, ensure you have the following tools installed:
 | `tf-docs-generate-nix` | Generate module documentation in Nix | `just tf-docs-generate-nix` or `just tf-docs-generate-nix default` | Creates README.md in Nix environment |
 | `tf-validate` | Validate Terraform modules locally | `just tf-validate default` | Checks module configuration |
 | `tf-validate-nix` | Validate Terraform modules in Nix | `just tf-validate-nix default` | Checks module configuration in Nix |
-| `tf-exec` | Run Terraform commands locally | `just tf-exec . 'init'` | Flexible Terraform command execution |
-| `tf-exec-nix` | Run Terraform commands in Nix | `just tf-exec-nix . 'init'` | Flexible Terraform command in Nix |
+| `tf-exec` | Run Terraform commands with flexible working directory | `just tf-exec . 'init'` | Flexible Terraform command execution |
+| `tf-exec-nix` | Run Terraform commands in Nix environment | `just tf-exec-nix . 'init'` | Flexible Terraform command in Nix |
 | `tf-cmd` | Run Terraform commands for a specific module | `just tf-cmd default init` | Module-specific Terraform commands |
 | `tf-cmd-nix` | Run Terraform commands for a module in Nix | `just tf-cmd-nix default init` | Module-specific Terraform in Nix |
+| `tofu-cmd` | Run OpenTofu commands locally | `just tofu-cmd default init` | OpenTofu module-specific commands |
+| `tofu-cmd-nix` | Run OpenTofu commands in Nix | `just tofu-cmd-nix default init` | OpenTofu module-specific in Nix |
 | `tf-dev` | Quick development feedback loop | `just tf-dev default basic` | Runs formatting, linting, and initialization |
 | `tf-dev-nix` | Quick development feedback loop in Nix | `just tf-dev-nix default basic` | Runs formatting, linting, and initialization in Nix |
 | `tf-ci-static` | Run Terraform CI checks locally | `just tf-ci-static default` | Runs static code checks |
