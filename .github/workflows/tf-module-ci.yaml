@@ -204,11 +204,11 @@ jobs:
           echo "🔬 Unit Tests Exist: ${UNIT_TESTS_EXIST}"
           echo "🔬 Examples Tests Exist: ${EXAMPLES_TESTS_EXIST}"
 
-      - name: 🧪 Run Unit Tests
+      - name: 🧪 Run Unit Tests (Readonly)
         if: steps.discover-tests.outputs.unit_tests_exist == 'true'
-        working-directory: tests/modules/${{ inputs.module_name }}/unit
+        working-directory: tests
         run: |
-          echo "🚀 Running Unit Tests for module: ${{ inputs.module_name }}"
+          echo "🚀 Running Readonly Unit Tests for module: ${{ inputs.module_name }}"
           echo "🔍 Current PATH: $PATH"
           echo "🔍 Terraform version:"
           terraform version
@@ -223,7 +223,7 @@ jobs:
           go mod tidy
 
           # Run tests with verbose output and additional logging
-          go test -v -timeout 30m ./... 2>&1 | tee test_output.log
+          go test -v -tags 'readonly,unit' -timeout 30m ./modules/${{ inputs.module_name }}/unit/... 2>&1 | tee test_output.log
 
           # Check test output for any errors
           if grep -q "FAIL" test_output.log; then
@@ -231,13 +231,43 @@ jobs:
             exit 1
           fi
 
-      - name: 🌐 Run Examples Tests
-        if: steps.discover-tests.outputs.examples_tests_exist == 'true'
-        working-directory: tests/modules/${{ inputs.module_name }}/examples
+      - name: 🧪 Run Unit Tests (Integration)
+        if: steps.discover-tests.outputs.unit_tests_exist == 'true' && false
+        # The "false" condition disables this step since integration tests usually require cloud credentials
+        # Remove "false" condition when you want to run integration tests in CI
+        working-directory: tests
         run: |
-          echo "🚀 Running Examples Tests for module: ${{ inputs.module_name }}"
+          echo "🚀 Running Integration Unit Tests for module: ${{ inputs.module_name }}"
+
+          # Ensure Go dependencies are up to date
           go mod tidy
-          go test -v ./...
+
+          # Run tests with verbose output and additional logging
+          go test -v -tags 'integration,unit' -timeout 30m ./modules/${{ inputs.module_name }}/unit/... 2>&1 | tee test_output_integration.log
+
+          # Check test output for any errors
+          if grep -q "FAIL" test_output_integration.log; then
+            echo "❌ Integration tests failed. See detailed output above."
+            exit 1
+          fi
+
+      - name: 🌐 Run Examples Tests (Readonly)
+        if: steps.discover-tests.outputs.examples_tests_exist == 'true'
+        working-directory: tests
+        run: |
+          echo "🚀 Running Readonly Examples Tests for module: ${{ inputs.module_name }}"
+          go mod tidy
+          go test -v -tags 'readonly,examples' ./modules/${{ inputs.module_name }}/examples/...
+
+      - name: 🌐 Run Examples Tests (Integration)
+        if: steps.discover-tests.outputs.examples_tests_exist == 'true' && false
+        # The "false" condition disables this step since integration tests usually require cloud credentials
+        # Remove "false" condition when you want to run integration tests in CI
+        working-directory: tests
+        run: |
+          echo "🚀 Running Integration Examples Tests for module: ${{ inputs.module_name }}"
+          go mod tidy
+          go test -v -tags 'integration,examples' ./modules/${{ inputs.module_name }}/examples/...
 
   summary:
     name: 🏁 Validation Summary
