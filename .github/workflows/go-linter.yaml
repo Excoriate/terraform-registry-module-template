@@ -22,7 +22,8 @@ permissions:
   pull-requests: read
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.24'
+  GOLANGCI_LINT_VERSION: 'v1.64.5'
   TEST_ROOT: tests
 
 jobs:
@@ -80,7 +81,7 @@ jobs:
       - name: 🕵️ Go Linter
         uses: golangci/golangci-lint-action@v3
         with:
-          version: latest
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
           working-directory: ${{ matrix.dir }}
           args: --config ../.golangci.yml
           skip-cache: true
@@ -97,6 +98,7 @@ jobs:
           echo "🦫 Go Code Quality Checks Complete!"
           echo "✅ Modules Scanned: ${{ needs.detect-modules.outputs.matrix }}"
           echo "🔍 Detailed results available in job logs."
+          echo "🧹 Golangci-lint Version: ${{ env.GOLANGCI_LINT_VERSION }}"
 
         # Conditional status check
         if: |

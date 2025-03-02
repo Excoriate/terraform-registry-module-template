@@ -46,7 +46,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Modules** (`/modules`):
   - [Module Development Guidelines](/modules/README.md)
-  - [Terraform Modules StyleGuide](/docs/conventions/terraform-modules-styleguide.md)
+  - [Terraform Modules StyleGuide](/docs/terraform-styleguide/terraform-styleguide-modules.md)
   - Reusable, well-structured Terraform module implementations
 
 - **Examples** (`/examples`):
@@ -55,7 +55,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   - Progressive complexity from basic to advanced scenarios
 
 - **Docs** (`/docs`):
-  - [Developer Guide](/docs/developer-guide.md)
+  - [Developer Tools Guide](/docs/guides/development-tools-guide.md)
   - Terraform StyleGuide:
     - [Code Guidelines](/docs/terraform-styleguide/terraform-styleguide-code.md)
     - [Modules Guidelines](/docs/terraform-styleguide/terraform-styleguide-modules.md)

@@ -84,3 +84,9 @@ func (t *TFSourcesDir) GetExamplesDir(exampleName string) string {
 func (t *TFSourcesDir) GetRootDir() string {
 	return t.rootDir
 }
+
+// GetTargetDir returns the absolute path to the specified target test directory.
+// The target directory is used for unit tests and is located at tests/modules/<moduleName>/target/<targetName>.
+func (t *TFSourcesDir) GetTargetDir(moduleName, targetName string) string {
+	return filepath.Join(t.rootDir, "tests", "modules", moduleName, "target", targetName)
+}

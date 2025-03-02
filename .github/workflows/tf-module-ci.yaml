@@ -17,9 +17,10 @@ env:
   TERRAFORM_VERSION: '1.10.0'
   TFLINT_VERSION: 'latest'
   TERRAFORM_DOCS_VERSION: 'latest'
+  GO_VERSION: '1.21'
 
 jobs:
-  validate-module:
+  ci-module:
     name: 🌐 Module Validation
     runs-on: ubuntu-latest
     steps:
@@ -104,10 +105,57 @@ jobs:
           echo "🔬 Validating Terraform module configuration..."
           terraform validate
 
-  validate-examples:
-    name: 🌈 Example Validation
-    needs: validate-module
+  discover-test-targets:
+    name: 🔍 Discover Test Targets
     runs-on: ubuntu-latest
+    outputs:
+      examples: ${{ steps.find-examples.outputs.examples }}
+      unit_tests_exist: ${{ steps.check-unit-tests.outputs.exists }}
+      examples_tests_exist: ${{ steps.check-examples-tests.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔎 Find Example Implementations
+        id: find-examples
+        run: |
+          # Find all directories under the example module directory
+          EXAMPLES=$(find "examples/${{ inputs.module_name }}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "examples=${EXAMPLES}" >> $GITHUB_OUTPUT
+          echo "🌟 Discovered Examples: ${EXAMPLES}"
+
+      - name: 🔎 Check for Unit Tests
+        id: check-unit-tests
+        run: |
+          UNIT_TEST_DIR="tests/modules/${{ inputs.module_name }}/unit"
+          if [ -d "$UNIT_TEST_DIR" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "🔬 Unit Tests Exist: true"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "🔬 Unit Tests Exist: false"
+          fi
+
+      - name: 🔎 Check for Examples Tests
+        id: check-examples-tests
+        run: |
+          EXAMPLES_TEST_DIR="tests/modules/${{ inputs.module_name }}/examples"
+          if [ -d "$EXAMPLES_TEST_DIR" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "🔬 Examples Tests Exist: true"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "🔬 Examples Tests Exist: false"
+          fi
+
+  ci-examples:
+    name: 🌈 Example Validation - ${{ matrix.example }}
+    needs: [ci-module, discover-test-targets]
+    runs-on: ubuntu-latest
+    if: ${{ needs.discover-test-targets.outputs.examples != '[]' && needs.discover-test-targets.outputs.examples != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ${{ fromJson(needs.discover-test-targets.outputs.examples) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -117,61 +165,41 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      - name: 🔍 Discover Example Implementations
-        id: discover-examples
+      - name: 🧪 Validate Example - ${{ matrix.example }}
         run: |
-          # Find all directories under the example module directory
-          EXAMPLES=$(find "examples/${{ inputs.module_name }}" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n") | map(select(. != ""))')
-          echo "examples=${EXAMPLES}" >> $GITHUB_OUTPUT
-          echo "🌟 Discovered Examples: ${EXAMPLES}"
+          echo "🔍 Validating example: ${{ matrix.example }}"
 
-      - name: 🧪 Validate Example Implementations
-        env:
-          EXAMPLES: ${{ steps.discover-examples.outputs.examples }}
-        run: |
-          # Convert JSON array to bash array
-          readarray -t EXAMPLE_ARRAY < <(echo '${{ steps.discover-examples.outputs.examples }}' | jq -r '.[]')
+          EXAMPLE_PATH="examples/${{ inputs.module_name }}/${{ matrix.example }}"
+          echo "📂 Validating directory: ${EXAMPLE_PATH}"
 
-          # Validate each example
-          for EXAMPLE in "${EXAMPLE_ARRAY[@]}"; do
-            if [ -n "$EXAMPLE" ]; then
-              echo "🔍 Validating example: $EXAMPLE"
+          # Change to example directory
+          cd "${EXAMPLE_PATH}"
 
-              EXAMPLE_PATH="examples/${{ inputs.module_name }}/${EXAMPLE}"
-              echo "📂 Validating directory: ${EXAMPLE_PATH}"
+          # Terraform fmt check
+          echo "✨ Checking Terraform formatting..."
+          terraform fmt -check -recursive
 
-              # Change to example directory
-              cd "${EXAMPLE_PATH}"
+          # Terraform init
+          echo "🚀 Initializing Terraform example..."
+          terraform init -backend=false
 
-              # Terraform fmt check
-              echo "✨ Checking Terraform formatting..."
-              terraform fmt -check -recursive
+          # Terraform validate
+          echo "🧪 Validating Terraform configuration..."
+          terraform validate
 
-              # Terraform init
-              echo "🚀 Initializing Terraform example..."
-              terraform init -backend=false
-
-              # Terraform validate
-              echo "🧪 Validating Terraform configuration..."
-              terraform validate
-
-              # Return to root
-              cd - > /dev/null
-            fi
-          done
-
-  terratest-validation:
-    name: 🧪 Terratest Validation
-    needs: [validate-module, validate-examples]
+  ci-terratest-unit-readonly:
+    name: 🧪 Unit Tests (Readonly)
+    needs: [ci-module, discover-test-targets]
     runs-on: ubuntu-latest
+    if: ${{ needs.discover-test-targets.outputs.unit_tests_exist == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Setup Go and Terraform
+      - name: 🛠️ Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
-          cache: false
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
 
       - name: 🔧 Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -179,69 +207,151 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      - name: 🔍 Discover Test Directories
-        id: discover-tests
+      - name: 🧪 Run Unit Tests (Readonly)
+        working-directory: tests
         run: |
-          # Discover unit and integration test directories
-          UNIT_TEST_DIR="tests/modules/${{ inputs.module_name }}/unit"
-          INTEGRATION_TEST_DIR="tests/modules/${{ inputs.module_name }}/integration"
+          echo "🚀 Running Readonly Unit Tests for module: ${{ inputs.module_name }}"
 
-          # Check and set test directory flags
-          UNIT_TESTS_EXIST=false
-          INTEGRATION_TESTS_EXIST=false
+          # Clean up any existing state before running
+          find modules/${{ inputs.module_name }} -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find modules/${{ inputs.module_name }} -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
 
-          if [ -d "$UNIT_TEST_DIR" ]; then
-            UNIT_TESTS_EXIST=true
-          fi
-
-          if [ -d "$INTEGRATION_TEST_DIR" ]; then
-            INTEGRATION_TESTS_EXIST=true
-          fi
-
-          echo "unit_tests_exist=${UNIT_TESTS_EXIST}" >> $GITHUB_OUTPUT
-          echo "integration_tests_exist=${INTEGRATION_TESTS_EXIST}" >> $GITHUB_OUTPUT
-
-          echo "🔬 Unit Tests Exist: ${UNIT_TESTS_EXIST}"
-          echo "🔬 Integration Tests Exist: ${INTEGRATION_TESTS_EXIST}"
-
-      - name: 🧪 Run Unit Tests
-        if: steps.discover-tests.outputs.unit_tests_exist == 'true'
-        working-directory: tests/modules/${{ inputs.module_name }}/unit
-        run: |
-          echo "🚀 Running Unit Tests for module: ${{ inputs.module_name }}"
-          echo "🔍 Current PATH: $PATH"
-          echo "🔍 Terraform version:"
-          terraform version
-          echo "🔍 Which terraform:"
-          which terraform
-
-          # Clean up any existing provider cache
-          rm -rf .terraform
-          rm -f .terraform.lock.hcl
-
-          # Ensure Go dependencies are up to date
+          # Ensure Go modules are up to date
           go mod tidy
 
-          # Run tests with verbose output and additional logging
-          go test -v -timeout 30m ./... 2>&1 | tee test_output.log
+          # Run the tests (without -parallel flag to avoid concurrency issues)
+          go test -v -tags 'readonly,unit' -count=1 ./modules/${{ inputs.module_name }}/unit/...
 
-          # Check test output for any errors
-          if grep -q "FAIL" test_output.log; then
-            echo "❌ Tests failed. See detailed output above."
-            exit 1
-          fi
+  ci-terratest-examples-readonly:
+    name: 🧪 Examples Tests (Readonly)
+    needs: [ci-module, discover-test-targets]
+    runs-on: ubuntu-latest
+    if: ${{ needs.discover-test-targets.outputs.examples_tests_exist == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: 🌐 Run Integration Tests
-        if: steps.discover-tests.outputs.integration_tests_exist == 'true'
-        working-directory: tests/modules/${{ inputs.module_name }}/integration
+      - name: 🛠️ Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: 🧪 Run Examples Tests (Readonly)
+        working-directory: tests
         run: |
-          echo "🚀 Running Integration Tests for module: ${{ inputs.module_name }}"
+          echo "🚀 Running Readonly Examples Tests for module: ${{ inputs.module_name }}"
+
+          # Clean up any existing state before running
+          find modules/${{ inputs.module_name }} -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find modules/${{ inputs.module_name }} -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+
+          # Find all terraform example directories and clean them
+          cd ..
+          find examples/${{ inputs.module_name }} -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find examples/${{ inputs.module_name }} -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+          cd tests
+
+          # Ensure Go modules are up to date
           go mod tidy
-          go test -v ./...
+
+          # Run the tests (without -parallel flag to avoid concurrency issues)
+          go test -v -tags 'readonly,examples' -count=1 ./modules/${{ inputs.module_name }}/examples/...
+
+  ci-terratest-unit-integration:
+    name: 🧪 Unit Tests (Integration)
+    needs: [ci-module, discover-test-targets]
+    runs-on: ubuntu-latest
+    # Integration tests are disabled by default (set to 'false') because they require cloud credentials
+    # When enabled, we check if unit tests exist
+    if: ${{ false && needs.discover-test-targets.outputs.unit_tests_exist == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: 🧪 Run Unit Tests (Integration)
+        working-directory: tests
+        run: |
+          echo "🚀 Running Integration Unit Tests for module: ${{ inputs.module_name }}"
+
+          # Clean up any existing state before running
+          find modules/${{ inputs.module_name }} -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find modules/${{ inputs.module_name }} -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+
+          # Ensure Go modules are up to date
+          go mod tidy
+
+          # Run the tests (without -parallel flag to avoid concurrency issues)
+          go test -v -tags 'integration,unit' -count=1 ./modules/${{ inputs.module_name }}/unit/...
+
+  ci-terratest-examples-integration:
+    name: 🧪 Examples Tests (Integration)
+    needs: [ci-module, discover-test-targets]
+    runs-on: ubuntu-latest
+    # Integration tests are disabled by default (set to 'false') because they require cloud credentials
+    # When enabled, we check if examples tests exist
+    if: ${{ false && needs.discover-test-targets.outputs.examples_tests_exist == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: 🧪 Run Examples Tests (Integration)
+        working-directory: tests
+        run: |
+          echo "🚀 Running Integration Examples Tests for module: ${{ inputs.module_name }}"
+
+          # Clean up any existing state before running
+          find modules/${{ inputs.module_name }} -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find modules/${{ inputs.module_name }} -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+
+          # Find all terraform example directories and clean them
+          cd ..
+          find examples/${{ inputs.module_name }} -name ".terraform" -type d -exec rm -rf {} \; 2>/dev/null || true
+          find examples/${{ inputs.module_name }} -name ".terraform.lock.hcl" -type f -delete 2>/dev/null || true
+          cd tests
+
+          # Ensure Go modules are up to date
+          go mod tidy
+
+          # Run the tests (without -parallel flag to avoid concurrency issues)
+          go test -v -tags 'integration,examples' -count=1 ./modules/${{ inputs.module_name }}/examples/...
 
   summary:
     name: 🏁 Validation Summary
-    needs: [validate-module, validate-examples, terratest-validation]
+    needs:
+      - ci-module
+      - ci-examples
+      - ci-terratest-unit-readonly
+      - ci-terratest-examples-readonly
+      - ci-terratest-unit-integration
+      - ci-terratest-examples-integration
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -251,9 +361,40 @@ jobs:
           echo "✅ Module: ${{ inputs.module_name }}"
           echo "🔍 Detailed results available in job logs."
 
-        # Conditional status check
-        if: |
-          needs.validate-module.result == 'success' &&
-          needs.validate-examples.result == 'success' &&
-          (needs.terratest-validation.result == 'success' ||
-           needs.terratest-validation.result == 'skipped')
+          # Check the status of all jobs
+          if [[ "${{ needs.ci-module.result }}" != "success" ]]; then
+            echo "❌ Module validation failed"
+            exit 1
+          fi
+
+          # ci-examples may be skipped if there are no examples
+          if [[ "${{ needs.ci-examples.result }}" != "success" && "${{ needs.ci-examples.result }}" != "skipped" ]]; then
+            echo "❌ Examples validation failed"
+            exit 1
+          fi
+
+          # Unit tests (readonly) may be skipped if there are no unit tests
+          if [[ "${{ needs.ci-terratest-unit-readonly.result }}" != "success" && "${{ needs.ci-terratest-unit-readonly.result }}" != "skipped" ]]; then
+            echo "❌ Unit tests (readonly) failed"
+            exit 1
+          fi
+
+          # Examples tests (readonly) may be skipped if there are no examples tests
+          if [[ "${{ needs.ci-terratest-examples-readonly.result }}" != "success" && "${{ needs.ci-terratest-examples-readonly.result }}" != "skipped" ]]; then
+            echo "❌ Examples tests (readonly) failed"
+            exit 1
+          fi
+
+          # Integration tests are disabled by default, so they should be skipped
+          if [[ "${{ needs.ci-terratest-unit-integration.result }}" != "success" && "${{ needs.ci-terratest-unit-integration.result }}" != "skipped" ]]; then
+            echo "❌ Unit tests (integration) failed"
+            exit 1
+          fi
+
+          # Integration tests are disabled by default, so they should be skipped
+          if [[ "${{ needs.ci-terratest-examples-integration.result }}" != "success" && "${{ needs.ci-terratest-examples-integration.result }}" != "skipped" ]]; then
+            echo "❌ Examples tests (integration) failed"
+            exit 1
+          fi
+
+          echo "✅ All checks passed!"

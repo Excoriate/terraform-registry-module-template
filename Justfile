@@ -48,28 +48,34 @@ hooks-run:
     @echo "🔍 Running pre-commit hooks from .pre-commit-config.yaml..."
     @./scripts/hooks/pre-commit-init.sh run
 
-# 🧹 Remove Terraform and Terragrunt cache directories to reset project state
-clean-tf MOD='':
-    @echo "🗑️ Cleaning Terraform and Terragrunt cache directories..."
-    @if [ -z "{{MOD}}" ]; then \
-        find . -type d -name ".terraform" -exec rm -rf {} +; \
-        find . -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
-        find . -type f -name "*.tfstate" -exec rm -f {} +; \
-        find . -type f -name "*.tfstate.backup" -exec rm -f {} +; \
-    else \
-        echo "🧹 Cleaning Terraform artifacts for module: {{MOD}}"; \
-        echo "   🔍 Cleaning module directory..."; \
-        find "{{MODULES_DIR}}/{{MOD}}" -type d -name ".terraform" -exec rm -rf {} +; \
-        find "{{MODULES_DIR}}/{{MOD}}" -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
-        find "{{MODULES_DIR}}/{{MOD}}" -type f -name "*.tfstate" -exec rm -f {} +; \
-        find "{{MODULES_DIR}}/{{MOD}}" -type f -name "*.tfstate.backup" -exec rm -f {} +; \
-        \
-        echo "   🔍 Cleaning example directories..."; \
-        find "{{EXAMPLES_DIR}}/{{MOD}}" -type d -name ".terraform" -exec rm -rf {} +; \
-        find "{{EXAMPLES_DIR}}/{{MOD}}" -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
-        find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name "*.tfstate" -exec rm -f {} +; \
-        find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name "*.tfstate.backup" -exec rm -f {} +; \
+# 🔍 Check if a module is a Terraform module
+is-tf-module MOD='default':
+    @echo "🔍 Checking if module: {{MODULES_DIR}}/{{MOD}} is a Terraform module..."
+    @if [ -z "$(find "{{MODULES_DIR}}/{{MOD}}" -type f -name '*.tf')" ]; then \
+        echo "❌ No Terraform files found in module: {{MODULES_DIR}}/{{MOD}}"; \
+        exit 1; \
     fi
+
+# 🧹 Remove Terraform and Terragrunt cache directories to reset project state
+clean-tf:
+    @echo "🗑️ Cleaning Terraform and Terragrunt cache directories across the entire repository..."
+    find . -type d -name ".terraform" -exec rm -rf {} +; \
+    find . -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
+    find . -type f -name "*.tfstate" -exec rm -f {} +; \
+    find . -type f -name "*.tfstate.backup" -exec rm -f {} +; \
+    echo "✅ Cleanup complete!"
+
+# 🧹 Remove Terraform and Terragrunt cache directories for a specific module
+clean-tf-mod MOD='default': (is-tf-module MOD)
+    @echo "🗑️ Cleaning Terraform and Terragrunt cache directories for module: {{MOD}}..."
+    @echo "🔍 Found module: {{MODULES_DIR}}/{{MOD}}"
+    @echo "📂 Listing directories and files in module: {{MODULES_DIR}}/{{MOD}}"
+    @ls -R "{{MODULES_DIR}}/{{MOD}}"
+    find "{{MODULES_DIR}}/{{MOD}}" -type d -name ".terraform" -exec rm -rf {} +; \
+    find "{{MODULES_DIR}}/{{MOD}}" -type d -name ".terragrunt-cache" -exec rm -rf {} +; \
+    find "{{MODULES_DIR}}/{{MOD}}" -type f -name "*.tfstate" -exec rm -f {} +; \
+    find "{{MODULES_DIR}}/{{MOD}}" -type f -name "*.tfstate.backup" -exec rm -f {} +; \
+    echo "✅ Cleanup complete!"
 
 # 🧹 Comprehensive cleanup of project artifacts, state files, and cache directories
 clean:
@@ -152,6 +158,7 @@ go-tidy:
 go-ci: (go-tidy) (go-format) (go-lint)
     @echo "✅ Go files CI checks completed"
 
+# 🐹 Comprehensive CI checks for Go files in Nix environment
 go-ci-nix: (go-tidy-nix) (go-format-nix) (go-lint-nix)
     @echo "✅ Go files CI checks completed in Nix environment"
 
@@ -229,16 +236,6 @@ tf-format-check MOD='':
         cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check -recursive; \
         cd - > /dev/null; \
     fi
-
-# 🌿 Run tests for Terraform module locally
-tf-tests MOD='default' TYPE='unit':
-    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}}..."
-    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && go test -v
-
-# 🌿 Run tests for Terraform module in Nix development environment
-tf-tests-nix MOD='default' TYPE='unit':
-    @echo "🏗️ Running tests for Terraform module: {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} in Nix environment..."
-    @cd {{TESTS_DIR}}/modules/{{MOD}}/{{TYPE}} && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command go test -v
 
 # 🌿 Run Terraform commands with flexible working directory and command selection
 tf-exec WORKDIR='.' CMDS='--help':
@@ -409,3 +406,143 @@ tf-dev-nix MOD='default' EXAMPLE='basic':
     @just tf-ci-static-nix "{{MOD}}"
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+
+# 🧪 Run unit tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running unit tests with readonly tag..."
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
+    fi
+
+    @cd {{TESTS_DIR}} && \
+    if [ -z "{{MOD}}" ]; then \
+        find . -type d -name ".terraform" -exec rm -rf {} +; \
+        find . -type f -name ".terraform.lock.hcl" -delete; \
+        go test \
+            -v \
+            -tags "{{TAGS}}" \
+            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+            -timeout="{{TIMEOUT}}" \
+            ./...; \
+    else \
+        find "./modules/{{MOD}}/{{TYPE}}" -type d -name ".terraform" -exec rm -rf {} +; \
+        find "./modules/{{MOD}}/{{TYPE}}" -type f -name ".terraform.lock.hcl" -delete; \
+        go test \
+            -v \
+            -tags "{{TAGS}}" \
+            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+            -timeout="{{TIMEOUT}}" \
+            "./modules/{{MOD}}/{{TYPE}}/..."; \
+    fi
+
+# 🧪 Run unit tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running unit tests with readonly tag in Nix environment..."
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
+    fi
+
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
+    if [ -z '{{MOD}}' ]; then \
+        find . -type d -name '.terraform' -exec rm -rf {} +; \
+        find . -type f -name '.terraform.lock.hcl' -delete; \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            ./...; \
+    else \
+        find './modules/{{MOD}}/{{TYPE}}' -type d -name '.terraform' -exec rm -rf {} +; \
+        find './modules/{{MOD}}/{{TYPE}}' -type f -name '.terraform.lock.hcl' -delete; \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            './modules/{{MOD}}/{{TYPE}}/...'; \
+    fi"
+
+# 🧪 Run example tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running example tests with readonly tag..."
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
+    fi
+
+    @cd {{TESTS_DIR}} && \
+    if [ -z "{{MOD}}" ]; then \
+        find . -type d -name ".terraform" -exec rm -rf {} +; \
+        find . -type f -name ".terraform.lock.hcl" -delete; \
+        go test \
+            -v \
+            -tags "{{TAGS}}" \
+            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+            -timeout="{{TIMEOUT}}" \
+            ./...; \
+    else \
+        find "./modules/{{MOD}}/{{TYPE}}" -type d -name ".terraform" -exec rm -rf {} +; \
+        find "./modules/{{MOD}}/{{TYPE}}" -type f -name ".terraform.lock.hcl" -delete; \
+        go test \
+            -v \
+            -tags "{{TAGS}}" \
+            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+            -timeout="{{TIMEOUT}}" \
+            "./modules/{{MOD}}/{{TYPE}}/..."; \
+    fi
+
+# 🧪 Run example tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-examples-nix MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running example tests with readonly tag in Nix environment..."
+    @echo "📋 Configuration:"
+    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🏷️  Tags: {{TAGS}}"
+    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   ⏱️  Timeout: {{TIMEOUT}}"
+
+    @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
+        echo "❌ Invalid timeout format. Use format like '60s', '5m', or '1h'"; \
+        exit 1; \
+    fi
+
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
+    if [ -z '{{MOD}}' ]; then \
+        find . -type d -name '.terraform' -exec rm -rf {} +; \
+        find . -type f -name '.terraform.lock.hcl' -delete; \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            ./...; \
+    else \
+        find './modules/{{MOD}}/{{TYPE}}' -type d -name '.terraform' -exec rm -rf {} +; \
+        find './modules/{{MOD}}/{{TYPE}}' -type f -name '.terraform.lock.hcl' -delete; \
+        go test \
+            -v \
+            -tags '{{TAGS}}' \
+            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+            -timeout='{{TIMEOUT}}' \
+            './modules/{{MOD}}/{{TYPE}}/...'; \
+    fi"

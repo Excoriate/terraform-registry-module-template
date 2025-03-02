@@ -7,18 +7,20 @@
   - [Purpose and Scope](#purpose-and-scope)
   - [Styleguide: Fundamental Principles of Terraform Testing](#styleguide-fundamental-principles-of-terraform-testing)
     - [Rule: Testing Philosophy](#rule-testing-philosophy)
-    - [Rule: Testing Approach](#rule-testing-approach)
-  - [Styleguide: Test Structure Rules](#styleguide-test-structure-rules)
+    - [Rule: Type of Tests](#rule-type-of-tests)
+    - [Rule: Build Tags](#rule-build-tags)
+    - [Rule: Test Targets](#rule-test-targets)
+  - [Styleguide: Test Naming Conventions](#styleguide-test-naming-conventions)
     - [Rule: Test Directory Layout](#rule-test-directory-layout)
-    - [Rule: Target Terraform Configuration in the Test Directory](#rule-target-terraform-configuration-in-the-test-directory)
-    - [Rule: Test File Creation, and Organization.](#rule-test-file-creation-and-organization)
-    - [Rule: Test Naming Conventions](#rule-test-naming-conventions)
-  - [Styleguide: Unit Testing Rules](#styleguide-unit-testing-rules)
-    - [Rule: Module Unit Tests](#rule-module-unit-tests)
+    - [Rule: Go code, and utilities in the `pkg/` directory](#rule-go-code-and-utilities-in-the-pkg-directory)
+      - [pkg/repo/finder.go](#pkgrepofindergo)
+      - [pkg/helper/terraform.go](#pkghelperterraformgo)
+    - [Recommended Usage](#recommended-usage)
+    - [Rule: Unit Test Conventions](#rule-unit-test-conventions)
+      - [Rule: Examples Tests Conventions](#rule-examples-tests-conventions)
+    - [Rule: Quality of the Tests written (Terratest)](#rule-quality-of-the-tests-written-terratest)
   - [Styleguide: Test Implementation Rules](#styleguide-test-implementation-rules)
-    - [Rule: Test Function Structure](#rule-test-function-structure)
-  - [Styleguide: Test Utilities](#styleguide-test-utilities)
-    - [Rule: Repository Path Resolution](#rule-repository-path-resolution)
+    - [Rule: Terratest Rules](#rule-terratest-rules)
   - [Styleguide: Test Execution Rules](#styleguide-test-execution-rules)
     - [Rule: Using Justfile Commands](#rule-using-justfile-commands)
 
@@ -31,23 +33,56 @@ This document provides comprehensive guidelines for implementing tests for Terra
 ### Rule: Testing Philosophy
 
 - ENSURE tests validate both resource creation and configuration of the target module.
-- SIMPLE tests, that always test two things:
-  - The module's configuration, and its features, by testing the examples in the `examples/[module-name]/[example-type]/*.tf` modules (e.g. `basic`, `complete`, `minimal`, etc.)
-  - Unit tests that validate particular features, or behaviors, of the module. The sources of these tests are located in the `tests/modules/[module-name]/target` directory.
+- ALWAYS the tests validate the two dimension when creating IaaC with Terraform: 1) the module's configuration, and 2) the module's features.
+  - The module's configuration: Is the module returning the expected plan output under certain conditions? is the module's output the one expected? are the resources created?
+  - The module's features: Is the module's feature working as expected? Are the resources created with the declared configuration and reflect as such in the provider's API?
 - ALWAYS use the latest version of Terratest, and the latest version of Terraform.
+- ALWAYS check, and refresh your memory reading these guidelines, and the [Terratest](https://terratest.gruntwork.io/) documentation.
+- TOTALLY PROHIBITED flaky tests, or tests that are not deterministic.
+- ALWAYS integration tests require apply the resources, and test with the provider's API (AWS, GCP, etc.) the actual resources created before they're destroyed.
 
-### Rule: Testing Approach
+### Rule: Type of Tests
 
-- The tests targets are always two:
-  1. The module's configuration, and its features, by testing the examples in the `examples/[module-name]/[example-type]/*.tf` modules (e.g. `basic`, `complete`, `minimal`, etc.).
-  2. Unit tests that validate particular features, or behaviors, of the module. The sources of these tests are located in the `tests/[module-name]/target` directory. If this directory does not exist, create it, and call it `target/[use-case-name]`.
-- Keep tests simple, readable, and maintainable. Use the [terratest](https://terratest.gruntwork.io/) framework to its fullest extent.
+There are two types of tests based on **their scope**:
 
-## Styleguide: Test Structure Rules
+1. **Unit Tests**: These tests are used to test the module's configuration and individual features. They are always located in the `tests/[module-name]/unit` directory, and always use the terraform configuration in the `tests/modules/[module-name]/target/[use-case-name]/main.tf` file.
+2. **Examples(s) Tests**: These tests are meant to test the example(s) implementation of the module. They are always located in the `tests/[module-name]/examples` directory, and always use the terraform configuration in the `tests/modules/[module-name]/examples/[example-name]` to execute the terratest tests.
+
+### Rule: Build Tags
+
+- `readonly`: These tests are used to test the module's configuration and individual features without applying the resources (without the terraform apply, or destroy).
+- `integration`: These tests runs the whole lifecycle of terraform: init, apply and before destroy, they validate the resources against the provider's API (AWS, GCP, etc.). They always require provider's credentials (E.g.: AWS, GCP, etc.)
+- `unit`: These tests are used to test the module's configuration and individual features without applying the resources (without the terraform apply, or destroy).
+- `examples`: These tests are used to test the example(s) implementation of the module. They are always located in the `tests/[module-name]/examples` directory, and always use the terraform configuration in the `tests/modules/[module-name]/examples/[example-name]` to execute the terratest tests.
+
+### Rule: Test Targets
+
+The test targets are the sources of the terraform configuration files (or modules) that are being tested, and from where the tests [terratest](https://terratest.gruntwork.io/) will be executed against.
+
+- ALWAYS, with no exception, acknowledge the following test targets:
+
+| Test Target (target is where the *.tf files and the modules are located)                                   | Description                                                  |
+|-----------------------------------------------|--------------------------------------------------------------|
+| `modules/[module-name]`                       | The main module being tested. Only run tests against this target for static analysis, and read-only tests (terraform init, terraform validate, etc.).                               |
+| `examples/[module-name]/[example-name]`                | Example implementation of the module that shows different use-cases, and scenarios of the module. |
+| `tests/[module-name]/target/[use-case-name]/` | Use-case specific test suite for particular features of the module that's in the `tests/[module-name]/target/` directory. Suitable for unit tests, and integration tests, but mostly unit tests either read-only, or e2e. |
+
+- ALWAYS, the target modules, or configurations in the `tests/[module-name]/target/[use-case-name]/` directory, are always a one-file terraform configuration, meaning they always have the `main.tf` file, and no other files for simplicity sake. See these examples:
+
+```text
+tests/
+├── target/                     # Target test suite
+│   ├── basic/                  # Basic use-case
+│   │   └── main.tf             # Terraform configuration for basic use-case
+│   └── with_multiple_options/  # Specific use-case for with_multiple_options
+│       └── main.tf             # Terraform configuration for with_multiple_options use-case
+```
+
+## Styleguide: Test Naming Conventions
 
 ### Rule: Test Directory Layout
 
-- FOLLOW this structure for all test implementations:
+- FOLLOW ALWAYS this structure for all test implementations:
 
 ```text
 tests/
@@ -57,40 +92,109 @@ tests/
 ├── pkg/                    # Shared testing utilities
 │   └── repo/               # Repository path utilities
 │       └── finder.go       # Path resolution functions
+│   └── helper/             # Helper utilities
+│       └── resources.go    # Resources utilities
+│       └── terraform.go    # Terraform utilities
 └── modules/                # Module-specific test suites
     └── <module_name>/      # Tests for specific module
         ├── target/         # Use-case specific test suite
-        │   └── <use-case-name>/    # Use-case specific test suite
-        │   └── main.tf         # Terraform configuration for the use-case
+        │   ├── basic/      # Basic use-case configuration
+        │   │   └── main.tf # Terraform configuration for basic use-case
+        │   ├── specific_use_case/  # Specific use-case depending on the module's configuration, and capabilities
+        │   │   └── main.tf # Terraform configuration for specific use-case
+        │   └── disabled_module/  # Specific use-case for disabled configuration
+        │       └── main.tf # Terraform configuration for disabled configuration use-case
         ├── unit/           # Unit test suite
-        │   ├── module_test.go    # Tests for the module itself
-        │   └── examples_test.go  # Tests for the module's examples
-        │   └── features_test.go  # Tests for the module's features. These tests runs against the target module(s)
-        └── integration/    # Integration test suite (when needed)
-            ├── module_test.go
-            └── examples_test.go
+        │   └── target_specific_use_case_ro_unit_test.go          # Read-only unit test for specific configuration
+        │   └── target_specific_use_case_integration_test.go      # End-to-end integration test for specific use-case
+        └── examples/    # Examples test suite, with e2e tests
+            ├── example_complete_integration_test.go                # End-to-end integration test for complete example
+            ├── example_basic_ro_test.go                            # Read-only unit test for basic example
+            └── example_disabled_configuration_integration_test.go  # End-to-end integration test for disabled configuration example
 ```
 
 - Boilerplate code that's always included in every test implementation:
-  - `go.mod` and `go.sum` files, to manage the dependencies, since the Go modules are always created in advance.
+  - `go.mod` and `go.sum` files, to manage the dependencies, since the Go modules are always created in advance. Always USE THE LATEST VERSION OF GO that's available. Currently, it's `1.24.0`.
   - `pkg/` directory, to manage the shared testing utilities. More utilities shared by all tests will be added incrementally.
-  - `modules/` directory, to manage the module-specific test suites per module located in the `modules/[module-name]/` directory.
-  - `target/` directory, to manage the use-case specific test suites. These are ad-hoc terraform configurations that uses the module in the `modules/[module-name]/` directory, to test particular (hence, units) features, and capabilities of the  module. The path should be always relative to the `modules/[module-name]/` directory. E.g.: `modules/[module-name]/target/[use-case-name]/*.tf`.
+- ALWAYS, use the unit directory to group the unit tests that are `readonly`, and `integration`. Which means, they test the module's configuration and individual features in the `tests/[module-name]/target/[use-case-name]/main.tf` files.
+- ALWAYS, use the examples directory to group the examples tests. Which means, they test the examples implementation of the module in the `examples/[module-name]/[example-name]/main.tf` modules.
+- ALWAYS create these TWO TARGET(S) USE CASES, BY DEFAULT:
+  - `disabled_module`: A default target use-case to test the module disabled (with the input variable `is_enabled = false`), called `disabled_module` in the path `tests/[module-name]/target/disabled_module/main.tf`.
+  - `basic`: A default target use-case to test the module enabled with very basic features (with the input variable `is_enabled = true`), called `basic` in the path `tests/[module-name]/target/basic/main.tf`.
+- ALWAYS examine and utilize the pre-existing utilities in the `pkg/` directory:
 
-### Rule: Target Terraform Configuration in the Test Directory
+### Rule: Go code, and utilities in the `pkg/` directory
 
-The purpose of these configurations is to be used for unit testing purposes
+- ALWAYS use the latest golang version available. Currently, it's `1.24.0`.
+- STRICTLY adhere to the `.golangci.yml` file, to ensure the test files are well-written, and easy to understand.
+- ALWAYS use Go Docs (verbose) for each Test Function, to explain what the test is verifying.
+- ALWAYS write common utilities, and helpers in the `pkg/` directory, to be used across all tests.
+- USE descriptive variable names
+- FOLLOW Go naming conventions, and the Go effective practices.
 
-- ALWAYS create the `tests/modules/[module-name]/target/basic/main.tf`, to manage the terraform configuration for the use-case, that's the most basic, and default one. Mimic the configuration placed in the `examples/[module-name]/basic/main.tf` file, as a good starting point, and reference. Nevertheless, ALSO CHECK the `variables.tf` file, and the `outputs.tf` file, to ensure the use-case is properly configured (from the `modules/[module-name]/variables.tf` and `modules/[module-name]/outputs.tf` files).
-- ALWAYS call the first target unit-test module `basic`, so if you're creating a new target unit-test module, name it `tests/modules/[module-name]/target/basic/main.tf`.
-- NAME the module reference as `this`, and not `[module-name]_test` in the `tests/modules/[module-name]/target/[use-case-name]/main.tf` file.
-- OPTIONALLY, create `variables.tf`, and other `*.tf` configuration files, ONLY if they're required by the unit tests.
+#### pkg/repo/finder.go
 
-### Rule: Test File Creation, and Organization.
+- **GetGitRootDir()**: Finds the root directory of the Git repository.
+- **NewTFSourcesDir()**: Creates a directory finder for Terraform sources, returning a struct with methods:
+  - **GetModulesDir(moduleName)**: Retrieves the path to a specific module.
+  - **GetExamplesDir(exampleName)**: Retrieves the path to a specific example.
+  - **GetRootDir()**: Retrieves the repository root path.
+  - **GetTargetDir(moduleName, targetName)**: Retrieves the path to a specific target test directory.
 
-- ALWAYS create the `tests/modules/[module-name]/unit/module_test.go`, to manage the unit tests for the module itself. This test is a simple `terraform init` check on the `modules/[module-name]/` directory. E.g.:
+#### pkg/helper/terraform.go
+
+- **SetupTerraformOptions(t, examplePath, vars)**: Configures Terraform options for tests, automatically resolving example directory paths and setting up Terraform variables for testing.
+- **WaitForResourceDeletion(t, duration)**: Adds a delay to handle eventual consistency in cloud resources.
+
+### Recommended Usage
+
+- ALWAYS use `repo.NewTFSourcesDir()` for path resolution in tests.
+- Use `helper.SetupTerraformOptions()` to create standardized Terraform test configurations.
+- Leverage `WaitForResourceDeletion()` when managing cloud resource cleanup.
+
+### Rule: Unit Test Conventions
+
+- ALWAYS add the build tag `readonly` to the unit tests that are read-only tests. See the [Rule: Build Tags](#rule-build-tags) section for more information.
+- ALWAYS add the build tag `integration` to the unit tests that are integration tests. See the [Rule: Build Tags](#rule-build-tags) section for more information.
+- The unit tests should always have the following build tags: `unit`, without exception.
+- The mandatory naming convention for unit tests are: `[test-name]_[test-scope]_test`, where:
+  - `[test-name]`: is the target of the test (terraform module) to test that should match the name of the directory in the `tests/[module-name]/target/[use-case-name]/` directory. E.g.: if the target usecase is in the `tests/mymodule/target/enabled_keys/` directory, then the test name is `enabled_keys`.
+  - `[test-scope]`: is the scope of the test - ONLY VALID VALUES ARE `readonly`, `integration`, where `readonly` means read-only, and `integration` means end-to-end. See the [Rule: Build Tags](#rule-build-tags) section for more information.
+- For a same target, if it combines `readonly` and `integration`, then the tests should be grouped in the same file if they share the same scope, and the build tag it's set at the file level. E.g.:
+
+```text
+tests/
+└── target/
+    ├── enabled_keys/
+    │   ├── enabled_keys_readonly_test.go # Read-only unit test with the build tag `readonly` and `unit`
+    │   └── enabled_keys_integration_test.go # End-to-end integration test with the build tag `integration` and `unit`
+```
+
+#### Rule: Examples Tests Conventions
+
+- The `examples` directory always should be created, even if it's empty. And, it includes ONLY e2e tests, and no unit tests that uses the example modules in the `examples/[module-name]/[example-name]` modules directory.
+- The mandatory naming convention for examples tests are: `[test-name]_[test-scope]_test`, where:
+  - `[test-name]`: is the name of the test that always match the name of the terraform module in the examples directory. E.g.: if the module is in the `examples/mymodule/basic/` directory, then the test name is `basic`.
+  - `[test-scope]`: is the scope of the test - ONLY VALID VALUES ARE `readonly`, `integration`, where `readonly` means read-only, and `integration` means end-to-end. See the [Rule: Build Tags](#rule-build-tags) section for more information.
+- For a same target, if it combines `readonly` and `integration`, then the tests should be grouped in the same file if they share the same scope, and the build tag it's set at the file level. E.g.:
+
+```text
+tests/
+└── examples/
+    ├── basic_readonly_test.go # Read-only unit test with the build tag `readonly` and `examples`
+    └── basic_integration_test.go # End-to-end integration test with the build tag `integration` and `examples`
+```
+
+### Rule: Quality of the Tests written (Terratest)
+
+- A Good Example of a test function is (self-explanatory, with nice comments, and verbose):
 
 ```go
+// TestSanityChecksOnModule verifies that the Terraform module can be initialized and validated successfully.
+// It performs the following steps:
+// 1. Initializes the Terraform module located in the specified directory.
+// 2. Validates the Terraform configuration to ensure it is syntactically valid and ready for deployment.
+// This test runs in parallel to allow for efficient execution of multiple tests.
 func TestSanityChecksOnModule(t *testing.T) {
 	// Parallel execution with unique test names
 	t.Parallel()
@@ -119,24 +223,43 @@ func TestSanityChecksOnModule(t *testing.T) {
 }
 ```
 
-- ALWAYS create the `examples_basic_test.go`, to test through terratest the `examples/[module-name]/basic`  example module. Here's an example implementation:
-- The unit tests of the configurations in the `tests/modules/[module-name]/target/[use-case-name]`, MUST all be written in the `tests/modules/[module-name]/unit/features_test.go` file (a file with a set of unit tests, all run against the `tests/modules/[module-name]/target/[use-case-name]` target module).
+- The test functions should be named following the pattern: `Test<Behaviour>On<Scenario>When<Condition>`. E.g.: `TestStaticAnalysisOnExamplesWhenTerraformIsInitialized`, and ensure it's consistent, clear, and ideally short without sacrificing the readability.
 
 ```go
-func TestStaticAnalysisOnExamples(t *testing.T) {
+// TestInitializationOnModuleWhenUpgradeEnabled verifies that the Terraform module can be successfully initialized
+// with upgrade enabled, ensuring compatibility and readiness for deployment.
+func TestInitializationOnModuleWhenUpgradeEnabled(t *testing.T) {
 	t.Parallel()
 
 	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
-	// Enhanced Terraform options with logging and upgrade
+	terraformOptions := &terraform.Options{
+		TerraformDir: dirs.GetModulesDir("default"),
+		Upgrade:      true,
+	}
+
+	t.Logf("🔍 Terraform Module Directory: %s", terraformOptions.TerraformDir)
+
+	initOutput, err := terraform.InitE(t, terraformOptions)
+	require.NoError(t, err, "Terraform init failed")
+	t.Log("✅ Terraform Init Output:\n", initOutput)
+}
+
+// TestValidationOnExamplesWhenBasicConfigurationLoaded ensures that the basic example
+// configuration passes Terraform validation checks, verifying its structural integrity.
+func TestValidationOnExamplesWhenBasicConfigurationLoaded(t *testing.T) {
+	t.Parallel()
+
+	dirs, err := repo.NewTFSourcesDir()
+	require.NoError(t, err, "Failed to get Terraform sources directory")
+
 	terraformOptions := &terraform.Options{
 		TerraformDir: dirs.GetExamplesDir("default/basic"),
 		Upgrade:      true,
 	}
 
-	// Detailed logging of module directory
-	t.Logf("🔍 Terraform Module Directory: %s", terraformOptions.TerraformDir)
+	t.Logf("🔍 Terraform Examples Directory: %s", terraformOptions.TerraformDir)
 
 	// Initialize with detailed error handling
 	initOutput, err := terraform.InitE(t, terraformOptions)
@@ -154,24 +277,22 @@ func TestStaticAnalysisOnExamples(t *testing.T) {
 	t.Log("✅ Terraform fmt Output:\n", fmtOutput)
 }
 
-func TestPlanOnExamples(t *testing.T) {
+// TestPlanningOnExamplesWhenModuleEnabled verifies the Terraform plan generation
+// for the basic example when the module is explicitly enabled.
+func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
 	t.Parallel()
 
 	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
-	// Enhanced Terraform options with logging and upgrade
 	terraformOptions := &terraform.Options{
 		TerraformDir: dirs.GetExamplesDir("default/basic"),
 		Upgrade:      true,
-
-		// Optional: Add vars for more comprehensive testing
 		Vars: map[string]interface{}{
 			"is_enabled": true,
 		},
 	}
 
-	// Detailed logging of module directory
 	t.Logf("🔍 Terraform Examples Directory: %s", terraformOptions.TerraformDir)
 
 	// Initialize with detailed error handling
@@ -179,12 +300,12 @@ func TestPlanOnExamples(t *testing.T) {
 	require.NoError(t, err, "Terraform init failed")
 	t.Log("✅ Terraform Init Output:\n", initOutput)
 
-	// Optional: Plan to show what would be created in examples
+	// Plan to show what would be created in examples
 	planOutput, err := terraform.PlanE(t, terraformOptions)
 	require.NoError(t, err, "Terraform plan failed")
 	t.Log("📝 Terraform Plan Output:\n", planOutput)
 
-	// Optional: Verify no changes are planned when module is disabled
+	// Verify no changes are planned when module is disabled
 	disabledOptions := &terraform.Options{
 		TerraformDir: dirs.GetExamplesDir("default/basic"),
 		Upgrade:      true,
@@ -199,97 +320,18 @@ func TestPlanOnExamples(t *testing.T) {
 }
 ```
 
-- Whenever you are creating a new tests, always verify the interfaces of the `modules/[module-name]/` directory, and the `examples/[module-name]/[example-type]/*.tf` files, to ensure the use-case is properly configured (interfaces, are the variables, and outputs of the module).
-
-
-### Rule: Test Naming Conventions
-
-- PREFIX all test functions with `Test`
-- USE descriptive names that indicate what is being tested
-- USE always, Go Docs (verbose) for each Test Function, to explain what the test is verifying.
-- FOLLOW this pattern: `Test<Module><Feature><Scenario>`.
-
-An example of well-crafted test names, and test functions are:
-
-```go
-// Compliant Names
-
-// TestDefaultModuleWithEnabledFlag verifies that the default module behaves correctly
-// when the enabled flag is set. It checks that all expected resources are created
-// and that the module initializes without errors.
-func TestDefaultModuleWithEnabledFlag(t *testing.T) { ... }
-
-// TestBasicExampleStaticAnalysis ensures that the basic example configuration passes
-// static analysis checks. This includes verifying that the Terraform code is valid
-// and adheres to best practices.
-func TestBasicExampleStaticAnalysis(t *testing.T) { ... }
-
-// Non-Compliant Names (Avoid)
-// TestFunction1 is a placeholder test function that does not provide any meaningful
-// context about what is being tested. It should be avoided in favor of more descriptive
-// test names that clearly indicate the purpose of the test.
-func TestFunction1(t *testing.T) { ... }
-
-// TestBasic is a vague test function name that does not specify what aspect of the
-// module or functionality is being tested. It is important to use descriptive names
-// to improve test readability and maintainability.
-func TestBasic(t *testing.T) { ... }
-```
-
-- USE descriptive variable names
-- FOLLOW Go naming conventions, and the Go effective practices.
-- MAINTAIN consistency with module variable names
-- USE lowercase with underscores for all file names
-- FOLLOW standard Go test file naming (`*_test.go`)
-- ENSURE file names reflect their purpose
-
-## Styleguide: Unit Testing Rules
-
-### Rule: Module Unit Tests
-
-- VERIFY module initialization succeeds
-- VALIDATE module structure and configuration
-- ENSURE module passes static analysis
-
-```go
-func TestSanityChecksOnModule(t *testing.T) {
-    t.Parallel()
-
-    dirs, err := repo.NewTFSourcesDir()
-    require.NoError(t, err, "Failed to get Terraform sources directory")
-
-    terraformOptions := &terraform.Options{
-        TerraformDir: dirs.GetModulesDir("default"),
-        Upgrade:      true,
-    }
-
-    t.Logf("🔍 Terraform Module Directory: %s", terraformOptions.TerraformDir)
-
-    initOutput, err := terraform.InitE(t, terraformOptions)
-    require.NoError(t, err, "Terraform init failed")
-
-    validateOutput, err := terraform.ValidateE(t, terraformOptions)
-    require.NoError(t, err, "Terraform validate failed")
-}
-```
-
-- TEST module behavior with feature flags enabled and disabled
-- VERIFY conditional resource creation works as expected
-- VALIDATE module handles edge cases properly
-- TEST module with various input combinations
-- VERIFY validation rules work as expected
-- CONFIRM default values are applied correctly
-
 ## Styleguide: Test Implementation Rules
 
-### Rule: Test Function Structure
+### Rule: Terratest Rules
 
 - IMPLEMENT parallel execution with `t.Parallel()`
 - STRUCTURE tests with setup, execution, and validation phases
 - INCLUDE detailed logging for troubleshooting
 
 ```go
-func TestExampleStructure(t *testing.T) {
+// TestPlanningOnExamplesWhenModuleEnabled verifies the Terraform plan generation
+// for the basic example when the module is explicitly enabled.
+func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
     // Enable parallel execution
     t.Parallel()
 
@@ -340,26 +382,25 @@ func TestExampleStructure(t *testing.T) {
 - IMPLEMENT random suffixes for resource names
 - AVOID resource name collisions
 
-## Styleguide: Test Utilities
-
-### Rule: Repository Path Resolution
-
-- USE the `repo` package for path resolution, and other utilities, and packages that are available in the `pkg/` directory.
-- AVOID hardcoded paths, unless it's strictly necessary.
-- IMPLEMENT reusable helper functions in the `pkg` directory
-- SHARE common test logic across test files
 
 ## Styleguide: Test Execution Rules
 
 ### Rule: Using Justfile Commands
 
 - USE Justfile commands for test execution
-
+- ALWAYS inspect with `just` the commands that are available, and the options that can be used. For test executions, there are the following commands that are available:
 
 ```bash
-# Run unit tests for a specific module
-just tf-tests MOD=default
+# 🧪 Run unit tests  - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-unit
 
-# Run unit tests
-just tf-tests MOD=default TYPE=unit
+# 🧪 Run unit tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-unit-nix
+
+# 🧪 Run example tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-examples
+
+# 🧪 Run example tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
+just tf-test-examples-nix
+
 ```

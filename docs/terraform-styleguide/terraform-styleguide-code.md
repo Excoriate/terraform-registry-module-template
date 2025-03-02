@@ -261,4 +261,3 @@ variable "tags" {
     default     = {}
 }
 ```
-
