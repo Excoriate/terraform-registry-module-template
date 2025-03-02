@@ -395,7 +395,6 @@ tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) 
 # 📄 Run Terraform CI checks in Nix development environment
 tf-ci-static-nix MOD='': (tf-format-check-nix MOD) (tf-lint-nix MOD) (tf-docs-generate-nix MOD) (tf-validate-nix MOD)
 
-# Start of Selection
 # 🌀 Quick feedback loop for development
 tf-dev MOD='default' EXAMPLE='basic' CLEAN='false':
     @if [ "{{CLEAN}}" = "true" ]; then \
