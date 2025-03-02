@@ -58,3 +58,6 @@ result-*
 # Nix flake specific
 .flake-registry.json
 flake.lock.old
+
+# Specific ignore pattern for .terraform.lock.hcl files in tests directory
+**/tests/modules/**/**.terraform.lock.hcl
