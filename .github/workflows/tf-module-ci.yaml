@@ -19,7 +19,7 @@ env:
   TERRAFORM_DOCS_VERSION: 'latest'
 
 jobs:
-  validate-module:
+  ci-module:
     name: 🌐 Module Validation
     runs-on: ubuntu-latest
     steps:
@@ -104,9 +104,9 @@ jobs:
           echo "🔬 Validating Terraform module configuration..."
           terraform validate
 
-  validate-examples:
+  ci-examples:
     name: 🌈 Example Validation
-    needs: validate-module
+    needs: ci-module
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -160,9 +160,9 @@ jobs:
             fi
           done
 
-  terratest-validation:
+  ci-terratest:
     name: 🧪 Terratest Validation
-    needs: [validate-module, validate-examples]
+    needs: [ci-module, ci-examples]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -184,25 +184,25 @@ jobs:
         run: |
           # Discover unit and integration test directories
           UNIT_TEST_DIR="tests/modules/${{ inputs.module_name }}/unit"
-          INTEGRATION_TEST_DIR="tests/modules/${{ inputs.module_name }}/integration"
+          EXAMPLES_TEST_DIR="tests/modules/${{ inputs.module_name }}/examples"
 
           # Check and set test directory flags
           UNIT_TESTS_EXIST=false
-          INTEGRATION_TESTS_EXIST=false
+          EXAMPLES_TESTS_EXIST=false
 
           if [ -d "$UNIT_TEST_DIR" ]; then
             UNIT_TESTS_EXIST=true
           fi
 
-          if [ -d "$INTEGRATION_TEST_DIR" ]; then
-            INTEGRATION_TESTS_EXIST=true
+          if [ -d "$EXAMPLES_TEST_DIR" ]; then
+            EXAMPLES_TESTS_EXIST=true
           fi
 
           echo "unit_tests_exist=${UNIT_TESTS_EXIST}" >> $GITHUB_OUTPUT
-          echo "integration_tests_exist=${INTEGRATION_TESTS_EXIST}" >> $GITHUB_OUTPUT
+          echo "examples_tests_exist=${EXAMPLES_TESTS_EXIST}" >> $GITHUB_OUTPUT
 
           echo "🔬 Unit Tests Exist: ${UNIT_TESTS_EXIST}"
-          echo "🔬 Integration Tests Exist: ${INTEGRATION_TESTS_EXIST}"
+          echo "🔬 Examples Tests Exist: ${EXAMPLES_TESTS_EXIST}"
 
       - name: 🧪 Run Unit Tests
         if: steps.discover-tests.outputs.unit_tests_exist == 'true'
@@ -231,17 +231,17 @@ jobs:
             exit 1
           fi
 
-      - name: 🌐 Run Integration Tests
-        if: steps.discover-tests.outputs.integration_tests_exist == 'true'
-        working-directory: tests/modules/${{ inputs.module_name }}/integration
+      - name: 🌐 Run Examples Tests
+        if: steps.discover-tests.outputs.examples_tests_exist == 'true'
+        working-directory: tests/modules/${{ inputs.module_name }}/examples
         run: |
-          echo "🚀 Running Integration Tests for module: ${{ inputs.module_name }}"
+          echo "🚀 Running Examples Tests for module: ${{ inputs.module_name }}"
           go mod tidy
           go test -v ./...
 
   summary:
     name: 🏁 Validation Summary
-    needs: [validate-module, validate-examples, terratest-validation]
+    needs: [ci-module, ci-examples, ci-terratest]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -253,7 +253,7 @@ jobs:
 
         # Conditional status check
         if: |
-          needs.validate-module.result == 'success' &&
-          needs.validate-examples.result == 'success' &&
-          (needs.terratest-validation.result == 'success' ||
-           needs.terratest-validation.result == 'skipped')
+          needs.ci-module.result == 'success' &&
+          needs.ci-examples.result == 'success' &&
+          (needs.ci-terratest.result == 'success' ||
+           needs.ci-terratest.result == 'skipped')
