@@ -286,6 +286,7 @@ tf-lint MOD='':
         for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
             echo "🕵️ Linting directory: $dir"; \
             cd $dir && \
+            tflint --init && \
             tflint --recursive && \
             cd - > /dev/null; \
         done \
@@ -299,6 +300,7 @@ tf-lint MOD='':
         for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
             echo "   📂 Linting example directory: $example_dir"; \
             cd "$example_dir" && \
+            tflint --init && \
             tflint --recursive && \
             cd - > /dev/null; \
         done; \
@@ -311,20 +313,20 @@ tf-lint-nix MOD='':
         for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
             echo "🕵️ Linting directory: $dir"; \
             cd $dir && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
+            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
             cd - > /dev/null; \
         done \
     else \
         echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
         cd "{{MODULES_DIR}}/{{MOD}}" && \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
         cd - > /dev/null; \
         \
         echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
         for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
             echo "   📂 Linting example directory: $example_dir"; \
             cd "$example_dir" && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tflint --recursive && \
+            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
             cd - > /dev/null; \
         done; \
     fi

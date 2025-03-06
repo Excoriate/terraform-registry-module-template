@@ -19,6 +19,7 @@
     - [Rule: Unit Test Conventions](#rule-unit-test-conventions)
       - [Rule: Examples Tests Conventions](#rule-examples-tests-conventions)
     - [Rule: Quality of the Tests written (Terratest)](#rule-quality-of-the-tests-written-terratest)
+    - [Rule: Example of a Well-Structured Test File](#rule-example-of-a-well-structured-test-file)
   - [Styleguide: Test Implementation Rules](#styleguide-test-implementation-rules)
     - [Rule: Terratest Rules](#rule-terratest-rules)
   - [Styleguide: Test Execution Rules](#styleguide-test-execution-rules)
@@ -50,10 +51,36 @@ There are two types of tests based on **their scope**:
 
 ### Rule: Build Tags
 
-- `readonly`: These tests are used to test the module's configuration and individual features without applying the resources (without the terraform apply, or destroy).
-- `integration`: These tests runs the whole lifecycle of terraform: init, apply and before destroy, they validate the resources against the provider's API (AWS, GCP, etc.). They always require provider's credentials (E.g.: AWS, GCP, etc.)
-- `unit`: These tests are used to test the module's configuration and individual features without applying the resources (without the terraform apply, or destroy).
-- `examples`: These tests are used to test the example(s) implementation of the module. They are always located in the `tests/[module-name]/examples` directory, and always use the terraform configuration in the `tests/modules/[module-name]/examples/[example-name]` to execute the terratest tests.
+- Build tags are directives that control which Go source files are included in a package during compilation.
+- ALWAYS use the modern `//go:build` syntax (introduced in Go 1.17) at the very top of the file:
+
+```go
+//go:build integration && examples
+
+package examples
+```
+
+- The following build tags are used to categorize tests:
+  - `readonly`: Tests that validate module configuration without applying resources (no terraform apply/destroy).
+  - `integration`: Tests that run the full Terraform lifecycle (init, apply, validate with provider API, destroy). These tests require provider credentials.
+  - `unit`: Tests for module configuration and individual features in the `tests/[module-name]/unit` directory.
+  - `examples`: Tests for example implementations in the `examples/[module-name]/[example-name]` directory.
+
+- ALWAYS place build tags at the very top of the file with a blank line after them.
+- ALWAYS use logical operators to combine build tags appropriately:
+  - `&&` (AND): Both conditions must be true (e.g., `//go:build integration && examples`)
+  - `||` (OR): Either condition can be true (e.g., `//go:build linux || darwin`)
+  - `!` (NOT): Negates a condition (e.g., `//go:build !windows`)
+
+- For example tests, ALWAYS use the combination of the test type and `examples` tag:
+  - Integration example tests: `//go:build integration && examples`
+  - Read-only example tests: `//go:build readonly && examples`
+
+- For unit tests, ALWAYS use the combination of the test type and `unit` tag:
+  - Integration unit tests: `//go:build integration && unit`
+  - Read-only unit tests: `//go:build readonly && unit`
+
+- NEVER mix incompatible tags (e.g., don't combine `readonly` and `integration` with AND logic).
 
 ### Rule: Test Targets
 
@@ -154,36 +181,46 @@ tests/
 
 ### Rule: Unit Test Conventions
 
-- ALWAYS add the build tag `readonly` to the unit tests that are read-only tests. See the [Rule: Build Tags](#rule-build-tags) section for more information.
-- ALWAYS add the build tag `integration` to the unit tests that are integration tests. See the [Rule: Build Tags](#rule-build-tags) section for more information.
-- The unit tests should always have the following build tags: `unit`, without exception.
-- The mandatory naming convention for unit tests are: `[test-name]_[test-scope]_test`, where:
-  - `[test-name]`: is the target of the test (terraform module) to test that should match the name of the directory in the `tests/[module-name]/target/[use-case-name]/` directory. E.g.: if the target usecase is in the `tests/mymodule/target/enabled_keys/` directory, then the test name is `enabled_keys`.
-  - `[test-scope]`: is the scope of the test - ONLY VALID VALUES ARE `readonly`, `integration`, where `readonly` means read-only, and `integration` means end-to-end. See the [Rule: Build Tags](#rule-build-tags) section for more information.
-- For a same target, if it combines `readonly` and `integration`, then the tests should be grouped in the same file if they share the same scope, and the build tag it's set at the file level. E.g.:
+- ALWAYS add the appropriate build tag at the top of unit test files:
+  - For read-only tests: `//go:build readonly && unit`
+  - For integration tests: `//go:build integration && unit`
+- The build tag MUST be placed at the very top of the file with a blank line after it.
+- The mandatory naming convention for unit test files is: `[test-name]_[test-scope]_test.go`, where:
+  - `[test-name]`: The target of the test (terraform module) that should match the name of the directory in the `tests/[module-name]/target/[use-case-name]/` directory. E.g.: if the target use case is in the `tests/mymodule/target/enabled_keys/` directory, then the test name is `enabled_keys`.
+  - `[test-scope]`: The scope of the test - ONLY VALID VALUES ARE `readonly`, `integration`, where `readonly` means read-only, and `integration` means end-to-end.
+- For a same target, if you need both `readonly` and `integration` tests, they should be in separate files with appropriate build tags:
 
 ```text
 tests/
-└── target/
-    ├── enabled_keys/
-    │   ├── enabled_keys_readonly_test.go # Read-only unit test with the build tag `readonly` and `unit`
-    │   └── enabled_keys_integration_test.go # End-to-end integration test with the build tag `integration` and `unit`
+└── modules/
+    └── mymodule/
+        └── unit/
+            ├── enabled_keys_readonly_test.go  # With build tag: //go:build readonly && unit
+            └── enabled_keys_integration_test.go  # With build tag: //go:build integration && unit
 ```
 
 #### Rule: Examples Tests Conventions
 
-- The `examples` directory always should be created, even if it's empty. And, it includes ONLY e2e tests, and no unit tests that uses the example modules in the `examples/[module-name]/[example-name]` modules directory.
-- The mandatory naming convention for examples tests are: `[test-name]_[test-scope]_test`, where:
-  - `[test-name]`: is the name of the test that always match the name of the terraform module in the examples directory. E.g.: if the module is in the `examples/mymodule/basic/` directory, then the test name is `basic`.
-  - `[test-scope]`: is the scope of the test - ONLY VALID VALUES ARE `readonly`, `integration`, where `readonly` means read-only, and `integration` means end-to-end. See the [Rule: Build Tags](#rule-build-tags) section for more information.
-- For a same target, if it combines `readonly` and `integration`, then the tests should be grouped in the same file if they share the same scope, and the build tag it's set at the file level. E.g.:
+- The `examples` directory should always be created, even if it's empty. It includes tests that use the example modules in the `examples/[module-name]/[example-name]` directory.
+- ALWAYS add the appropriate build tag at the top of example test files:
+  - For read-only tests: `//go:build readonly && examples`
+  - For integration tests: `//go:build integration && examples`
+- The build tag MUST be placed at the very top of the file with a blank line after it.
+- The mandatory naming convention for example test files is: `[test-name]_[test-scope]_test.go`, where:
+  - `[test-name]`: The name of the test that matches the name of the terraform module in the examples directory. E.g.: if the module is in the `examples/mymodule/basic/` directory, then the test name is `basic`.
+  - `[test-scope]`: The scope of the test - ONLY VALID VALUES ARE `readonly`, `integration`, where `readonly` means read-only, and `integration` means end-to-end.
+- For a same example, if you need both `readonly` and `integration` tests, they should be in separate files with appropriate build tags:
 
 ```text
 tests/
-└── examples/
-    ├── basic_readonly_test.go # Read-only unit test with the build tag `readonly` and `examples`
-    └── basic_integration_test.go # End-to-end integration test with the build tag `integration` and `examples`
+└── modules/
+    └── mymodule/
+        └── examples/
+            ├── basic_readonly_test.go  # With build tag: //go:build readonly && examples
+            └── basic_integration_test.go  # With build tag: //go:build integration && examples
 ```
+
+- Example test files should be named after the example they're testing, not after the functionality they're testing.
 
 ### Rule: Quality of the Tests written (Terratest)
 
@@ -318,7 +355,79 @@ func TestPlanningOnExamplesWhenModuleEnabled(t *testing.T) {
 	// Cleanup resources after test
 	terraform.Destroy(t, terraformOptions)
 }
+
 ```
+
+### Rule: Example of a Well-Structured Test File
+
+Below is an example of a well-structured integration test file for an example module:
+
+```go
+//go:build integration && examples
+
+package examples
+
+import (
+	"testing"
+	"time"
+
+	"github.com/example/terraform-module/tests/pkg/repo"
+	"github.com/example/terraform-module/tests/pkg/helper"
+	"github.com/gruntwork-io/terratest/modules/terraform"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// TestDeploymentOnExamplesBasicWhenDefaultFixture verifies the full deployment of
+// the basic example with the default fixture (all components enabled).
+func TestDeploymentOnExamplesBasicWhenDefaultFixture(t *testing.T) {
+	t.Parallel()
+
+	dirs, err := repo.NewTFSourcesDir()
+	require.NoError(t, err, "Failed to get Terraform sources directory")
+
+	// Setup the terraform options with default fixture
+	terraformOptions := &terraform.Options{
+		TerraformDir: dirs.GetExamplesDir("mymodule/basic"),
+		Upgrade:      true,
+		VarFiles:     []string{"fixtures/default.tfvars"},
+	}
+
+	// Cleanup resources when the test completes
+	defer func() {
+		terraform.Destroy(t, terraformOptions)
+		helper.WaitForResourceDeletion(t, 30*time.Second)
+	}()
+
+	t.Logf("🔍 Terraform Example Directory: %s", terraformOptions.TerraformDir)
+	t.Logf("📝 Using fixture: fixtures/default.tfvars")
+
+	// Initialize and apply Terraform
+	terraform.InitAndApply(t, terraformOptions)
+
+	// Get outputs from Terraform
+	output1 := terraform.Output(t, terraformOptions, "output_name_1")
+	output2 := terraform.Output(t, terraformOptions, "output_name_2")
+
+	// Verify outputs
+	assert.NotEmpty(t, output1, "Output 1 should not be empty")
+	assert.NotEmpty(t, output2, "Output 2 should not be empty")
+
+	// Additional verification logic...
+}
+
+```
+
+Key elements of a well-structured test file:
+
+1. **Build Tags**: Placed at the very top of the file with a blank line after them.
+2. **Package Declaration**: Matches the directory structure (e.g., `package examples` for tests in the examples directory).
+3. **Imports**: Organized and grouped logically.
+4. **Test Function Documentation**: Clear comment explaining what the test verifies.
+5. **Parallel Execution**: Using `t.Parallel()` for efficient test execution.
+6. **Resource Cleanup**: Using `defer` to ensure resources are cleaned up after the test.
+7. **Detailed Logging**: Providing context about what's being tested.
+8. **Clear Assertions**: Using appropriate assertion functions with descriptive error messages.
 
 ## Styleguide: Test Implementation Rules
 
