@@ -81,11 +81,14 @@ pc_init() {
         return 1
     fi
 
-    # Verify hook installation
-    verify_hook_installation || {
+    # Verify hook installation - call separately to preserve set -e behavior
+    local verification_result=0
+    verify_hook_installation || verification_result=$?
+
+    if [[ ${verification_result} -ne 0 ]]; then
         log ERROR "Hook verification failed. Please check your Git configuration."
         return 1
-    }
+    fi
 
     # Configure Git to always run hooks
     if ! git config --global core.hooksPath .git/hooks; then

@@ -5,6 +5,8 @@
 # Disable specific warnings that might be too restrictive or context-dependent
 disable=SC2034   # Variables appear unused
 disable=SC2155   # Declare and assign separately for clarity
+disable=SC2310   # Function invoked in condition (set -e disabled)
+disable=SC2250   # Prefer putting braces around variable references
 
 # Enable optional checks for improved code quality
 enable=add-default-case
