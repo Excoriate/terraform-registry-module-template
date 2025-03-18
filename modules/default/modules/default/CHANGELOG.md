@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.2.0...v1.3.0) (2025-03-18)
+
+
+### ✨ Features
+
+* Add random output and update module README ([#29](https://github.com/Excoriate/terraform-registry-module-template/issues/29)) ([81062c9](https://github.com/Excoriate/terraform-registry-module-template/commit/81062c9191f17a9297a1bbb00d9998a0f1bc8529))
+
 ## [1.2.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.1.0...v1.2.0) (2025-02-25)
 
 
