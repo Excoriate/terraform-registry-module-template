@@ -170,14 +170,76 @@ tests/
 
 #### pkg/helper/terraform.go
 
-- **SetupTerraformOptions(t, examplePath, vars)**: Configures Terraform options for tests, automatically resolving example directory paths and setting up Terraform variables for testing.
+- **SetupTerraformOptions(t, examplePath, vars)**: Configures Terraform options for tests with isolated provider cache.
+  - Parameters:
+    - `t`: The testing object for test logging and cleanup functions
+    - `examplePath`: Path to the example module (can be relative like "default/basic" or absolute)
+    - `vars`: Map of Terraform variables to be passed to the example module
+  - Features:
+    - Creates an isolated provider cache directory for each test
+    - Automatically cleans up the cache after the test completes
+    - Handles both absolute and relative paths correctly
+    - Sets up appropriate environment variables
+
+- **SetupTargetTerraformOptions(t, moduleName, targetName, vars)**: Configures Terraform options for unit tests that use target directories.
+  - Parameters:
+    - `t`: The testing object for test logging and cleanup functions
+    - `moduleName`: Name of the module being tested (e.g., "default")
+    - `targetName`: Name of the target test case (e.g., "basic")
+    - `vars`: Map of Terraform variables to be passed to the module
+  - Features:
+    - Sets up isolated provider cache for clean test execution
+    - Automatically resolves paths to the target test directory
+    - Provides consistent environment variables
+
+- **SetupModuleTerraformOptions(t, moduleDir, vars)**: Configures Terraform options for testing a module directly.
+  - Parameters:
+    - `t`: The testing object for test logging and cleanup functions
+    - `moduleDir`: Direct path to the module being tested
+    - `vars`: Map of Terraform variables to be passed to the module
+  - Features:
+    - Creates isolated provider cache
+    - Uses the module directory directly without path handling to prevent path duplication
+    - Disables color output for more consistent test output parsing
+
 - **WaitForResourceDeletion(t, duration)**: Adds a delay to handle eventual consistency in cloud resources.
+  - Parameters:
+    - `t`: The testing object for logging
+    - `duration`: The amount of time to wait (e.g., 30*time.Second)
 
 ### Recommended Usage
 
-- ALWAYS use `repo.NewTFSourcesDir()` for path resolution in tests.
-- Use `helper.SetupTerraformOptions()` to create standardized Terraform test configurations.
-- Leverage `WaitForResourceDeletion()` when managing cloud resource cleanup.
+- **For example tests**: Use `helper.SetupTerraformOptions()` with the example path
+  ```go
+  terraformOptions := helper.SetupTerraformOptions(t, "default/basic", vars)
+  ```
+
+- **For target directory tests**: Use `helper.SetupTargetTerraformOptions()` with module and target names
+  ```go
+  terraformOptions := helper.SetupTargetTerraformOptions(t, "default", "basic", vars)
+  ```
+
+- **For direct module tests**: Use `helper.SetupModuleTerraformOptions()` with the full module path
+  ```go
+  dirs, err := repo.NewTFSourcesDir()
+  require.NoError(t, err)
+  terraformOptions := helper.SetupModuleTerraformOptions(t, dirs.GetModulesDir("default"), vars)
+  ```
+
+- **For path resolution**: Always use `repo.NewTFSourcesDir()` instead of hardcoding paths
+  ```go
+  dirs, err := repo.NewTFSourcesDir()
+  require.NoError(t, err)
+  modulePath := dirs.GetModulesDir("default")
+  examplePath := dirs.GetExamplesDir("default/basic")
+  targetPath := dirs.GetTargetDir("default", "basic")
+  ```
+
+- **For resource cleanup**: Add appropriate delays after resource deletion
+  ```go
+  terraform.Destroy(t, terraformOptions)
+  helper.WaitForResourceDeletion(t, 30*time.Second)
+  ```
 
 ### Rule: Unit Test Conventions
 

@@ -33,6 +33,23 @@ We utilize [Terratest](https://github.com/gruntwork-io/terratest), a Go-based te
    - Lightweight, fast execution
    - Focus on module-specific behaviors
 
+### Testing Benefits
+
+1. **Enhanced Isolation**
+   - Each test runs with its own isolated Terraform provider cache
+   - Tests can run in parallel without resource conflicts
+   - Cleaner test output with independent state
+
+2. **Path Handling**
+   - Automatic path resolution for modules, examples, and test targets
+   - Support for both absolute and relative paths
+   - Prevents path duplication issues and improves reliability
+
+3. **Resource Management**
+   - Automatic cleanup of temporary resources
+   - Support for waiting periods after resource deletion
+   - Consistent environment variables across tests
+
 ## 📂 Directory Structure
 
 ```text
@@ -41,15 +58,24 @@ tests/
 ├── go.mod                  # Go module dependencies
 ├── go.sum                  # Dependency lockfile
 ├── pkg/                    # Shared testing utilities
-│   └── repo/               # Repository path utilities
-│       └── finder.go       # Path resolution functions
+│   ├── repo/               # Repository path utilities
+│   │   └── finder.go       # Path resolution functions
+│   └── helper/             # Helper utilities
+│       ├── resources.go    # Resources utilities
+│       └── terraform.go    # Terraform test configuration helpers
 └── modules/                # Module-specific test suites
     └── <module_name>/      # Tests for specific module
         ├── examples/       # Example configuration tests
-        │   └── basic_readonly_test.go    # Read-only tests for basic example
+        │   ├── basic_readonly_test.go    # Read-only tests for basic example
         │   └── basic_integration_test.go # Integration tests for basic example
-        ├── unit/           # Unit test suite
-        │   └── module_test.go    # Tests for the module itself
+        ├── target/         # Test-specific Terraform configurations
+        │   ├── basic/      # Basic configuration for unit tests
+        │   │   └── main.tf # Terraform configuration for unit tests
+        │   └── disabled_module/  # Configuration for disabled state tests
+        │       └── main.tf # Terraform configuration with module disabled
+        └── unit/           # Unit test suite
+            ├── basic_readonly_test.go    # Read-only unit tests for basic configuration
+            └── basic_integration_test.go # Integration unit tests for basic configuration
 ```
 
 ## 🚀 Test Execution Workflow
@@ -61,12 +87,42 @@ The project uses a `Justfile` to provide a consistent, user-friendly test execut
 #### Running Tests
 
 ```bash
-# Run all tests
-just tf-tests
+# Run all readonly tests for the default module
+just tf-test-unit
 
-# Run tests for a specific module
-just tf-tests MOD=<module_name>
+# Run examples tests with specified parameters
+just tf-test-examples MOD=default TAGS=readonly NOCACHE=true TIMEOUT=60s
+
+# Run integration tests for a specific module
+just tf-test-unit MOD=mymodule TAGS=integration
 ```
+
+### Helper Function Usage
+
+The tests use specialized helper functions to simplify test setup and ensure isolation:
+
+1. **SetupTerraformOptions** - For testing example implementations:
+   ```go
+   terraformOptions := helper.SetupTerraformOptions(t, "default/basic", map[string]interface{}{
+      "is_enabled": true,
+   })
+   ```
+
+2. **SetupTargetTerraformOptions** - For unit tests using target directories:
+   ```go
+   terraformOptions := helper.SetupTargetTerraformOptions(t, "default", "basic", map[string]interface{}{
+      "is_enabled": true,
+   })
+   ```
+
+3. **SetupModuleTerraformOptions** - For testing modules directly:
+   ```go
+   dirs, err := repo.NewTFSourcesDir()
+   require.NoError(t, err)
+   terraformOptions := helper.SetupModuleTerraformOptions(t, dirs.GetModulesDir("default"), map[string]interface{}{
+      "is_enabled": true,
+   })
+   ```
 
 ### Test Execution Variants
 
@@ -78,34 +134,38 @@ just tf-tests MOD=<module_name>
 2. **Nix Development Environment**
    ```bash
    # Run tests in reproducible Nix environment
-   just tf-tests-nix
+   just tf-test-unit-nix
+   just tf-test-examples-nix
    ```
 
 ## 💡 Best Practices
 
 ### Writing Tests
 
-- Use descriptive test function names
-- Cover multiple scenarios (enabled/disabled states)
-- Validate resource attributes
-- Test error conditions
-- Clean up resources after tests
+- Use descriptive test function names in the format `Test<Behaviour>On<Target>When<Condition>`
+- Enable parallel test execution with `t.Parallel()`
+- Use the appropriate helper function for your test type
+- Always clean up resources after tests
+- Leverage isolated provider caches for independence
 
 ### Test Function Example
 
 ```go
-func TestBasicExampleInitialization(t *testing.T) {
+// TestInitializationOnBasicExampleWhenModuleEnabled verifies that the basic
+// example can be initialized with the module enabled.
+func TestInitializationOnBasicExampleWhenModuleEnabled(t *testing.T) {
   t.Parallel()
 
-  terraformOptions := &terraform.Options{
-    TerraformDir: "examples/default/basic",
-    Vars:         map[string]interface{}{
-      "is_enabled": true
-    },
-  }
+  // Set up test with isolated provider cache
+  terraformOptions := helper.SetupTerraformOptions(t, "default/basic", map[string]interface{}{
+    "is_enabled": true,
+  })
 
-  terraform.Init(t, terraformOptions)
-  terraform.Plan(t, terraformOptions)
+  // Log the test context
+  t.Logf("Testing example at: %s", terraformOptions.TerraformDir)
+
+  // Initialize and validate the configuration
+  terraform.InitAndValidate(t, terraformOptions)
 }
 ```
 
