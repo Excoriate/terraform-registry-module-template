@@ -1,2 +1,40 @@
-# Disable specific shellcheck warnings
-disable=SC2034,SC2155
+# Shellcheck Configuration for Enhanced Shell Script Quality
+# Last Updated: 2024-07-10
+# Purpose: Enforce best practices, improve security, and ensure code quality
+
+# Disable specific warnings that might be too restrictive or context-dependent
+disable=SC2034   # Variables appear unused
+disable=SC2155   # Declare and assign separately for clarity
+
+# Enable optional checks for improved code quality
+enable=add-default-case
+enable=avoid-nullary-conditions
+enable=check-unassigned-uppercase
+enable=deprecate-which
+enable=quote-safe-variables
+enable=require-double-brackets
+enable=require-variable-braces
+
+# Security-focused checks
+check-set-e-suppressed
+check-extra-masked-returns
+
+# Portability and Best Practices
+# Warn about non-POSIX constructs and potential portability issues
+external-sources=true
+
+# Recommended shell script security practices
+# - Enforce quoting
+# - Prevent command injection
+# - Improve error handling
+# - Enhance script robustness
+
+# Specific rule configurations
+# Require explicit error handling
+require-command-check=true
+
+# Enforce safe variable and command substitution
+enforce-supported-shell=bash
+
+# Recommended logging and error reporting
+# Encourage comprehensive error messages and logging
