@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.2.0...v1.3.0) (2025-03-18)
+
+
+### ✨ Features
+
+* Add Makefile to example modules for consistent testing ([#31](https://github.com/Excoriate/terraform-registry-module-template/issues/31)) ([21a1ce7](https://github.com/Excoriate/terraform-registry-module-template/commit/21a1ce709606510697bca1e031ec0dd999d2d03d))
+* Improve test file structure and conventions ([377702c](https://github.com/Excoriate/terraform-registry-module-template/commit/377702cc0f603fa7e96bfdc60b3fa626dacb611a))
+
+
+### 🐛 Bug Fixes
+
+* Initialize TFLint before running it in Justfile ([#33](https://github.com/Excoriate/terraform-registry-module-template/issues/33)) ([377702c](https://github.com/Excoriate/terraform-registry-module-template/commit/377702cc0f603fa7e96bfdc60b3fa626dacb611a))
+
+
+### 🔧 Maintenance
+
+* **docs:** release 1.2.0 ([#28](https://github.com/Excoriate/terraform-registry-module-template/issues/28)) ([54920d1](https://github.com/Excoriate/terraform-registry-module-template/commit/54920d1df5f03f51db85e7f6243f4b254b3c05e9))
+
 ## [1.2.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.1.1...v1.2.0) (2025-03-02)
 
 
