@@ -419,13 +419,13 @@ tf-dev-nix MOD='default' EXAMPLE='basic' CLEAN='false':
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
 
-# 🧪 Run unit tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
-    @echo "🧪 Running unit tests with readonly tag..."
+# 🧪 Run unit tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running unit tests..."
     @echo "📋 Configuration:"
+    @echo "   🏷️  Tags: unit,{{TAGS}}"
     @echo "   🔍 Module: {{MOD}}"
-    @echo "   🏷️  Tags: {{TAGS}}"
-    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
     @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
@@ -434,33 +434,42 @@ tf-test-unit MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEO
     fi
 
     @cd {{TESTS_DIR}} && \
-    if [ -z "{{MOD}}" ]; then \
-        find . -type d -name ".terraform" -exec rm -rf {} +; \
-        find . -type f -name ".terraform.lock.hcl" -delete; \
+    if [ -z "{{MOD}}" ] || [ "{{MOD}}" = "default" ]; then \
+        echo "🔍 Running unit tests for module: default in path {{TESTS_DIR}}/modules/{{MOD}}/unit" && \
+        echo "🧹 Cleaning up terraform state" && \
+        find . -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
+        find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
         go test \
             -v \
-            -tags "{{TAGS}}" \
+            -tags "unit,{{TAGS}}" \
             $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
             -timeout="{{TIMEOUT}}" \
-            ./...; \
+            ./modules/default/unit/...; \
     else \
-        find "./modules/{{MOD}}/{{TYPE}}" -type d -name ".terraform" -exec rm -rf {} +; \
-        find "./modules/{{MOD}}/{{TYPE}}" -type f -name ".terraform.lock.hcl" -delete; \
-        go test \
-            -v \
-            -tags "{{TAGS}}" \
-            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
-            -timeout="{{TIMEOUT}}" \
-            "./modules/{{MOD}}/{{TYPE}}/..."; \
+        if [ -d "./modules/{{MOD}}/unit" ]; then \
+            echo "🔍 Running unit tests for module: {{MOD}}" && \
+            echo "🧹 Cleaning up terraform state" && \
+            find "./modules/{{MOD}}/unit" -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
+            find "./modules/{{MOD}}/unit" -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
+            go test \
+                -v \
+                -tags "unit,{{TAGS}}" \
+                $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+                -timeout="{{TIMEOUT}}" \
+                "./modules/{{MOD}}/unit/..."; \
+        else \
+            echo "❌ Unit test directory not found: ./modules/{{MOD}}/unit"; \
+            exit 1; \
+        fi; \
     fi
 
-# 🧪 Run unit tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'unit,readonly'), TYPE (E.g. 'unit|examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' TIMEOUT='60s':
-    @echo "🧪 Running unit tests with readonly tag in Nix environment..."
+# 🧪 Run unit tests in Nix environment - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-unit-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running unit tests in Nix environment..."
     @echo "📋 Configuration:"
+    @echo "   🏷️  Tags: unit,{{TAGS}}"
     @echo "   🔍 Module: {{MOD}}"
-    @echo "   🏷️  Tags: {{TAGS}}"
-    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
     @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
@@ -469,33 +478,40 @@ tf-test-unit-nix MOD='default' TAGS='unit,readonly' TYPE='unit' NOCACHE='true' T
     fi
 
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
-    if [ -z '{{MOD}}' ]; then \
-        find . -type d -name '.terraform' -exec rm -rf {} +; \
-        find . -type f -name '.terraform.lock.hcl' -delete; \
+    if [ -z '{{MOD}}' ] || [ '{{MOD}}' = 'default' ]; then \
+        echo '🔍 Running unit tests for module: default' && \
+        find . -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
+        find . -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
         go test \
             -v \
-            -tags '{{TAGS}}' \
+            -tags 'unit,{{TAGS}}' \
             $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
             -timeout='{{TIMEOUT}}' \
-            ./...; \
+            ./modules/default/unit/...; \
     else \
-        find './modules/{{MOD}}/{{TYPE}}' -type d -name '.terraform' -exec rm -rf {} +; \
-        find './modules/{{MOD}}/{{TYPE}}' -type f -name '.terraform.lock.hcl' -delete; \
-        go test \
-            -v \
-            -tags '{{TAGS}}' \
-            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
-            -timeout='{{TIMEOUT}}' \
-            './modules/{{MOD}}/{{TYPE}}/...'; \
+        if [ -d './modules/{{MOD}}/unit' ]; then \
+            echo '🔍 Running unit tests for module: {{MOD}}' && \
+            find './modules/{{MOD}}/unit' -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
+            find './modules/{{MOD}}/unit' -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
+            go test \
+                -v \
+                -tags 'unit,{{TAGS}}' \
+                $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+                -timeout='{{TIMEOUT}}' \
+                './modules/{{MOD}}/unit/...'; \
+        else \
+            echo '❌ Unit test directory not found: ./modules/{{MOD}}/unit'; \
+            exit 1; \
+        fi; \
     fi"
 
-# 🧪 Run example tests - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
-    @echo "🧪 Running example tests with readonly tag..."
+# 🧪 Run examples tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-examples TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running example tests..."
     @echo "📋 Configuration:"
+    @echo "   🏷️  Tags: examples,{{TAGS}}"
     @echo "   🔍 Module: {{MOD}}"
-    @echo "   🏷️  Tags: {{TAGS}}"
-    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
     @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
@@ -504,33 +520,42 @@ tf-test-examples MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE=
     fi
 
     @cd {{TESTS_DIR}} && \
-    if [ -z "{{MOD}}" ]; then \
-        find . -type d -name ".terraform" -exec rm -rf {} +; \
-        find . -type f -name ".terraform.lock.hcl" -delete; \
+    if [ -z "{{MOD}}" ] || [ "{{MOD}}" = "default" ]; then \
+        echo "🔍 Running examples tests for module: default in path {{TESTS_DIR}}/modules/{{MOD}}/examples" && \
+        echo "🧹 Cleaning up terraform state" && \
+        find . -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
+        find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
         go test \
             -v \
-            -tags "{{TAGS}}" \
+            -tags "examples,{{TAGS}}" \
             $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
             -timeout="{{TIMEOUT}}" \
-            ./...; \
+            ./modules/default/examples/...; \
     else \
-        find "./modules/{{MOD}}/{{TYPE}}" -type d -name ".terraform" -exec rm -rf {} +; \
-        find "./modules/{{MOD}}/{{TYPE}}" -type f -name ".terraform.lock.hcl" -delete; \
-        go test \
-            -v \
-            -tags "{{TAGS}}" \
-            $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
-            -timeout="{{TIMEOUT}}" \
-            "./modules/{{MOD}}/{{TYPE}}/..."; \
+        if [ -d "./modules/{{MOD}}/examples" ]; then \
+            echo "🔍 Running examples tests for module: {{MOD}}" && \
+            echo "🧹 Cleaning up terraform state" && \
+            find "./modules/{{MOD}}/examples" -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
+            find "./modules/{{MOD}}/examples" -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
+            go test \
+                -v \
+                -tags "examples,{{TAGS}}" \
+                $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
+                -timeout="{{TIMEOUT}}" \
+                "./modules/{{MOD}}/examples/..."; \
+        else \
+            echo "❌ Examples test directory not found: ./modules/{{MOD}}/examples"; \
+            exit 1; \
+        fi; \
     fi
 
-# 🧪 Run example tests on Nix - parameters: MOD (E.g. 'aws'), TAGS (E.g. 'examples,readonly'), TYPE (E.g. 'examples'), NOCACHE (E.g. 'true|false'), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-examples-nix MOD='default' TAGS='examples,readonly' TYPE='examples' NOCACHE='true' TIMEOUT='60s':
-    @echo "🧪 Running example tests with readonly tag in Nix environment..."
+# 🧪 Run examples tests in Nix environment - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
+tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+    @echo "🧪 Running example tests in Nix environment..."
     @echo "📋 Configuration:"
+    @echo "   🏷️  Tags: examples,{{TAGS}}"
     @echo "   🔍 Module: {{MOD}}"
-    @echo "   🏷️  Tags: {{TAGS}}"
-    @echo "   📂 Test Type: {{TYPE}}"
+    @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
     @if ! echo "{{TIMEOUT}}" | grep -qE '^[0-9]+[smh]$'; then \
@@ -539,22 +564,29 @@ tf-test-examples-nix MOD='default' TAGS='examples,readonly' TYPE='examples' NOCA
     fi
 
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
-    if [ -z '{{MOD}}' ]; then \
-        find . -type d -name '.terraform' -exec rm -rf {} +; \
-        find . -type f -name '.terraform.lock.hcl' -delete; \
+    if [ -z '{{MOD}}' ] || [ '{{MOD}}' = 'default' ]; then \
+        echo '🔍 Running examples tests for module: default' && \
+        find . -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
+        find . -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
         go test \
             -v \
-            -tags '{{TAGS}}' \
+            -tags 'examples,{{TAGS}}' \
             $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
             -timeout='{{TIMEOUT}}' \
-            ./...; \
+            ./modules/default/examples/...; \
     else \
-        find './modules/{{MOD}}/{{TYPE}}' -type d -name '.terraform' -exec rm -rf {} +; \
-        find './modules/{{MOD}}/{{TYPE}}' -type f -name '.terraform.lock.hcl' -delete; \
-        go test \
-            -v \
-            -tags '{{TAGS}}' \
-            $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
-            -timeout='{{TIMEOUT}}' \
-            './modules/{{MOD}}/{{TYPE}}/...'; \
+        if [ -d './modules/{{MOD}}/examples' ]; then \
+            echo '🔍 Running examples tests for module: {{MOD}}' && \
+            find './modules/{{MOD}}/examples' -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
+            find './modules/{{MOD}}/examples' -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
+            go test \
+                -v \
+                -tags 'examples,{{TAGS}}' \
+                $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
+                -timeout='{{TIMEOUT}}' \
+                './modules/{{MOD}}/examples/...'; \
+        else \
+            echo '❌ Examples test directory not found: ./modules/{{MOD}}/examples'; \
+            exit 1; \
+        fi; \
     fi"
