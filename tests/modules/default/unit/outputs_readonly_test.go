@@ -5,7 +5,7 @@ package unit
 import (
 	"testing"
 
-	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/repo"
+	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/helper"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/require"
 )
@@ -15,16 +15,11 @@ import (
 func TestOutputsOnBasicTarget(t *testing.T) {
 	t.Parallel()
 
-	dirs, err := repo.NewTFSourcesDir()
-	require.NoError(t, err, "Failed to get Terraform sources directory")
-
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetTargetDir("default", "basic"),
-		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": true,
-		},
-	}
+	// Use helper to set up terraform options with isolated provider cache
+	terraformOptions := helper.SetupTargetTerraformOptions(t, "default", "basic", map[string]interface{}{
+		"is_enabled": true,
+	})
+	terraformOptions.Upgrade = true
 
 	t.Logf("🔍 Terraform Target Directory: %s", terraformOptions.TerraformDir)
 
@@ -44,16 +39,11 @@ func TestOutputsOnBasicTarget(t *testing.T) {
 func TestOutputValuesOnBasicTarget(t *testing.T) {
 	t.Parallel()
 
-	dirs, err := repo.NewTFSourcesDir()
-	require.NoError(t, err, "Failed to get Terraform sources directory")
-
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetTargetDir("default", "basic"),
-		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": true,
-		},
-	}
+	// Use helper to set up terraform options with isolated provider cache
+	terraformOptions := helper.SetupTargetTerraformOptions(t, "default", "basic", map[string]interface{}{
+		"is_enabled": true,
+	})
+	terraformOptions.Upgrade = true
 
 	t.Logf("🔍 Terraform Target Directory: %s", terraformOptions.TerraformDir)
 

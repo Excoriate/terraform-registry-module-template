@@ -13,7 +13,7 @@ set -euo pipefail
 log() {
     local -r level="${1}"
     local -r message="${2}"
-    local -r timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    local -r timestamp=$(date "+%Y-%m-%d %H:%M:%S") || true
     local color=""
 
     case "${level}" in
@@ -46,7 +46,7 @@ verify_hook_installation() {
     git_dir=$(git rev-parse --git-dir)
 
     for hook_type in "${hook_types[@]}"; do
-        if [ ! -f "${git_dir}/hooks/${hook_type}" ]; then
+        if [[ ! -f "${git_dir}/hooks/${hook_type}" ]]; then
             log ERROR "Hook ${hook_type} not installed correctly"
             return 1
         fi
@@ -81,8 +81,11 @@ pc_init() {
         return 1
     fi
 
-    # Verify hook installation
-    if ! verify_hook_installation; then
+    # Verify hook installation - call separately to preserve set -e behavior
+    local verification_result=0
+    verify_hook_installation || verification_result=$?
+
+    if [[ ${verification_result} -ne 0 ]]; then
         log ERROR "Hook verification failed. Please check your Git configuration."
         return 1
     fi

@@ -5,6 +5,7 @@ package unit
 import (
 	"testing"
 
+	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/helper"
 	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/repo"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/require"
@@ -18,10 +19,12 @@ func TestInitializationOnModuleWhenUpgradeEnabled(t *testing.T) {
 	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetModulesDir("default"),
-		Upgrade:      true,
-	}
+	// Get the module directory directly
+	moduleDir := dirs.GetModulesDir("default")
+
+	// Use helper to set up terraform options with isolated provider cache
+	terraformOptions := helper.SetupModuleTerraformOptions(t, moduleDir, map[string]interface{}{})
+	terraformOptions.Upgrade = true
 
 	t.Logf("🔍 Terraform Module Directory: %s", terraformOptions.TerraformDir)
 
@@ -38,10 +41,12 @@ func TestValidationOnModuleWhenBasicConfiguration(t *testing.T) {
 	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
 
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetModulesDir("default"),
-		Upgrade:      true,
-	}
+	// Get the module directory directly
+	moduleDir := dirs.GetModulesDir("default")
+
+	// Use helper to set up terraform options with isolated provider cache
+	terraformOptions := helper.SetupModuleTerraformOptions(t, moduleDir, map[string]interface{}{})
+	terraformOptions.Upgrade = true
 
 	t.Logf("🔍 Terraform Module Directory: %s", terraformOptions.TerraformDir)
 

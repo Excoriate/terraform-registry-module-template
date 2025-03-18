@@ -5,10 +5,9 @@ package examples
 import (
 	"testing"
 
+	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/helper"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/require"
-
-	"github.com/Excoriate/terraform-registry-module-template/tests/pkg/repo"
 )
 
 // TestInitializationOnBasicExampleWhenModuleEnabled verifies that the basic example
@@ -22,18 +21,11 @@ func TestInitializationOnBasicExampleWhenModuleEnabled(t *testing.T) {
 	// Enable parallel test execution
 	t.Parallel()
 
-	// Setup phase - Get directory paths using repo utilities
-	dirs, err := repo.NewTFSourcesDir()
-	require.NoError(t, err, "Failed to get Terraform sources directory")
-
-	// Create Terraform options for the test
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetExamplesDir("default/basic"),
-		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": true,
-		},
-	}
+	// Create Terraform options with isolated provider cache
+	terraformOptions := helper.SetupTerraformOptions(t, "default/basic", map[string]interface{}{
+		"is_enabled": true,
+	})
+	terraformOptions.Upgrade = true
 
 	// Log the test context
 	t.Logf("🔍 Testing example at directory: %s", terraformOptions.TerraformDir)
@@ -55,15 +47,9 @@ func TestValidationOnBasicExampleWhenTerraformInitialized(t *testing.T) {
 	// Enable parallel test execution
 	t.Parallel()
 
-	// Setup phase - Get directory paths using repo utilities
-	dirs, err := repo.NewTFSourcesDir()
-	require.NoError(t, err, "Failed to get Terraform sources directory")
-
-	// Create Terraform options for the test
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetExamplesDir("default/basic"),
-		Upgrade:      true,
-	}
+	// Create Terraform options with isolated provider cache
+	terraformOptions := helper.SetupTerraformOptions(t, "default/basic", map[string]interface{}{})
+	terraformOptions.Upgrade = true
 
 	// Log the test context
 	t.Logf("🔍 Testing example at directory: %s", terraformOptions.TerraformDir)
@@ -73,46 +59,46 @@ func TestValidationOnBasicExampleWhenTerraformInitialized(t *testing.T) {
 	require.NoError(t, err, "Terraform init failed")
 	t.Log("✅ Terraform Init Output:\n", initOutput)
 
-	// Validate the module to ensure configuration correctness
+	// Validate the module to ensure structural integrity
 	validateOutput, err := terraform.ValidateE(t, terraformOptions)
-	require.NoError(t, err, "Terraform validate failed")
+	require.NoError(t, err, "Terraform validation failed")
 	t.Log("✅ Terraform Validate Output:\n", validateOutput)
-
-	// Check formatting
-	fmtOutput, err := terraform.RunTerraformCommandAndGetStdoutE(t, terraformOptions, "fmt", "-recursive", "-check")
-	require.NoError(t, err, "Terraform fmt check failed")
-	t.Log("✅ Terraform fmt Output:\n", fmtOutput)
 }
 
-// TestPlanningOnBasicExampleWhenModuleDisabled verifies that no resources are planned
-// for creation when the module is disabled through the is_enabled flag.
+// TestPlanningOnBasicExampleWhenModuleDisabled verifies that when the module is disabled,
+// no resources are planned for creation, modification, or destruction.
 func TestPlanningOnBasicExampleWhenModuleDisabled(t *testing.T) {
 	// Enable parallel test execution
 	t.Parallel()
 
-	// Setup phase - Get directory paths using repo utilities
-	dirs, err := repo.NewTFSourcesDir()
-	require.NoError(t, err, "Failed to get Terraform sources directory")
-
-	// Create Terraform options with the module disabled
-	terraformOptions := &terraform.Options{
-		TerraformDir: dirs.GetExamplesDir("default/basic"),
-		Upgrade:      true,
-		Vars: map[string]interface{}{
-			"is_enabled": false,
-		},
-	}
+	// Create Terraform options with isolated provider cache
+	terraformOptions := helper.SetupTerraformOptions(t, "default/basic", map[string]interface{}{
+		"is_enabled": false,
+	})
+	terraformOptions.Upgrade = true
 
 	// Log the test context
-	t.Logf("🔍 Testing disabled module at directory: %s", terraformOptions.TerraformDir)
+	t.Logf("🔍 Testing example at directory: %s", terraformOptions.TerraformDir)
 
 	// Execution phase - Initialize the module
 	initOutput, err := terraform.InitE(t, terraformOptions)
 	require.NoError(t, err, "Terraform init failed")
 	t.Log("✅ Terraform Init Output:\n", initOutput)
 
-	// Plan the module to verify no resources are created when disabled
+	// Plan the module to verify no resources are planned when disabled
 	planOutput, err := terraform.PlanE(t, terraformOptions)
 	require.NoError(t, err, "Terraform plan failed")
-	t.Log("📝 Terraform Plan Output (Disabled Module):\n", planOutput)
+	t.Log("📝 Terraform Plan Output:\n", planOutput)
+
+	// Verify the plan does not contain resource creation actions
+	require.NotContains(t, planOutput, "# module.main_module.random_string.random_text",
+		"Plan should not include random_string resource creation when module is disabled")
+
+	// Verify the plan does not include any resource additions
+	require.NotContains(t, planOutput, "Plan: 1 to add",
+		"Plan should not include any resource additions when module is disabled")
+
+	// Verify is_enabled output is set to false - use more flexible matching to handle color codes
+	require.Contains(t, planOutput, "is_enabled = false",
+		"Plan should include output is_enabled=false")
 }

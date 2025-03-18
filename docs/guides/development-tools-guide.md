@@ -100,10 +100,79 @@ Before getting started, ensure you have the following tools installed:
 | `go-tidy-nix` | Tidy Go module dependencies in Nix | `just go-tidy-nix` | Manages Go dependencies in Nix |
 | `go-ci` | Comprehensive Go checks locally | `just go-ci` | Runs formatting, linting, and tidying |
 | `go-ci-nix` | Comprehensive Go checks in Nix | `just go-ci-nix` | Runs formatting, linting, and tidying in Nix |
-| `tf-test-unit` | Run unit tests locally | `just tf-test-unit default` | Runs Terraform module unit tests |
-| `tf-test-unit-nix` | Run unit tests in Nix | `just tf-test-unit-nix default` | Runs Terraform module unit tests in Nix |
-| `test-examples` | Run example tests locally | `just test-examples default` | Runs Terraform module example tests |
-| `tf-test-examples-nix` | Run example tests in Nix | `just tf-test-examples-nix default` | Runs Terraform module example tests in Nix |
+| `tf-test-unit` | Run unit tests with isolated provider cache | `just tf-test-unit [MOD=default] [TAGS=readonly] [NOCACHE=true] [TIMEOUT=60s]` | Runs Terraform module unit tests with various options |
+| `tf-test-unit-nix` | Run unit tests in Nix environment | `just tf-test-unit-nix [MOD=default] [TAGS=readonly] [NOCACHE=true] [TIMEOUT=60s]` | Runs Terraform module unit tests in Nix |
+| `tf-test-examples` | Run example tests with isolated provider cache | `just tf-test-examples [MOD=default] [TAGS=readonly] [NOCACHE=true] [TIMEOUT=60s]` | Runs Terraform module example tests |
+| `tf-test-examples-nix` | Run example tests in Nix environment | `just tf-test-examples-nix [MOD=default] [TAGS=readonly] [NOCACHE=true] [TIMEOUT=60s]` | Runs Terraform module example tests in Nix |
+
+### 🧪 Testing Parameters
+
+The test recipes accept several parameters to customize test execution:
+
+- `MOD`: Specifies the module to test (e.g., `default`, `mymodule`)
+- `TAGS`: Specifies additional test tags (e.g., `readonly`, `integration`)
+- `NOCACHE`: Controls Go test caching - set to `true` to force tests to run (default: `true`)
+- `TIMEOUT`: Specifies test timeout duration (e.g., `60s`, `5m`, `1h`)
+
+### 🔄 Testing Workflow
+
+The test recipes work in tandem with helper functions in the `tests/pkg/helper/terraform.go` file to provide:
+
+1. **Isolated Terraform Provider Cache**:
+   - Each test gets its own provider cache directory
+   - Automatic cleanup of cache directories after tests
+   - Prevents conflicts between parallel test executions
+
+2. **Simplified Test Setup**:
+   - Helper functions handle path resolution and environment setup
+   - Common patterns for all test types (example tests, unit tests)
+   - Cleaner test code focusing on test logic
+
+3. **Test Types**:
+   - **Unit Tests** (`tf-test-unit`): Test modules against test-specific configurations in `tests/modules/<module>/target/` directory
+   - **Example Tests** (`tf-test-examples`): Test example implementations in `examples/<module>/` directory
+
+### 📚 Helper Functions
+
+The test recipes rely on three main helper functions:
+
+1. **SetupTerraformOptions**: For testing example implementations
+   ```go
+   // Used in example tests
+   terraformOptions := helper.SetupTerraformOptions(t, "default/basic", vars)
+   ```
+
+2. **SetupTargetTerraformOptions**: For unit tests using target directories
+   ```go
+   // Used in unit tests
+   terraformOptions := helper.SetupTargetTerraformOptions(t, "default", "basic", vars)
+   ```
+
+3. **SetupModuleTerraformOptions**: For testing modules directly
+   ```go
+   // Used in module tests
+   terraformOptions := helper.SetupModuleTerraformOptions(t, dirs.GetModulesDir("default"), vars)
+   ```
+
+### 📋 Example Testing Commands
+
+```bash
+# Run all unit tests for default module with readonly tag
+just tf-test-unit
+
+# Run integration tests for a specific module
+just tf-test-unit MOD=mymodule TAGS=integration
+
+# Run example tests with a 5-minute timeout
+just tf-test-examples TIMEOUT=5m
+
+# Run example tests for a specific module without caching
+just tf-test-examples MOD=custommod NOCACHE=true
+
+# Run all tests in Nix environment
+just tf-test-unit-nix
+just tf-test-examples-nix
+```
 
 ### 🌐 YAML Workflow
 
