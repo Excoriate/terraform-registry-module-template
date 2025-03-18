@@ -52,7 +52,7 @@ func SetupTerraformOptions(t *testing.T, examplePath string, vars map[string]int
 }
 
 // SetupTargetTerraformOptions configures Terraform options for unit tests that use target directories
-func SetupTargetTerraformOptions(t *testing.T, moduleName string, targetName string, vars map[string]interface{}) *terraform.Options {
+func SetupTargetTerraformOptions(t *testing.T, moduleName, targetName string, vars map[string]interface{}) *terraform.Options {
 	// Get test directory
 	dirs, err := repo.NewTFSourcesDir()
 	require.NoError(t, err, "Failed to get Terraform sources directory")
