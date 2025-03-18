@@ -16,8 +16,8 @@ enable=require-double-brackets
 enable=require-variable-braces
 
 # Security-focused checks
-check-set-e-suppressed
-check-extra-masked-returns
+enable=check-set-e-suppressed
+enable=check-extra-masked-returns
 
 # Portability and Best Practices
 # Warn about non-POSIX constructs and potential portability issues
