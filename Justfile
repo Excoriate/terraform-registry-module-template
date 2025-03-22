@@ -397,11 +397,12 @@ tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) 
 # 📄 Run Terraform CI checks in Nix development environment
 tf-ci-static-nix MOD='': (tf-format-check-nix MOD) (tf-lint-nix MOD) (tf-docs-generate-nix MOD) (tf-validate-nix MOD)
 
-# 🌀 Quick feedback loop for development
+# 🌀 Quick feedback loop for development E.g: just tf-dev "default" "basic" "true"
 tf-dev MOD='default' EXAMPLE='basic' CLEAN='false':
     @if [ "{{CLEAN}}" = "true" ]; then \
         rm -rf "./modules/{{MOD}}/.terraform" && \
-        rm -f "./modules/{{MOD}}/.terraform.lock.hcl"; \
+        rm -rf "./examples/{{MOD}}/{{EXAMPLE}}/.terraform" && \
+        rm -f "./examples/{{MOD}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
     fi;
     @just tf-ci-static "{{MOD}}"
     @just tf-cmd "{{MOD}}" 'init'
@@ -413,11 +414,14 @@ tf-dev MOD='default' EXAMPLE='basic' CLEAN='false':
 tf-dev-nix MOD='default' EXAMPLE='basic' CLEAN='false':
     @if [ "{{CLEAN}}" = "true" ]; then \
         rm -rf "./modules/{{MOD}}/.terraform" && \
-        rm -f "./modules/{{MOD}}/.terraform.lock.hcl"; \
+        rm -rf "./examples/{{MOD}}/{{EXAMPLE}}/.terraform" && \
+        rm -f "./examples/{{MOD}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
     fi;
     @just tf-ci-static-nix "{{MOD}}"
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+	@just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
+	@just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan'
 
 # 🧪 Run unit tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
 tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
