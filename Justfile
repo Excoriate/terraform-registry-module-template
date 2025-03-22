@@ -420,8 +420,8 @@ tf-dev-nix MOD='default' EXAMPLE='basic' CLEAN='false':
     @just tf-ci-static-nix "{{MOD}}"
     @just tf-cmd-nix "{{MOD}}" 'init'
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
-	@just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
-	@just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan'
+    @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
+    @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan'
 
 # 🧪 Run unit tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
 tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
