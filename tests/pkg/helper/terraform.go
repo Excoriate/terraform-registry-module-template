@@ -28,7 +28,8 @@ func SetupTerraformOptions(t *testing.T, examplePath string, vars map[string]int
 
 	// Set up environment variables for Terraform
 	env := map[string]string{
-		"TF_PLUGIN_CACHE_DIR": tempDir,
+		"TF_PLUGIN_CACHE_DIR":     tempDir,
+		"TF_SKIP_PROVIDER_VERIFY": "1", // Skip provider verification to avoid issues with provider caching
 	}
 
 	t.Logf("🔧 Using isolated provider cache at: %s", tempDir)
@@ -68,7 +69,8 @@ func SetupTargetTerraformOptions(t *testing.T, moduleName, targetName string, va
 
 	// Set up environment variables for Terraform
 	env := map[string]string{
-		"TF_PLUGIN_CACHE_DIR": tempDir,
+		"TF_PLUGIN_CACHE_DIR":     tempDir,
+		"TF_SKIP_PROVIDER_VERIFY": "1", // Skip provider verification to avoid issues with provider caching
 	}
 
 	t.Logf("🔧 Using isolated provider cache at: %s", tempDir)
@@ -99,7 +101,8 @@ func SetupModuleTerraformOptions(t *testing.T, moduleDir string, vars map[string
 
 	// Configure environment variables for Terraform
 	env := map[string]string{
-		"TF_PLUGIN_CACHE_DIR": tempDir,
+		"TF_PLUGIN_CACHE_DIR":     tempDir,
+		"TF_SKIP_PROVIDER_VERIFY": "1", // Skip provider verification to avoid issues with provider caching
 	}
 
 	// Return Terraform options with the isolated provider cache

@@ -30,6 +30,23 @@
           };
         };
 
+        # Version configuration for easy updates
+        terraformVersion = "1.11.2";
+        opentofuVersion = "1.9.0";
+
+        # Convert version string to Nix package name format (e.g., 1.8.0 -> 1_8_0)
+        tfVersionFormatted = builtins.replaceStrings [ "." ] [ "_" ] terraformVersion;
+
+        # Create attribute name for the terraform package
+        tfAttrName = "terraform_${tfVersionFormatted}";
+
+        # Custom terraform package with desired version
+        # Use hasAttr to check if the specific version exists in nixpkgs
+        terraform-pkg = if pkgs.lib.hasAttr tfAttrName pkgs then pkgs.${tfAttrName} else pkgs.terraform; # Fallback to default if specified version not available
+
+        # Custom opentofu package with desired version
+        opentofu-pkg = pkgs.opentofu;
+
         # Consolidated tools list
         devTools = with pkgs; [
           # Go toolchain
@@ -38,10 +55,10 @@
           golangci-lint
 
           # Terraform and related
-          terraform
+          terraform-pkg
           terraform-ls
           tflint
-          opentofu
+          opentofu-pkg
           terraform-docs
 
           # Development and utility tools
@@ -69,8 +86,8 @@
           shellHook = ''
             echo "🚀 Devshell for Terraform Registry Module Template 🛠️"
             echo "Go version: $(go version)"
-            echo "Terraform version: $(terraform version)"
-            echo "OpenTofu version: $(tofu version)"
+            echo "Terraform version: $(${terraform-pkg}/bin/terraform version)"
+            echo "OpenTofu version: $(${opentofu-pkg}/bin/tofu version)"
           '';
         };
 
@@ -97,12 +114,12 @@
               # Terraform and OpenTofu hooks
               terraform-fmt = {
                 enable = true;
-                entry = "${pkgs.terraform}/bin/terraform fmt -check -recursive";
+                entry = "${terraform-pkg}/bin/terraform fmt -check -recursive";
                 files = "\\.(tf|tfvars)$";
               };
               tofu-fmt = {
                 enable = true;
-                entry = "${pkgs.opentofu}/bin/tofu fmt -check -recursive";
+                entry = "${opentofu-pkg}/bin/tofu fmt -check -recursive";
                 files = "\\.(tf|tfvars)$";
               };
 
