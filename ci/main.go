@@ -4,13 +4,18 @@ import (
 	"context"
 	"dagger/terraformci/internal/dagger"
 	"fmt"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
 const (
-	defaultTFVersion  = "1.11.2"
-	defaultImageURL   = "alpine:3.18"
-	defaultModuleName = "default"
+	defaultTFVersion   = "1.11.2"
+	defaultImageURL    = "alpine:3.18"
+	defaultMntPath     = "/src"
+	tfFileExtension    = ".tf"
+	defaultExampleName = "basic"
+	defaultModuleName  = "default"
 )
 
 // Terraformci represents a configurable Terraform CI container with various configuration options.
@@ -18,6 +23,8 @@ const (
 type Terraformci struct {
 	// Ctr is the container to use as a base container.
 	Ctr *dagger.Container
+	// Src is the source directory to use for the Terraform CI container.
+	Src *dagger.Directory
 }
 
 // New creates and configures a new Terraformci instance with flexible initialization options.
@@ -64,32 +71,37 @@ func New(
 	// +defaultPath="/"
 	// +ignore=["*", "!**/*.hcl", "!**/*.tfvars", "!**/*.tfvars.json", "!**/*.tf"]
 	srcDir *dagger.Directory,
+	// tfPath is the path to the Terraform source code.
+	// +optional
+	tfPath string,
 ) (*Terraformci, error) {
 	if ctr != nil {
 		mod := &Terraformci{Ctr: ctr}
 		mod.WithSecrets(ctx, secrets)
-		mod.WithSRC(ctx, srcDir)
+		mod.WithSRC(ctx, tfPath, srcDir)
 		mod, enVarError := mod.WithEnvVars(envVars)
 
 		if enVarError != nil {
 			return nil, enVarError
 		}
 
-		return mod, nil
+		return mod.
+			WithTFPluginCache(), nil
 	}
 
 	if imageURL != "" {
 		mod := &Terraformci{}
 		mod.Ctr = dag.Container().From(imageURL)
 		mod.WithSecrets(ctx, secrets)
-		mod.WithSRC(ctx, srcDir)
+		mod.WithSRC(ctx, tfPath, srcDir)
 		mod, enVarError := mod.WithEnvVars(envVars)
 
 		if enVarError != nil {
 			return nil, enVarError
 		}
 
-		return mod, nil
+		return mod.
+			WithTFPluginCache(), nil
 	}
 
 	// We'll use the binary that should be downloaded from its source, or github repository.
@@ -103,14 +115,24 @@ func New(
 	mod.Ctr = mod.Ctr.WithExec([]string{"terraform", "version"})
 
 	mod.WithSecrets(ctx, secrets)
-	mod.WithSRC(ctx, srcDir)
+	mod.WithSRC(ctx, tfPath, srcDir)
 	mod, enVarError := mod.WithEnvVars(envVars)
 
 	if enVarError != nil {
 		return nil, enVarError
 	}
 
-	return mod, nil
+	return mod.
+		WithTFPluginCache(), nil
+}
+
+func (t *Terraformci) WithTFPluginCache() *Terraformci {
+	t.Ctr = t.Ctr.
+		WithExec([]string{"mkdir", "-p", "/root/.terraform.d/plugin-cache"}).
+		WithExec([]string{"chmod", "755", "/root/.terraform.d/plugin-cache"}).
+		WithMountedCache("/root/.terraform.d/plugin-cache", dag.CacheVolume("terraform-plugin-cache"))
+
+	return t
 }
 
 func getTFInstallCmd(tfVersion string) string {
@@ -125,6 +147,23 @@ func getTFInstallCmd(tfVersion string) string {
 	return strings.TrimSpace(command)
 }
 
+func isNonEmptyDaggerDir(ctx context.Context, dir *dagger.Directory) error {
+	if dir == nil {
+		return fmt.Errorf("dagger directory cannot be nil")
+	}
+
+	entries, err := dir.Entries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get entries from the dagger directory passed: %w", err)
+	}
+
+	if len(entries) == 0 {
+		return fmt.Errorf("no entries found in the dagger directory passed")
+	}
+
+	return nil
+}
+
 // WithSecrets adds secrets to the Terraformci container, making them available as environment variables.
 //
 // This method allows secure injection of sensitive information into the container.
@@ -135,11 +174,9 @@ func getTFInstallCmd(tfVersion string) string {
 // Returns:
 //   - The updated Terraformci instance with secrets mounted
 func (t *Terraformci) WithSecrets(ctx context.Context, secrets []*dagger.Secret) *Terraformci {
-	if len(secrets) > 0 {
-		for _, secret := range secrets {
-			secretName, _ := secret.Name(ctx)
-			t.Ctr = t.Ctr.WithSecretVariable(secretName, secret)
-		}
+	for _, secret := range secrets {
+		secretName, _ := secret.Name(ctx)
+		t.Ctr = t.Ctr.WithSecretVariable(secretName, secret)
 	}
 
 	return t
@@ -155,23 +192,22 @@ func (t *Terraformci) WithSecrets(ctx context.Context, secrets []*dagger.Secret)
 //
 // Returns:
 //   - The updated Terraformci instance with source directory mounted
-func (t *Terraformci) WithSRC(ctx context.Context, dir *dagger.Directory) (*Terraformci, error) {
-	mntPath := "/src"
-
-	entries, err := dir.Entries(ctx)
-	if err != nil {
-		return t, fmt.Errorf("failed to get entries from the src/ directory passed: %w", err)
+func (t *Terraformci) WithSRC(ctx context.Context, workdir string, dir *dagger.Directory) (*Terraformci, error) {
+	if workdir != "" {
+		workdir = filepath.Join(defaultMntPath, workdir)
 	}
 
-	if len(entries) == 0 {
-		return t, fmt.Errorf("no entries found in the src directory passed")
+	if err := isNonEmptyDaggerDir(ctx, dir); err != nil {
+		return t, fmt.Errorf("failed to validate the src/ directory passed: %w", err)
 	}
 
 	// TODO: More specialised validations can be added later.
 
 	t.Ctr = t.Ctr.
-		WithWorkdir(mntPath).
-		WithMountedDirectory(mntPath, dir)
+		WithWorkdir(workdir).
+		WithMountedDirectory(workdir, dir)
+
+	t.Src = dir
 
 	return t, nil
 }
@@ -194,10 +230,12 @@ func (t *Terraformci) WithEnvVars(envVars []string) (*Terraformci, error) {
 			if !strings.Contains(trimmedEnvVar, "=") {
 				return nil, fmt.Errorf("environment variable must be in the format ENVARKEY=VALUE: %s", trimmedEnvVar)
 			}
+
 			parts := strings.Split(trimmedEnvVar, "=")
 			if len(parts) != 2 {
 				return nil, fmt.Errorf("environment variable must be in the format ENVARKEY=VALUE: %s", trimmedEnvVar)
 			}
+
 			t.Ctr = t.Ctr.WithEnvVariable(parts[0], parts[1])
 		}
 	}
@@ -221,10 +259,100 @@ func (t *Terraformci) OpenTerminal() *dagger.Container {
 	return t.Ctr.Terminal()
 }
 
-func (t *Terraformci) ModuleCI(moduleName string) (*dagger.Container, error) {
-	if moduleName == "" {
-		moduleName = defaultModuleName // It's expected that all the modules will have at least a single module called 'default'
+// TFStatic validates the module directory passed and returns a container for the module.
+//
+// This method performs the following checks:
+// 1. Run Terraform init
+// 2. Run Terraform validate
+// 3. Run Terraform fmt -check
+func (t *Terraformci) TFStatic(ctx context.Context,
+	// tfSrc is the source directory to validate
+	tfSrc *dagger.Directory,
+	// tfPath is the path to the Terraform source code
+	// +optional
+	tfPath string,
+	// cacheBurst is the flag to enable cache busting
+	// +optional
+	cacheBurst bool,
+) (*dagger.Container, error) {
+	if _, err := t.WithSRC(ctx, tfPath, tfSrc); err != nil {
+		return nil, fmt.Errorf("failed to validate the module directory passed: %w", err)
 	}
 
-	return nil, nil
+	if cacheBurst {
+		t.Ctr = t.Ctr.
+			WithEnvVariable("CACHE_BUSTER", time.
+				Now().
+				Format(time.RFC3339Nano))
+	}
+
+	t.Ctr = t.Ctr.
+		WithExec([]string{"terraform", "init"}).
+		WithExec([]string{"terraform", "validate"}).
+		WithExec([]string{"terraform", "fmt", "-check"})
+
+	return t.Ctr, nil
+}
+
+func (t *Terraformci) TFExamplesStatic(ctx context.Context,
+	// moduleName is the name of the module to validate
+	// +optional
+	moduleName string,
+	// exampleName is the name of the example to validate
+	// +optional
+	exampleName string,
+	// tfExamples is the examples directory to validate
+	// +optional
+	cacheBurst bool,
+) (*dagger.Container, error) {
+	if cacheBurst {
+		t.Ctr = t.Ctr.
+			WithEnvVariable("CACHE_BUSTER", time.
+				Now().
+				Format(time.RFC3339Nano))
+	}
+
+	if exampleName == "" {
+		exampleName = defaultExampleName
+	}
+
+	if moduleName == "" {
+		moduleName = defaultModuleName
+	}
+
+	// moduleNameNormalised := filepath.Join("modules", moduleName)
+	exampleNameNormalised := filepath.Join("examples", moduleName, exampleName)
+
+	t.Ctr = t.Ctr.
+		WithExec([]string{"sh", "-c", fmt.Sprintf("cd %s", exampleNameNormalised)}).
+		WithExec([]string{"terraform", "init"}).
+		WithExec([]string{"terraform", "validate"}).
+		WithExec([]string{"terraform", "fmt", "-check"})
+
+	return t.Ctr, nil
+}
+
+// TFStaticCI validates the module directory passed and returns the output of the terraform static check.
+//
+// This method performs the following checks:
+// 1. Run Terraform init
+// 2. Run Terraform validate
+// 3. Run Terraform fmt -check
+func (t *Terraformci) TFStaticCI(ctx context.Context,
+	// tfModule is the module directory to validate
+	tfModule *dagger.Directory,
+	// tfPath is the path to the Terraform source code
+	// +optional
+	tfPath string,
+	// cacheBurst is the flag to enable cache busting
+	// +optional
+	cacheBurst bool,
+) (string, error) {
+	container, err := t.TFStatic(ctx, tfModule, tfPath, cacheBurst)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to validate the module directory passed: %w", err)
+	}
+
+	return container.Stdout(ctx)
 }
