@@ -709,3 +709,10 @@ tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             exit 1; \
         fi; \
     fi"
+
+[working-directory:'ci']
+ci-terminal:
+    @echo "🚀 Starting CI terminal (powered by Dagger.io)..."
+    @dagger develop
+    @dagger functions
+    @dagger call open-terminal
