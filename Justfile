@@ -23,6 +23,7 @@ default: help
 TESTS_DIR := 'tests'
 MODULES_DIR := 'modules'
 EXAMPLES_DIR := 'examples'
+FIXTURES_DIR := 'fixtures'
 
 # ℹ️ List all available recipes with their descriptions
 help:
@@ -293,6 +294,7 @@ tf-lint MOD='':
     else \
         echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
         cd "{{MODULES_DIR}}/{{MOD}}" && \
+        tflint --init && \
         tflint --recursive && \
         cd - > /dev/null; \
         \
@@ -397,27 +399,110 @@ tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) 
 # 📄 Run Terraform CI checks in Nix development environment
 tf-ci-static-nix MOD='': (tf-format-check-nix MOD) (tf-lint-nix MOD) (tf-docs-generate-nix MOD) (tf-validate-nix MOD)
 
-# 🌀 Quick feedback loop for development
-tf-dev MOD='default' EXAMPLE='basic' CLEAN='false':
+# 🌀 Quick feedback loop for development E.g: just tf-dev "default" "basic" "true"
+tf-dev MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
+    @echo "🔄 Cleaning up resources for module: {{MOD}}, example: {{EXAMPLE}} (Clean: {{CLEAN}})"
     @if [ "{{CLEAN}}" = "true" ]; then \
         rm -rf "./modules/{{MOD}}/.terraform" && \
-        rm -f "./modules/{{MOD}}/.terraform.lock.hcl"; \
+        rm -rf "./examples/{{MOD}}/{{EXAMPLE}}/.terraform" && \
+        rm -f "./examples/{{MOD}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
+        echo "✅ Cleaned up resources for module: {{MOD}}, example: {{EXAMPLE}}"; \
+    else \
+        echo "🛑 No cleanup performed for module: {{MOD}}, example: {{EXAMPLE}}"; \
     fi;
+
+    @echo "🔍 Running CI checks for module: {{MOD}}"
     @just tf-ci-static "{{MOD}}"
+
+    @echo "🔍 Initializing module: {{MOD}}"
     @just tf-cmd "{{MOD}}" 'init'
+
+    @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MOD}}"
     @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+
+    @echo "🔍 Validating example: {{EXAMPLE}} for module: {{MOD}}"
     @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
-    @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'plan'
+
+    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+        echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for planning"; \
+        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'plan -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}"'; \
+    else \
+        echo "📄 No fixture provided, running plan without it"; \
+        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'plan'; \
+    fi
+
+# 🌀 Quick feedback loop for development whic includes apply, and optionally destroy E.g: just tf-dev-apply "default" "basic" "default.tfvars" "true"
+tf-dev-full MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false': (tf-dev MOD EXAMPLE FIXTURE CLEAN)
+    @echo "🚀 Running apply for module: {{MOD}}"
+    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+        echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for apply"; \
+        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'apply -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+    else \
+        echo "📄 No fixture provided, running apply without it"; \
+        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'apply -auto-approve'; \
+    fi
+
+    @echo "💣 Running destroy for module: {{MOD}}"
+    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+        echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for destroy"; \
+        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+    else \
+        echo "📄 No fixture provided, running destroy without it"; \
+        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -auto-approve'; \
+    fi
+
+# 🌀 Quick feedback loop for development in Nix environment which includes apply and destroy E.g: just tf-dev-full-nix "default" "basic" "default.tfvars" "true"
+tf-dev-full-nix MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false': (tf-dev-full MOD EXAMPLE FIXTURE CLEAN)
+    @echo "🚀 Running apply for module: {{MOD}}"
+    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+        echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for apply"; \
+        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'apply -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+    else \
+        echo "📄 No fixture provided, running apply without it"; \
+        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'apply -auto-approve'; \
+    fi
+
+    @echo "💣 Running destroy for module: {{MOD}}"
+    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+        echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for destroy"; \
+        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+    else \
+        echo "📄 No fixture provided, running destroy without it"; \
+        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -auto-approve'; \
+    fi
+
 
 # 🌀 Quick feedback loop for development in Nix environment
-tf-dev-nix MOD='default' EXAMPLE='basic' CLEAN='false':
+tf-dev-nix MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
+    @echo "🔄 Cleaning up resources for module: {{MOD}}, example: {{EXAMPLE}} (Clean: {{CLEAN}})"
     @if [ "{{CLEAN}}" = "true" ]; then \
         rm -rf "./modules/{{MOD}}/.terraform" && \
-        rm -f "./modules/{{MOD}}/.terraform.lock.hcl"; \
+        rm -rf "./examples/{{MOD}}/{{EXAMPLE}}/.terraform" && \
+        rm -f "./examples/{{MOD}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
+        echo "✅ Cleaned up resources for module: {{MOD}}, example: {{EXAMPLE}}"; \
+    else \
+        echo "🛑 No cleanup performed for module: {{MOD}}, example: {{EXAMPLE}}"; \
     fi;
+
+    @echo "🔍 Running CI checks for module: {{MOD}}"
     @just tf-ci-static-nix "{{MOD}}"
+
+    @echo "🔍 Initializing module: {{MOD}}"
     @just tf-cmd-nix "{{MOD}}" 'init'
+
+    @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MOD}}"
     @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+
+    @echo "🔍 Validating example: {{EXAMPLE}} for module: {{MOD}}"
+    @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
+
+    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+        echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for planning"; \
+        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}"'; \
+    else \
+        echo "📄 No fixture provided, running plan without it"; \
+        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan'; \
+    fi
 
 # 🧪 Run unit tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
 tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
