@@ -294,6 +294,7 @@ tf-lint MOD='':
     else \
         echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
         cd "{{MODULES_DIR}}/{{MOD}}" && \
+        tflint --init && \
         tflint --recursive && \
         cd - > /dev/null; \
         \
