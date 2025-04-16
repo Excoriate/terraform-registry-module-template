@@ -200,25 +200,28 @@ tf-format-all:
     @echo "📂 Scanning directories: modules/, examples/, tests/"
 
     @echo "\n🔍 Formatting files in modules/"
-    @cd modules && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+    @pushd modules > /dev/null && \
+    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
         echo "   📄 Processing: $file"; \
-    done
-    @cd modules && terraform fmt -recursive
-    @cd - > /dev/null
+    done && \
+    terraform fmt -recursive && \
+    popd > /dev/null
 
     @echo "\n🔍 Formatting files in examples/"
-    @cd examples && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+    @pushd examples > /dev/null && \
+    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
         echo "   📄 Processing: $file"; \
-    done
-    @cd examples && terraform fmt -recursive
-    @cd - > /dev/null
+    done && \
+    terraform fmt -recursive && \
+    popd > /dev/null
 
     @echo "\n🔍 Formatting files in tests/"
-    @cd tests && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+    @pushd tests > /dev/null && \
+    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
         echo "   📄 Processing: $file"; \
-    done
-    @cd tests && terraform fmt -recursive
-    @cd - > /dev/null
+    done && \
+    terraform fmt -recursive && \
+    popd > /dev/null
 
     @echo "\n✅ All Terraform files have been formatted!"
 
@@ -367,58 +370,89 @@ tf-lint-nix MOD='':
         done; \
     fi
 
-# 📄 Generate Terraform module documentation locally using terraform-docs, supporting multiple modules
 tf-docs-generate MOD='':
     @echo "🔍 Generating Terraform module documentation..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "📄 Attempting to generate docs for: $dir"; \
-            if [ -d "$dir" ]; then \
-                cd "$dir" && \
-                echo "   🔧 Current directory: $(pwd)" && \
+            echo "📄 Attempting to generate docs for: $$dir"; \
+            if [ -d "$$dir" ]; then \
+                cd "$$dir" && \
+                echo "   🔧 Current directory: $$(pwd)" && \
                 terraform-docs markdown . --output-file README.md || \
-                echo "   ❌ Documentation generation failed for $dir" && \
+                echo "   ❌ Documentation generation failed for $$dir"; \
                 cd - > /dev/null; \
             else \
-                echo "   ❌ Directory not found: $dir"; \
-            fi \
-        done \
+                echo "   ❌ Directory not found: $$dir"; \
+            fi; \
+        done; \
     else \
-        echo "📄 Generating docs for specified module: {{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && \
-        terraform-docs markdown . --output-file README.md || \
-        echo "❌ Documentation generation failed for {{MOD}}"; \
+        if [ -d "modules/{{MOD}}" ] && [ -f "modules/{{MOD}}/.terraform-docs.yml" ]; then \
+            echo "📄 Generating docs for module: modules/{{MOD}}"; \
+            cd "modules/{{MOD}}" && \
+            terraform-docs markdown . --output-file README.md || \
+            echo "❌ Documentation generation failed for modules/{{MOD}}"; \
+            cd - > /dev/null; \
+        else \
+            echo "   ⚠️  Skipping modules/{{MOD}} (no directory or .terraform-docs.yml)"; \
+        fi; \
+        if [ -d "examples/{{MOD}}" ]; then \
+            for exdir in examples/{{MOD}}/*; do \
+                if [ -d "$$exdir" ] && [ -f "$$exdir/.terraform-docs.yml" ]; then \
+                    echo "📄 Generating docs for example: $$exdir"; \
+                    cd "$$exdir" && \
+                    terraform-docs markdown . --output-file README.md || \
+                    echo "❌ Documentation generation failed for $$exdir"; \
+                    cd - > /dev/null; \
+                else \
+                    echo "   ⚠️  Skipping $$exdir (no directory or .terraform-docs.yml)"; \
+                fi; \
+            done; \
+        else \
+            echo "   ⚠️  No examples found for module {{MOD}}"; \
+        fi; \
     fi
 
-# 📄 Generate Terraform module documentation in Nix development environment using terraform-docs, supporting multiple modules
+# 📄 Generate Terraform module documentation in Nix development environment using terraform-docs
 tf-docs-generate-nix MOD='':
-    @echo "🔍 Generating Terraform module documentation in Nix environment..."
+    @echo "🔍 Generating Terraform module documentation (nix)..."
     @if [ -z "{{MOD}}" ]; then \
         for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "📄 Attempting to generate docs for: $dir"; \
-            cd "$dir" && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'terraform-docs markdown . --output-file README.md' && \
-            echo "   ✅ Documentation generated successfully for $dir" || \
-            echo "   ❌ Documentation generation failed for $dir" && \
-            cd - > /dev/null; \
-        done \
-    else \
-        echo "📄 Generating docs for module directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'terraform-docs markdown . --output-file README.md' && \
-        echo "   ✅ Documentation generated successfully for module" || \
-        echo "   ❌ Documentation generation failed for module" && \
-        cd - > /dev/null; \
-        \
-        echo "📄 Generating docs for example subdirectories for module: {{MOD}}"; \
-        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "   📂 Generating docs for example directory: $example_dir"; \
-            cd "$example_dir" && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'terraform-docs markdown . --output-file README.md' && \
-            echo "   ✅ Documentation generated successfully for example" || \
-            echo "   ❌ Documentation generation failed for example" && \
-            cd - > /dev/null; \
+            echo "📄 Attempting to generate docs for: $$dir"; \
+            if [ -d "$$dir" ]; then \
+                cd "$$dir" && \
+                echo "   🔧 Current directory: $$(pwd)" && \
+                nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
+                echo "   ❌ Documentation generation failed for $$dir"; \
+                cd - > /dev/null; \
+            else \
+                echo "   ❌ Directory not found: $$dir"; \
+            fi; \
         done; \
+    else \
+        if [ -d "modules/{{MOD}}" ] && [ -f "modules/{{MOD}}/.terraform-docs.yml" ]; then \
+            echo "📄 Generating docs for module: modules/{{MOD}}"; \
+            cd "modules/{{MOD}}" && \
+            nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
+            echo "❌ Documentation generation failed for modules/{{MOD}}"; \
+            cd - > /dev/null; \
+        else \
+            echo "   ⚠️  Skipping modules/{{MOD}} (no directory or .terraform-docs.yml)"; \
+        fi; \
+        if [ -d "examples/{{MOD}}" ]; then \
+            for exdir in examples/{{MOD}}/*; do \
+                if [ -d "$$exdir" ] && [ -f "$$exdir/.terraform-docs.yml" ]; then \
+                    echo "📄 Generating docs for example: $$exdir"; \
+                    cd "$$exdir" && \
+                    nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
+                    echo "❌ Documentation generation failed for $$exdir"; \
+                    cd - > /dev/null; \
+                else \
+                    echo "   ⚠️  Skipping $$exdir (no directory or .terraform-docs.yml)"; \
+                fi; \
+            done; \
+        else \
+            echo "   ⚠️  No examples found for module {{MOD}}"; \
+        fi; \
     fi
 
 # 📄 Validate Terraform modules locally using terraform validate
