@@ -743,3 +743,74 @@ tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             exit 1; \
         fi; \
     fi"
+
+[working-directory:'ci']
+ci-terminal:
+    @echo "🚀 Starting CI terminal (powered by Dagger.io)..."
+    @dagger develop
+    @dagger functions
+    @dagger call open-terminal
+
+# 🌿 Format Terraform files in Nix development environment
+tf-format-check-nix MOD='':
+    @echo "🌿 Discovering Terraform files in Nix environment..."
+    @if [ -z "{{MOD}}" ]; then \
+        unformatted_files=$(nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check' | tee /dev/tty); \
+        if [ -n "$unformatted_files" ]; then \
+            echo "❌ Some Terraform files are not properly formatted:"; \
+            echo "$unformatted_files"; \
+            exit 1; \
+        else \
+            echo "✅ All Terraform files are correctly formatted"; \
+        fi; \
+    else \
+        echo "📂 Checking formatting for Terraform files in Nix environment: {{MODULES_DIR}}/{{MOD}}"; \
+        module_unformatted=$(nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{MODULES_DIR}}/{{MOD}} && find . -type f \( -name '*.tf' -o -name '*.tfvars' \) -print0 | xargs -0 terraform fmt -check" | tee /dev/tty); \
+        example_unformatted=$(nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{EXAMPLES_DIR}}/{{MOD}} && find . -type f \( -name '*.tf' -o -name '*.tfvars' \) -print0 | xargs -0 terraform fmt -check" | tee /dev/tty); \
+        \
+        if [ -n "$module_unformatted" ] || [ -n "$example_unformatted" ]; then \
+            echo "❌ Some Terraform files are not properly formatted:"; \
+            if [ -n "$module_unformatted" ]; then \
+                echo "📂 Unformatted files in module directory:"; \
+                echo "$module_unformatted"; \
+            fi; \
+            if [ -n "$example_unformatted" ]; then \
+                echo "📂 Unformatted files in example directory:"; \
+                echo "$example_unformatted"; \
+            fi; \
+            exit 1; \
+        else \
+            echo "✅ All Terraform files are correctly formatted"; \
+        fi; \
+    fi
+
+# 🌿 Format all Terraform files across modules, examples, and tests directories in Nix environment
+tf-format-all-nix:
+    @echo "🌿 Formatting all Terraform files across the repository in Nix environment..."
+    @echo "📂 Scanning directories: modules/, examples/, tests/"
+
+    @echo "\n🔍 Formatting files in modules/"
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
+        cd modules && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "   📄 Processing: $file"; \
+        done && \
+        terraform fmt -recursive && \
+        cd - > /dev/null'
+
+    @echo "\n🔍 Formatting files in examples/"
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
+        cd examples && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "   📄 Processing: $file"; \
+        done && \
+        terraform fmt -recursive && \
+        cd - > /dev/null'
+
+    @echo "\n🔍 Formatting files in tests/"
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c '\
+        cd tests && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "   📄 Processing: $file"; \
+        done && \
+        terraform fmt -recursive && \
+        cd - > /dev/null'
+
+    @echo "\n✅ All Terraform files have been formatted in Nix environment!"
