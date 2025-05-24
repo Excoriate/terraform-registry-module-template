@@ -1,20 +1,15 @@
 # 🚀 Terraform Module Development Workflow: Automate setup, formatting, linting, and project management
-#
-# This Justfile provides a comprehensive set of tasks for managing
-# Terraform module development, including:
-# - Environment setup
-# - Code formatting
-# - Linting
-# - Pre-commit hooks
-# - Cleanup utilities
-#
-# Usage:
-#   just <recipe>           # Run a specific task
-#   just                    # Show available tasks
-#   just help               # List all available recipes
 
-# 🌍 Load environment variables from .env file for consistent configuration
+# 🐚 Shell configuration
+# Use bash with strict error handling to prevent silent failures
+# -u: Treat unset variables as an error
+# -e: Exit immediately if a command exits with a non-zero status
+set shell := ["bash", "-uce"]
 set dotenv-load
+
+# Avoid reporting traces to Dagger
+# TODO: Uncomment if traces aren't needed.
+# export NOTHANKS := "1"
 
 # 🎯 Default task: Display available recipes when no specific task is specified
 default: help
@@ -274,6 +269,42 @@ tf-format-check MOD='':
             echo "✅ All Terraform files are correctly formatted"; \
         fi; \
     fi
+
+tf-format-check-nix MOD='':
+    @echo "🌿 Discovering Terraform files in Nix environment..."
+    @if [ -z "{{MOD}}" ]; then \
+        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
+            echo "📄 Found: $file"; \
+        done; \
+        unformatted_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check | tee /dev/tty); \
+        if [ -n "$unformatted_files" ]; then \
+            echo "❌ Some Terraform files are not properly formatted:"; \
+            echo "$unformatted_files"; \
+            exit 1; \
+        else \
+            echo "✅ All Terraform files are correctly formatted"; \
+        fi; \
+    else \
+        echo "📂 Checking formatting for Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
+        module_unformatted=$(cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check | tee /dev/tty); \
+        example_unformatted=$(cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check | tee /dev/tty); \
+        \
+        if [ -n "$module_unformatted" ] || [ -n "$example_unformatted" ]; then \
+            echo "❌ Some Terraform files are not properly formatted:"; \
+            if [ -n "$module_unformatted" ]; then \
+                echo "📂 Unformatted files in module directory:"; \
+                echo "$module_unformatted"; \
+            fi; \
+            if [ -n "$example_unformatted" ]; then \
+                echo "📂 Unformatted files in example directory:"; \
+                echo "$example_unformatted"; \
+            fi; \
+            exit 1; \
+        else \
+            echo "✅ All Terraform files are correctly formatted"; \
+        fi; \
+    fi
+
 
 # 🌿 Run Terraform commands with flexible working directory and command selection
 tf-exec WORKDIR='.' CMDS='--help':
@@ -743,3 +774,43 @@ tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             exit 1; \
         fi; \
     fi"
+
+
+# 🔨 Build the Dagger pipeline
+[working-directory:'pipeline/infra']
+pipeline-infra-build:
+    @echo "🔨 Initializing Dagger development environment"
+    @dagger develop
+    @echo "📋 Building Dagger pipeline"
+    @dagger functions
+
+# 🔨 Help for Dagger job
+[working-directory:'pipeline/infra']
+pipeline-job-help fn: (pipeline-infra-build)
+    @echo "🔨 Help for Dagger job: {{fn}}"
+    @dagger call {{fn}} --help
+
+# 🔨 Open an interactive development shell for the Infra pipeline
+[working-directory:'pipeline/infra']
+pipeline-infra-shell args="": (pipeline-infra-build)
+    @echo "🚀 Launching interactive terminal"
+    @dagger call open-terminal {{args}}
+
+# 🔨 Validate Terraform modules for best practices and security
+[working-directory:'pipeline/infra']
+pipeline-infra-tf-modules-static-check args="": (pipeline-infra-build)
+    @echo " Analyzing Terraform modules for security and best practices"
+    @echo "⚡ Running static analysis checks"
+    @dagger call job-tf-modules-static-check {{args}}
+    @echo "✅ Static analysis completed successfully"
+
+# 🔨 Test Terraform modules against multiple provider versions
+[working-directory:'pipeline/infra']
+pipeline-infra-tf-modules-versions args="": (pipeline-infra-build)
+    @echo " Testing module compatibility across provider versions"
+    @echo "⚡ Running version compatibility checks"
+    @dagger call job-tf-modules-compatibility-check {{args}}
+    @echo "✅ Version compatibility testing completed"
+
+# 🔨 Run comprehensive CI checks for Terraform modules
+pipeline-infra-tf-ci args="": (pipeline-infra-tf-modules-static-check) (pipeline-infra-tf-modules-versions)
