@@ -69,7 +69,41 @@ func New(
 	//
 	// +optional
 	envVars []string,
+
+	// UseHashicorpImage is a flag to use the Hashicorp image.
+	// +optional
+	useHashicorpImage bool,
 ) (*Infra, error) {
+	// 1. If useHashicorpImage is true, override everything and use hashicorp image
+	if useHashicorpImage {
+		mod := &Infra{}
+		if tfVersion == "" {
+			tfVersion = defaultTerraformVersion
+		}
+		hashicorpImageWithTag := fmt.Sprintf("%s:%s", defaultImage, tfVersion)
+		mod.Ctr = dag.Container().From(hashicorpImageWithTag)
+
+		modWithSRC, modWithSRCError := mod.WithSRC(ctx, defaultMntPath, srcDir)
+		if modWithSRCError != nil {
+			return nil, WrapErrorf(modWithSRCError, "failed to initialise dagger module with source directory")
+		}
+		mod = modWithSRC
+
+		mod, enVarError := mod.WithEnvVars(envVars)
+		if enVarError != nil {
+			return nil, WrapErrorf(enVarError, "failed to initialise dagger module with environment variables")
+		}
+
+		// For hashicorp image, terraform is already installed, so skip WithTerraform
+		// and only do git installation and plugin cache setup
+		mod = mod.
+			WithGitPkgInstalled().
+			WithTerraformPluginCache()
+
+		return mod, nil
+	}
+
+	// 2. If ctr is passed, use that container (takes precedence over imageURL)
 	if ctr != nil {
 		mod := &Infra{Ctr: ctr}
 		mod, enVarError := mod.WithEnvVars(envVars)
@@ -88,6 +122,7 @@ func New(
 		return mod, nil
 	}
 
+	// 3. If imageURL is passed, use that image
 	if imageURL != "" {
 		mod := &Infra{}
 		mod.Ctr = dag.Container().From(imageURL)
@@ -107,17 +142,14 @@ func New(
 		return mod, nil
 	}
 
-	// We'll use the binary that should be downloaded from its source, or github repository.
+	// 4. Default: install binaries (use base image + install terraform)
 	mod := &Infra{}
 	if tfVersion == "" {
 		tfVersion = defaultTerraformVersion
 	}
 
-	defaultImageWithTag := fmt.Sprintf("%s:%s", defaultImage, defaultImageTag)
-
-	mod.Ctr = dag.
-		Container().
-		From(defaultImageWithTag)
+	// Use alpine base image for binary installation
+	mod.Ctr = dag.Container().From("alpine:latest")
 
 	modWithSRC, modWithSRCError := mod.WithSRC(ctx, defaultMntPath, srcDir)
 	if modWithSRCError != nil {

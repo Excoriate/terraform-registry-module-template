@@ -210,3 +210,35 @@ func parseCommandArgsFromString(argsString string) ([]string, error) {
 
 	return args, nil
 }
+
+// buildTerraformCommand constructs a well-formed Terraform command with arguments.
+// It validates the command and ensures all arguments are properly formatted.
+//
+// Parameters:
+//   - command: The Terraform command to execute (e.g., "plan", "apply", "destroy")
+//   - arguments: Optional arguments to pass to the command
+//
+// Returns:
+//   - []string: A slice representing the complete command to execute
+//   - error: An error if the command is invalid or malformed
+func buildTerraformCommand(command string, arguments []string) ([]string, error) {
+	trimmedCommand := strings.TrimSpace(command)
+	if trimmedCommand == "" {
+		return nil, NewError("terraform command cannot be empty")
+	}
+
+	// Start with "terraform" and the command
+	cmd := []string{"terraform", trimmedCommand}
+
+	// Add arguments if provided
+	if len(arguments) > 0 {
+		for _, arg := range arguments {
+			trimmedArg := strings.TrimSpace(arg)
+			if trimmedArg != "" {
+				cmd = append(cmd, trimmedArg)
+			}
+		}
+	}
+
+	return cmd, nil
+}
