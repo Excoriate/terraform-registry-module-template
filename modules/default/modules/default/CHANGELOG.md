@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.3.0...v1.4.0) (2025-05-24)
+
+
+### ✨ Features
+
+* Improve Terraform development workflow ([#35](https://github.com/Excoriate/terraform-registry-module-template/issues/35)) ([a815c17](https://github.com/Excoriate/terraform-registry-module-template/commit/a815c17e0996bfc3bb0549d043851f35680dc502))
+
+
+### 🔧 Maintenance
+
+* **module/default:** release 1.3.0 ([#34](https://github.com/Excoriate/terraform-registry-module-template/issues/34)) ([6dce7c2](https://github.com/Excoriate/terraform-registry-module-template/commit/6dce7c265fe447ecca85e5363d8885b4f485aad3))
+
 ## [1.3.0](https://github.com/Excoriate/terraform-registry-module-template/compare/v1.2.0...v1.3.0) (2025-03-25)
 
 
