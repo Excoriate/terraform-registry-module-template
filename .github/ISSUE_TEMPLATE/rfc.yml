@@ -1,0 +1,78 @@
+---
+name: 🚧 Request for Comments (RFC)
+description: Feature design and detailed proposals for the Terraform Module Template
+title: "RFC: "
+labels: ["RFC-proposal", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for submitting an RFC. Please provide as many details as possible to help further enrich this design proposal for the Terraform Module Template.
+  - type: input
+    id: relation
+    attributes:
+      label: Related Issues/Feature Requests
+      description: "If this RFC is related to an existing issue or feature request, please provide the link(s). (Optional)"
+      placeholder: "e.g., #123, #456"
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: "Provide a concise overview of the proposal in one or two paragraphs. What is the core idea?"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Motivation / Use Case
+      description: "Describe the problem this RFC aims to solve, the motivation behind it, and specific use cases relevant to the Terraform Module Template."
+      placeholder: "Why is this change needed? What scenarios does it address?"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Detailed Proposal
+      description: "Explain the design in detail. This should be comprehensive enough for someone familiar with the project to understand and potentially implement it. Consider including code examples, API changes, or architectural diagrams if applicable."
+      placeholder: "What does the user experience look like before and after this design? How does it work technically?"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Out of Scope
+      description: "Clearly define what is considered out of scope for this proposal. This helps to focus the discussion."
+    validations:
+      required: true
+  - type: textarea
+    id: challenges
+    attributes:
+      label: Potential Challenges & Unresolved Questions
+      description: "Identify any potential challenges, edge cases, or unresolved questions. If you have suggestions on how to mitigate them, please include them."
+    validations:
+      required: false
+  - type: textarea
+    id: integrations
+    attributes:
+      label: Dependencies and Integrations (Optional)
+      description: "If applicable, describe any new dependencies this feature might introduce or how it might integrate with other modules, tools, or utilities."
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions Considered (Optional)
+      description: "Describe any alternative solutions or approaches you considered and why you chose this proposal over them."
+      render: markdown
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Contribution Guidelines
+      description: By submitting this RFC, you agree to follow our project's [Code of Conduct](../../CODE_OF_CONDUCT.md).
+      options:
+        - label: I agree to follow this project's Code of Conduct.
+          required: true
+        - label: I have searched existing RFCs and issues to ensure this proposal is not a duplicate.
+          required: true

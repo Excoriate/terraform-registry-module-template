@@ -1,0 +1,115 @@
+---
+name: Bug Report
+description: Report an issue in the Terraform Module Template
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the Terraform Module Template.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      description: Select the primary component experiencing the issue
+      options:
+        - Module Core (`modules/default`)
+        - Module Example (`examples/...`)
+        - Test Suite (`tests/...`)
+        - Documentation (`docs/...`)
+        - CI/CD Workflow (`.github/workflows/...`)
+        - Tooling (`Justfile`, `flake.nix`, scripts)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem Description
+      description: Provide a clear, concise explanation of the unexpected behavior
+      placeholder: What went wrong and under what circumstances?
+    validations:
+      required: true
+
+  - type: input
+    id: module-version
+    attributes:
+      label: Module Version
+      placeholder: e.g., v1.2.3 or main
+    validations:
+      required: true
+
+  - type: input
+    id: terraform-version
+    attributes:
+      label: Terraform Version
+      placeholder: e.g., 1.5.3
+    validations:
+      required: true
+
+  - type: input
+    id: provider-versions
+    attributes:
+      label: Relevant Provider Version(s)
+      placeholder: e.g., hashicorp/aws v5.0.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide minimal, precise steps to consistently reproduce the issue
+      placeholder: |
+        1. Run '...'
+        2. Configure '...'
+        3. Observe error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Paste any error logs or command output (e.g., `terraform plan/apply` output, debug logs `TF_LOG=DEBUG`)
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Issue Severity
+      description: How critical is this issue?
+      options:
+        - Critical (Workflow Blocking)
+        - High (Significant Impact)
+        - Medium (Partial Functionality)
+        - Low (Minor Issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Configuration details, custom modifications, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Contribution Guidelines
+      description: By submitting this issue, you agree to follow our project's [Code of Conduct](../../CODE_OF_CONDUCT.md).
+      options:
+        - label: I have searched existing issues and verified this is not a duplicate
+          required: true
+        - label: I have provided a minimal reproducible example, if applicable
+          required: false
+        - label: I have included relevant Terraform and provider versions
+          required: true

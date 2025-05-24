@@ -1,0 +1,38 @@
+---
+name: "📕 Documentation Issue"
+description: Report an issue in the Terraform Module Template documentation
+title: "docs: (short issue description)"
+labels: [documentation, needs-triage]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the documentation issue
+      description: A clear and concise description of the documentation problem (e.g., missing, incorrect, unclear, typos).
+    validations:
+      required: true
+  - type: input
+    id: affected-documentation
+    attributes:
+      label: Affected Documentation File(s) or Section(s)
+      description: "Please specify the file(s) or section(s) of the documentation that this issue pertains to. E.g., `docs/terraform-styleguide/terraform-styleguide-modules.md` or `README.md#Usage Guidelines`."
+      placeholder: "E.g., README.md, docs/terraform-styleguide/terraform-styleguide-code.md"
+    validations:
+      required: true
+  - type: textarea
+    id: suggested-changes
+    attributes:
+      label: Suggested Changes
+      description: "If you have a suggestion for how to fix the documentation, please provide it here. (Optional)"
+      placeholder: "E.g., 'Change X to Y in section Z.' or 'Add a new section about X.'"
+    validations:
+      required: false
+  - type: checkboxes
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](../../CODE_OF_CONDUCT.md).
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
+        - label: I have searched existing documentation issues and verified this is not a duplicate
+          required: true
