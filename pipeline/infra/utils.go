@@ -242,3 +242,28 @@ func buildTerraformCommand(command string, arguments []string) ([]string, error)
 
 	return cmd, nil
 }
+
+func executeDaggerCtrAsync(
+	ctx context.Context,
+	resultChan chan<- JobResult,
+	baseCtr *dagger.Container,
+	tgWorkDir string,
+	commands [][]string,
+) {
+	jobRes := JobResult{WorkDir: tgWorkDir, Output: "", Err: nil}
+
+	execCtr := baseCtr
+	for _, command := range commands {
+		execCtr = execCtr.
+			WithExec(command)
+	}
+
+	stdout, err := execCtr.Stdout(ctx)
+	jobRes.Output = stdout
+
+	if err != nil {
+		jobRes.Err = WrapErrorf(err, "dagger command failed on working directory: %s", tgWorkDir)
+	}
+
+	resultChan <- jobRes
+}

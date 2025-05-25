@@ -796,7 +796,7 @@ pipeline-infra-shell args="": (pipeline-infra-build)
     @echo "🚀 Launching interactive terminal"
     @dagger call open-terminal {{args}}
 
-# 🔨 Execute a Dagger job
+# 🔨 Execute a Dagger job with any arbitrary command
 [working-directory:'pipeline/infra']
 pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
     @echo "🚀 Executing job: {{command}} with arguments: {{args}}"
@@ -804,20 +804,20 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
        --command="{{command}}" \
        --tf-module-path="{{mod}}" \
        --arguments="{{args}}" \
-       --aws-access-key-id=env:AWS_ACCESS_KEY_ID \
-       --aws-secret-access-key=env:AWS_SECRET_ACCESS_KEY \
-       --aws-session-token=env:AWS_SESSION_TOKEN \
-       --aws-region=env:AWS_REGION \
        --load-dot-env-file=true \
        --no-cache=true \
        --git-ssh $SSH_AUTH_SOCK
 
 # 🔨 Validate Terraform modules for best practices and security
 [working-directory:'pipeline/infra']
-pipeline-infra-tf-modules-static-check args="": (pipeline-infra-build)
+pipeline-job-terraform-static-check mod="default" args="": (pipeline-infra-build)
     @echo " Analyzing Terraform modules for security and best practices"
     @echo "⚡ Running static analysis checks"
-    @dagger call job-tf-modules-static-check {{args}}
+    @dagger call job-terraform-static-check \
+       --tf-module-path="{{mod}}" \
+       --load-dot-env-file=true \
+       --no-cache=true \
+       --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Static analysis completed successfully"
 
 # 🔨 Test Terraform modules against multiple provider versions
