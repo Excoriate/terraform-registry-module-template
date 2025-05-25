@@ -625,7 +625,7 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
 pipeline-job-terraform-static-check MODULE="default" args="": (pipeline-infra-build)
     @echo " Analyzing Terraform modules for security and best practices"
     @echo "⚡ Running static analysis checks"
-    @dagger call job-terraform-static-check \
+    @dagger --use-hashicorp-image=true call job-terraform-static-check \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
        --no-cache=true \
@@ -634,11 +634,15 @@ pipeline-job-terraform-static-check MODULE="default" args="": (pipeline-infra-bu
 
 # 🔨 Test Terraform modules against multiple provider versions
 [working-directory:'pipeline/infra']
-pipeline-job-terraform-version-compatibility-check args="": (pipeline-infra-build)
+pipeline-job-terraform-version-compatibility-check MODULE="default": (pipeline-infra-build)
     @echo " Testing module compatibility across provider versions"
     @echo "⚡ Running version compatibility checks"
-    @dagger call job-tf-modules-compatibility-check {{args}}
+    @dagger --use-hashicorp-image=true call job-terraform-version-compatibility-check \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache=true \
+       --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Version compatibility testing completed"
 
 # 🔨 Run comprehensive CI checks for Terraform modules
-pipeline-infra-tf-ci args="": (pipeline-job-terraform-static-check) (pipeline-job-terraform-version-compatibility-check)
+pipeline-infra-tf-ci MODULE="default" args="": (pipeline-job-terraform-static-check MODULE args) (pipeline-job-terraform-version-compatibility-check MODULE)

@@ -396,10 +396,8 @@ func (m *Infra) JobTerraformVersionCompatibilityCheck(
 ) (string, error) {
 	// Define Terraform versions to test against
 	versions := []string{
-		"1.11.1",
-		"1.11.2",
-		"1.11.3",
-		"1.11.4",
+		"1.12.0",
+		"1.12.1",
 	}
 
 	// Create channel for collecting results from concurrent version tests

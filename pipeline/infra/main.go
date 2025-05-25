@@ -13,9 +13,9 @@ import (
 
 const (
 	// Default version for binaries
-	defaultTerraformVersion = "1.11.3"
+	defaultTerraformVersion = "1.12.0"
 	defaultImage            = "hashicorp/terraform"
-	defaultImageTag         = "1.11.3"
+	defaultImageTag         = "1.12.0"
 	defaultMntPath          = "/mnt"
 	// Default for AWS
 	defaultAWSRegion              = "eu-west-1"
