@@ -15,7 +15,8 @@ body:
     id: affected-documentation
     attributes:
       label: Affected Documentation File(s) or Section(s)
-      description: "Please specify the file(s) or section(s) of the documentation that this issue pertains to. E.g., `docs/terraform-styleguide/terraform-styleguide-modules.md` or `README.md#Usage Guidelines`."
+      description: "Please specify the file(s) or section(s) of the documentation that this issue pertains to. E.g., `docs/terraform-styleguide/terraform-styleguide-modules.md`
+        or `README.md#Usage Guidelines`."
       placeholder: "E.g., README.md, docs/terraform-styleguide/terraform-styleguide-code.md"
     validations:
       required: true

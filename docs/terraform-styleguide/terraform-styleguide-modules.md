@@ -48,7 +48,7 @@
 - Design modules to be adaptable across different infrastructure contexts
 - START with simple implementations. ADD complexity only when necessary and well-justified
 - STRICTLY limit and explicitly manage module dependencies. Always check the `versions.tf` if the module is a root module and it's caling another module, to adhere to its version requirements.
-- STRICTLY use the latest stable Terraform version, and the latest version of the used providers on this module.
+- STRICTLY use the latest stable Terraform version (1.12.0 minimum), and the latest version of the used providers on this module.
 - **Guarantee Module Isolation**: CREATE modules that can be used independently, and composable with other modules incrementally.
 - CONTRACT FIRTS! Never break the 'contract' of a module. The contract are its interfaces, and the behaviors it implements (interfaces are the input variables, and its outputs are the resources it creates). When designing a module, the first think to do is to define the contract, and then implement it.
 - The documentation of the module is generated through terraform-docs, from the `.terraform-docs.yml` file. This file is mandatory.

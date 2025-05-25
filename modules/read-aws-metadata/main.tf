@@ -6,8 +6,14 @@
 # Each resource is annotated with comments explaining its purpose and any notable configurations.
 #
 ###################################
-resource "random_string" "this" {
-  for_each = local.is_enabled ? { example = true } : {}
-  length   = 10
-  special  = false
+data "aws_caller_identity" "current" {
+  count = local.is_enabled ? 1 : 0
+}
+
+data "aws_partition" "current" {
+  count = local.is_enabled ? 1 : 0
+}
+
+data "aws_region" "current" {
+  count = local.is_enabled ? 1 : 0
 }

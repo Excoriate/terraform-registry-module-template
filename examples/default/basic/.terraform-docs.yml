@@ -1,6 +1,41 @@
 ---
 formatter: markdown table
 
+sections:
+  hide: []
+  show:
+    - inputs
+    - outputs
+    - resources
+
+content: |-
+  # Terraform Module: Default Basic Example
+
+  ## Overview
+  > **Note:** This module demonstrates the basic usage of the `default` module.
+
+  ### 🔑 Key Features
+  - **Basic Module Usage**: Illustrates the minimal configuration required to use the `default` module.
+  - **Conditional Creation**: Shows how to enable or disable the module using the `is_enabled` variable.
+
+  ### 📋 Usage Guidelines
+  1. Set `is_enabled` to `true` or `false` to control module creation.
+  2. Provide `tags` for resource organization.
+
+  {{ .Header }}
+
+  ## Variables
+
+  {{ .Inputs }}
+
+  ## Outputs
+
+  {{ .Outputs }}
+
+  ## Resources
+
+  {{ .Resources }}
+
 output:
   file: README.md
   mode: inject
@@ -8,3 +43,15 @@ output:
     <!-- BEGIN_TF_DOCS -->
     {{ .Content }}
     <!-- END_TF_DOCS -->
+
+settings:
+  anchor: true
+  color: true
+  description: true
+  escape: true
+  header: true
+  html: true
+  indent: 2
+  required: true
+  sensitive: true
+  type: true

@@ -822,11 +822,11 @@ pipeline-job-terraform-static-check mod="default" args="": (pipeline-infra-build
 
 # 🔨 Test Terraform modules against multiple provider versions
 [working-directory:'pipeline/infra']
-pipeline-infra-tf-modules-versions args="": (pipeline-infra-build)
+pipeline-job-terraform-version-compatibility-check args="": (pipeline-infra-build)
     @echo " Testing module compatibility across provider versions"
     @echo "⚡ Running version compatibility checks"
     @dagger call job-tf-modules-compatibility-check {{args}}
     @echo "✅ Version compatibility testing completed"
 
 # 🔨 Run comprehensive CI checks for Terraform modules
-pipeline-infra-tf-ci args="": (pipeline-infra-tf-modules-static-check) (pipeline-infra-tf-modules-versions)
+pipeline-infra-tf-ci args="": (pipeline-job-terraform-static-check) (pipeline-job-terraform-version-compatibility-check)

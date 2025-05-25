@@ -7,7 +7,11 @@
 #
 ###################################
 resource "random_string" "this" {
-  for_each = local.is_enabled ? { example = true } : {}
-  length   = 10
-  special  = false
+  count = local.is_enabled ? 1 : 0
+
+  length  = var.length
+  lower   = var.lower
+  upper   = var.upper
+  special = false
+  numeric = false
 }

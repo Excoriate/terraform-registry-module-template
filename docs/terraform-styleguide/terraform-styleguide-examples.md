@@ -35,8 +35,8 @@ This document provides comprehensive guidelines for creating example modules in 
 │   ├── .terraform-docs.yml # Documentation generation configuration
 │   ├── .tflint.hcl        # Terraform linting rules
 │   └── fixtures/
-│       └── fixtures-disabled.tfvars  # Fixture for testing with the feature flag disabled
-│       └── fixtures-default.tfvars  # Default fixture with no predefined variable configurations
+│       └── default.tfvars       # Default fixture for testing
+│       └── disabled.tfvars      # Fixture for testing with the feature flag disabled
 ├── complete/              # Comprehensive, feature-rich example
 │   ├── main.tf
 │   ├── variables.tf
@@ -47,8 +47,8 @@ This document provides comprehensive guidelines for creating example modules in 
 │   ├── .terraform-docs.yml # Documentation generation configuration
 │   ├── .tflint.hcl        # Terraform linting rules
 │   └── fixtures/
-│       └── fixtures-disabled.tfvars  # Fixture for testing with the feature flag disabled
-│       └── fixtures-default.tfvars  # Default fixture with no predefined variable configurations
+│       └── default.tfvars       # Default fixture for testing
+│       └── disabled.tfvars      # Fixture for testing with the feature flag disabled
 └── [specific-use-case]/   # Optional specialized examples
     ├── main.tf
     ├── variables.tf
@@ -59,8 +59,8 @@ This document provides comprehensive guidelines for creating example modules in 
 │   ├── .terraform-docs.yml # Documentation generation configuration
 │   ├── .tflint.hcl        # Terraform linting rules
     └── fixtures/
-│       └── fixtures-disabled.tfvars  # Fixture for testing with the feature flag disabled
-│       └── fixtures-default.tfvars  # Default fixture with no predefined variable configurations
+│       └── default.tfvars       # Default fixture for testing
+│       └── disabled.tfvars      # Fixture for testing with the feature flag disabled
 ```
 
 - ALWAYS start with the `module/[module-name]/basic/` example, and add more examples as needed. When completing a module, and all the tests in the `tests/modules/[module-name]/unit` directory pass, you can consider completing the `complete/` example.
@@ -72,9 +72,8 @@ This document provides comprehensive guidelines for creating example modules in 
 - Use default or minimal input variables, but always looking at the module's `variables.tf` file to understand the full set of variables.
 - ALWAYS replicate the `outputs.tf` file in the example directory, and use the `terraform output` command to validate the outputs.
 - ALWAYS ensure you're following the version constraints in the `versions.tf` file of the called module in the `modules/[module-name]/versions.tf` example.
-- ALWAYS create a fixture in the `fixtures/` directory of the example module implementation `examples/[module-name]/[example-name]/fixtures/` directory called `fixture-disabled.tfvars` with the `is_enabled = false` variable set, to always have a fixture to test the module when the feauture flag is disabled.
+- ALWAYS create a fixture in the `fixtures/` directory of the example module implementation `examples/[module-name]/[example-name]/fixtures/` directory called `disabled.tfvars` with the `is_enabled = false` variable set to `false`.
 - ALWAYS create a fixture in the `fixtures/` directory of the example module implementation `examples/[module-name]/[example-name]/fixtures/` directory called `default.tfvars` empty, to always have a fixture to test the module when the feauture flag is enabled, and the default values are set for the module.
-- ALWAYS create a fixture in the `fixtures/` directory of the example module implementation `examples/[module-name]/[example-name]/fixtures/` directory called `disabled.tfvars` with the `is_enabled = false` variable set, to always have a fixture to test the module when the feauture flag is disabled.
 - ALWAYS use meaningful, and realistic values when setting the values for the input variables in the `main.tf` of the `examples/[module-name]/[example-name]/` module, BUT CAREFULLY VALIDATE that you're not creating a dependency that's overcomplicating the module's behavior (E.g.: creating other resources to get values to fill the input variables, making the example implementation flaky, and prone to failure).
 
 ### Rule: Naming Conventions for examples

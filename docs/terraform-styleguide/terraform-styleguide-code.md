@@ -64,7 +64,7 @@
 - Prioritize clarity and predictability in naming, with readability, and an idiomatic code style
 - If the name given isn't clear, and require a comment to explain it, it's not a good name.
 
-A complaint, and non compliant naming examples:
+A compliant, and non compliant naming examples:
 
 ```hcl
 # Compliant Naming
@@ -79,7 +79,7 @@ resource "azurerm_virtual_network" "vnet" { ... }
 ### Rule: Comments
 
 - Use comments to explain complex logic, and provide clear instructions for maintainers and contributors.
-- Use comments to explain oppinionated decisions, and provide context for valid values, specific configurations for resources, or specific parts of the code that favour maintainability, and readability.
+- Use comments to explain opinionated decisions, and provide context for valid values, specific configurations for resources, or specific parts of the code that favour maintainability, and readability.
 - Use a professional writing style. Use emojis only when necessary.
 
 A good comment example:

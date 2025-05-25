@@ -25,7 +25,8 @@ body:
     id: problem
     attributes:
       label: Motivation / Use Case
-      description: "Describe the problem this RFC aims to solve, the motivation behind it, and specific use cases relevant to the Terraform Module Template."
+      description: "Describe the problem this RFC aims to solve, the motivation behind it, and specific use cases relevant
+        to the Terraform Module Template."
       placeholder: "Why is this change needed? What scenarios does it address?"
     validations:
       required: true
@@ -33,7 +34,9 @@ body:
     id: proposal
     attributes:
       label: Detailed Proposal
-      description: "Explain the design in detail. This should be comprehensive enough for someone familiar with the project to understand and potentially implement it. Consider including code examples, API changes, or architectural diagrams if applicable."
+      description: "Explain the design in detail. This should be comprehensive enough for someone familiar with the project
+        to understand and potentially implement it. Consider including code examples, API changes, or architectural diagrams
+        if applicable."
       placeholder: "What does the user experience look like before and after this design? How does it work technically?"
     validations:
       required: true
@@ -48,14 +51,16 @@ body:
     id: challenges
     attributes:
       label: Potential Challenges & Unresolved Questions
-      description: "Identify any potential challenges, edge cases, or unresolved questions. If you have suggestions on how to mitigate them, please include them."
+      description: "Identify any potential challenges, edge cases, or unresolved questions. If you have suggestions on how
+        to mitigate them, please include them."
     validations:
       required: false
   - type: textarea
     id: integrations
     attributes:
       label: Dependencies and Integrations (Optional)
-      description: "If applicable, describe any new dependencies this feature might introduce or how it might integrate with other modules, tools, or utilities."
+      description: "If applicable, describe any new dependencies this feature might introduce or how it might integrate with
+        other modules, tools, or utilities."
     validations:
       required: false
   - type: textarea
