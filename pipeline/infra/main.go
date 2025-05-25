@@ -17,6 +17,9 @@ const (
 	defaultImage            = "hashicorp/terraform"
 	defaultImageTag         = "1.12.0"
 	defaultMntPath          = "/mnt"
+	// Terraform tools
+	defaultTFLintVersion        = "0.58.0"
+	defaultTerraformDocsVersion = "0.20.0"
 	// Default for AWS
 	defaultAWSRegion              = "eu-west-1"
 	defaultAWSOidcTokenSecretName = "AWS_OIDC_TOKEN"
@@ -394,6 +397,36 @@ func (m *Infra) WithTerraform(version string) *Infra {
 	m.Ctr = m.Ctr.
 		WithExec([]string{"/bin/sh", "-c", tfInstallationCmd}).
 		WithExec([]string{"terraform", "--version"})
+
+	return m
+}
+
+// WithTerraformTools installs TFLint and terraform-docs tools in the container.
+//
+// This method installs both TFLint (a Terraform linter) and terraform-docs (documentation generator)
+// using their respective installation methods. If versions are not specified, the latest versions
+// will be installed.
+//
+// Parameters:
+//   - tflintVersion: The TFLint version to install (optional, defaults to latest)
+//   - terraformDocsVersion: The terraform-docs version to install (optional, defaults to latest)
+//
+// Returns:
+//   - The updated Infra instance with TFLint and terraform-docs installed
+func (m *Infra) WithTerraformTools(tflintVersion, terraformDocsVersion string) *Infra {
+	// Install TFLint using the official installation script
+	tflintInstallCmd := getTFLintInstallCmd(tflintVersion)
+
+	// Install terraform-docs using binary download
+	terraformDocsInstallCmd := getTerraformDocsInstallCmd(terraformDocsVersion)
+
+	m.Ctr = m.Ctr.
+		// Install TFLint
+		WithExec([]string{"/bin/sh", "-c", tflintInstallCmd}).
+		WithExec([]string{"tflint", "--version"}).
+		// Install terraform-docs
+		WithExec([]string{"/bin/sh", "-c", terraformDocsInstallCmd}).
+		WithExec([]string{"terraform-docs", "--version"})
 
 	return m
 }

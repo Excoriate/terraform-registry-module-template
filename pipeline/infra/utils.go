@@ -20,6 +20,87 @@ func getTFInstallCmd(tfVersion string) string {
 	return strings.TrimSpace(command)
 }
 
+// getTFLintInstallCmd generates the installation command for TFLint.
+// If version is empty, it installs the latest version using the official script.
+// If version is specified, it downloads the specific version binary.
+func getTFLintInstallCmd(tflintVersion string) string {
+	if tflintVersion == "" {
+		// Use the official installation script for latest version
+		command := `apk add --no-cache curl bash &&
+		curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash`
+		return strings.TrimSpace(command)
+	}
+
+	// Install specific version
+	installDir := "/usr/local/bin/tflint"
+	command := fmt.Sprintf(`apk add --no-cache curl &&
+	curl -L https://github.com/terraform-linters/tflint/releases/download/v%[1]s/tflint_linux_amd64.zip -o /tmp/tflint.zip &&
+	unzip -o /tmp/tflint.zip -d /tmp &&
+	mv /tmp/tflint %[2]s &&
+	chmod +x %[2]s &&
+	rm /tmp/tflint.zip`, tflintVersion, installDir)
+
+	return strings.TrimSpace(command)
+}
+
+// getTerraformDocsInstallCmd generates the installation command for terraform-docs.
+// If version is empty, it uses the default version defined in constants.
+func getTerraformDocsInstallCmd(terraformDocsVersion string) string {
+	if terraformDocsVersion == "" {
+		terraformDocsVersion = defaultTerraformDocsVersion
+	}
+
+	installDir := "/usr/local/bin/terraform-docs"
+	command := fmt.Sprintf(`apk add --no-cache curl tar &&
+	curl -Lo /tmp/terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v%[1]s/terraform-docs-v%[1]s-$(uname)-amd64.tar.gz &&
+	tar -xzf /tmp/terraform-docs.tar.gz -C /tmp &&
+	chmod +x /tmp/terraform-docs &&
+	mv /tmp/terraform-docs %[2]s &&
+	rm /tmp/terraform-docs.tar.gz`, terraformDocsVersion, installDir)
+
+	return strings.TrimSpace(command)
+}
+
+func isTfModuleDir(ctx context.Context, dir *dagger.Directory, extraFilesToCheck []string) error {
+	entries, err := dir.Entries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get entries from the dagger directory passed: %w", err)
+	}
+
+	// Predefined set of files
+	predefinedFiles := append([]string{"main.tf", "variables.tf", "outputs.tf"}, extraFilesToCheck...)
+
+	tfFileFound := false
+	for _, entry := range entries {
+		_, err := dir.File(entry).Contents(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get contents from the dagger file passed: %w", err)
+		}
+
+		// validate if it's a valid Terraform extension and in predefined set of files
+		if filepath.Ext(entry) == ".tf" && contains(predefinedFiles, entry) {
+			tfFileFound = true
+			break
+		}
+	}
+
+	if !tfFileFound {
+		return fmt.Errorf("no Terraform module found in the directory")
+	}
+
+	return nil
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
 func isNonEmptyDaggerDir(ctx context.Context, dir *dagger.Directory) error {
 	if dir == nil {
 		return fmt.Errorf("dagger directory cannot be nil")
