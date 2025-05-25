@@ -174,137 +174,52 @@ reload-direnv:
     @direnv reload
 
 # 🌿 Format Terraform files locally using terraform fmt
-tf-format MOD='':
-    @echo "🌿 Discovering Terraform files..."
-    @if [ -z "{{MOD}}" ]; then \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-            echo "📄 Found: $file"; \
-        done; \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
-    else \
-        echo "📂 Formatting Terraform files in directory: {{{{MODULES_DIR}}/{{MOD}}}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
-        cd - > /dev/null; \
-        cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
-        cd - > /dev/null; \
-    fi
+tf-format:
+    @echo "🎨 Formatting Terraform files in current directory..."
+    @./scripts/utilities/format.sh --terraform
 
 # 🌿 Format all Terraform files across modules, examples, and tests directories
 tf-format-all:
-    @echo "🌿 Formatting all Terraform files across the repository..."
-    @echo "📂 Scanning directories: modules/, examples/, tests/"
+    @echo "🎨 Formatting all Terraform files across repository..."
+    @./scripts/utilities/format.sh --terraform --tf-all-dirs
 
-    @echo "\n🔍 Formatting files in modules/"
-    @pushd modules > /dev/null && \
-    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "   📄 Processing: $file"; \
-    done && \
-    terraform fmt -recursive && \
-    popd > /dev/null
+# 🌿 Format Terraform files for a specific module (both module and example directories)
+tf-format-module MODULE:
+    @echo "🎨 Formatting Terraform files for module: {{MODULE}}"
+    @./scripts/utilities/format.sh --terraform --tf-module {{MODULE}}
 
-    @echo "\n🔍 Formatting files in examples/"
-    @pushd examples > /dev/null && \
-    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "   📄 Processing: $file"; \
-    done && \
-    terraform fmt -recursive && \
-    popd > /dev/null
-
-    @echo "\n🔍 Formatting files in tests/"
-    @pushd tests > /dev/null && \
-    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "   📄 Processing: $file"; \
-    done && \
-    terraform fmt -recursive && \
-    popd > /dev/null
-
-    @echo "\n✅ All Terraform files have been formatted!"
-
-# 🌿 Format Terraform files in Nix development environment
-tf-format-nix MOD='':
-    @echo "🌿 Discovering Terraform files in Nix environment..."
-    @if [ -z "{{MOD}}" ]; then \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
-    else \
-        echo "📂 Formatting Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
-        cd - > /dev/null; \
-        echo "📂 Formatting Terraform files in directory: {{EXAMPLES_DIR}}/{{MOD}}"; \
-        cd "{{EXAMPLES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
-        cd - > /dev/null; \
-    fi
-
-# 🌿 Format Terraform files in Nix development environment
+# 🔍 Check Terraform file formatting without modifying files
 tf-format-check MOD='':
-    @echo "🌿 Discovering Terraform files..."
+    @echo "🔍 Checking Terraform file formatting..."
     @if [ -z "{{MOD}}" ]; then \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-            echo "📄 Found: $file"; \
-        done; \
-        unformatted_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check | tee /dev/tty); \
-        if [ -n "$unformatted_files" ]; then \
-            echo "❌ Some Terraform files are not properly formatted:"; \
-            echo "$unformatted_files"; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted"; \
-        fi; \
+        ./scripts/utilities/format.sh --terraform --tf-check; \
     else \
-        echo "📂 Checking formatting for Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
-        module_unformatted=$(cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check | tee /dev/tty); \
-        example_unformatted=$(cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check | tee /dev/tty); \
-        \
-        if [ -n "$module_unformatted" ] || [ -n "$example_unformatted" ]; then \
-            echo "❌ Some Terraform files are not properly formatted:"; \
-            if [ -n "$module_unformatted" ]; then \
-                echo "📂 Unformatted files in module directory:"; \
-                echo "$module_unformatted"; \
-            fi; \
-            if [ -n "$example_unformatted" ]; then \
-                echo "📂 Unformatted files in example directory:"; \
-                echo "$example_unformatted"; \
-            fi; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted"; \
-        fi; \
+        ./scripts/utilities/format.sh --terraform --tf-check --tf-module {{MOD}}; \
     fi
 
+# 🔍 Check Terraform file formatting for all directories
+tf-format-check-all:
+    @echo "🔍 Checking Terraform file formatting across all directories..."
+    @./scripts/utilities/format.sh --terraform --tf-check --tf-all-dirs
+
+# 🔍 Check Terraform file formatting for a specific module
+tf-format-check-module MODULE:
+    @echo "🔍 Checking Terraform file formatting for module: {{MODULE}}"
+    @./scripts/utilities/format.sh --terraform --tf-check --tf-module {{MODULE}}
+
+# 🔍 Check Terraform file formatting without modifying files (Nix environment)
 tf-format-check-nix MOD='':
-    @echo "🌿 Discovering Terraform files in Nix environment..."
+    @echo "🔍 Checking Terraform file formatting in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-            echo "📄 Found: $file"; \
-        done; \
-        unformatted_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check | tee /dev/tty); \
-        if [ -n "$unformatted_files" ]; then \
-            echo "❌ Some Terraform files are not properly formatted:"; \
-            echo "$unformatted_files"; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted"; \
-        fi; \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform --tf-check; \
     else \
-        echo "📂 Checking formatting for Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
-        module_unformatted=$(cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check | tee /dev/tty); \
-        example_unformatted=$(cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -check | tee /dev/tty); \
-        \
-        if [ -n "$module_unformatted" ] || [ -n "$example_unformatted" ]; then \
-            echo "❌ Some Terraform files are not properly formatted:"; \
-            if [ -n "$module_unformatted" ]; then \
-                echo "📂 Unformatted files in module directory:"; \
-                echo "$module_unformatted"; \
-            fi; \
-            if [ -n "$example_unformatted" ]; then \
-                echo "📂 Unformatted files in example directory:"; \
-                echo "$example_unformatted"; \
-            fi; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted"; \
-        fi; \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform --tf-check --tf-module {{MOD}}; \
     fi
 
+# 🔍 Discover and list all Terraform files in the repository
+tf-discover:
+    @echo "🔍 Discovering Terraform files..."
+    @./scripts/utilities/format.sh --terraform --tf-discover
 
 # 🌿 Run Terraform commands with flexible working directory and command selection
 tf-exec WORKDIR='.' CMDS='--help':

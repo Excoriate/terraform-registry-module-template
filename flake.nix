@@ -31,8 +31,8 @@
         };
 
         # Version configuration for easy updates
-        terraformVersion = "1.11.2";
-        opentofuVersion = "1.9.0";
+        terraformVersion = "1.12.0";
+        opentofuVersion = "1.9.1";
 
         # Convert version string to Nix package name format (e.g., 1.8.0 -> 1_8_0)
         tfVersionFormatted = builtins.replaceStrings [ "." ] [ "_" ] terraformVersion;
