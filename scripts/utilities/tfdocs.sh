@@ -97,9 +97,12 @@ execute_terraform_docs() {
     exit_code=0
     if [ "${use_nix}" = "true" ]; then
         if [ "${VERBOSE}" = "true" ]; then
-            log "Executing: nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md"
+            log "Executing: nix develop --command terraform-docs markdown . --output-file README.md"
         fi
-        nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || exit_code=$?
+        nix develop "${PROJECT_ROOT}" --impure \
+            --extra-experimental-features nix-command \
+            --extra-experimental-features flakes \
+            --command terraform-docs markdown . --output-file README.md || exit_code=$?
     else
         if [ "${VERBOSE}" = "true" ]; then
             log "Executing: terraform-docs markdown . --output-file README.md"

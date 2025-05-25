@@ -2,8 +2,6 @@
 formatter: markdown table
 
 sections:
-  hide:
-    - resources # This module only uses data sources
   show:
     - header
     - requirements
@@ -77,6 +75,3 @@ settings:
   required: true
   sensitive: true
   type: true
-  # Ensure all settings from the styleguide are explicitly present
-  # These are already present in the provided file content, but explicitly listing for completeness
-  # and to ensure no settings are missed if the template were different.
