@@ -236,176 +236,74 @@ tf-exec-nix WORKDIR='.' CMDS='--help':
     @cd "{{WORKDIR}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run Terraform commands locally with flexible module and command selection
-tf-cmd MOD='.' CMDS='--help':
+tf-exec-mod MODULE='.' CMDS='--help':
     @echo "🏗️ Running Terraform command:"
     @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && terraform {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && terraform {{CMDS}}
 
 # 🌿 Run Terraform commands in Nix development environment with flexible module and command selection
-tf-cmd-nix MOD='.' CMDS='--help':
+tf-exec-mod-cmd-nix MODULE='.' CMDS='--help':
     @echo "🏗️ Running Terraform command in Nix environment:"
     @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run OpenTofu commands locally with flexible module and command selection
-tofu-cmd MOD='.' CMDS='--help':
+tofu-exec-mod MODULE='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command:"
     @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && tofu {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && tofu {{CMDS}}
 
 # 🌿 Run OpenTofu commands in Nix development environment with flexible module and command selection
-tofu-cmd-nix MOD='.' CMDS='--help':
+tofu-exec-mod-cmd-nix MODULE='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command in Nix environment:"
     @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
 
-# 🔍 Lint Terraform modules locally using tflint, supporting directory-wide or specific module linting
+# 🔍 Run TFLint on Terraform files to check for issues and best practices
 tf-lint MOD='':
-    @echo "🔍 Discovering and linting Terraform modules..."
+    @echo "🔍 Running TFLint on Terraform files..."
     @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
-            echo "🕵️ Linting directory: $dir"; \
-            cd $dir && \
-            tflint --init && \
-            tflint --recursive && \
-            cd - > /dev/null; \
-        done \
+        ./scripts/utilities/tflint.sh; \
     else \
-        echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && \
-        tflint --init && \
-        tflint --recursive && \
-        cd - > /dev/null; \
-        \
-        echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
-        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
-            echo "   📂 Linting example directory: $example_dir"; \
-            cd "$example_dir" && \
-            tflint --init && \
-            tflint --recursive && \
-            cd - > /dev/null; \
-        done; \
+        ./scripts/utilities/tflint.sh --module {{MOD}}; \
     fi
 
-# 🔍 Lint Terraform modules in Nix development environment using tflint, supporting directory-wide or specific module linting
+# 🔍 Run TFLint on Terraform files using Nix environment
 tf-lint-nix MOD='':
-    @echo "🔍 Discovering and linting Terraform modules in Nix environment..."
+    @echo "🔍 Running TFLint on Terraform files in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
-            echo "🕵️ Linting directory: $dir"; \
-            cd $dir && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
-            cd - > /dev/null; \
-        done \
+        ./scripts/utilities/tflint.sh --nix; \
     else \
-        echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
-        cd - > /dev/null; \
-        \
-        echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
-        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
-            echo "   📂 Linting example directory: $example_dir"; \
-            cd "$example_dir" && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
-            cd - > /dev/null; \
-        done; \
+        ./scripts/utilities/tflint.sh --module {{MOD}} --nix; \
     fi
 
+# 📄 Generate Terraform documentation using terraform-docs
 tf-docs-generate MOD='':
-    @echo "🔍 Generating Terraform module documentation..."
+    @echo "📄 Generating Terraform documentation..."
     @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "📄 Attempting to generate docs for: $$dir"; \
-            if [ -d "$$dir" ]; then \
-                cd "$$dir" && \
-                echo "   🔧 Current directory: $$(pwd)" && \
-                terraform-docs markdown . --output-file README.md || \
-                echo "   ❌ Documentation generation failed for $$dir"; \
-                cd - > /dev/null; \
-            else \
-                echo "   ❌ Directory not found: $$dir"; \
-            fi; \
-        done; \
+        ./scripts/utilities/tfdocs.sh; \
     else \
-        if [ -d "modules/{{MOD}}" ] && [ -f "modules/{{MOD}}/.terraform-docs.yml" ]; then \
-            echo "📄 Generating docs for module: modules/{{MOD}}"; \
-            cd "modules/{{MOD}}" && \
-            terraform-docs markdown . --output-file README.md || \
-            echo "❌ Documentation generation failed for modules/{{MOD}}"; \
-            cd - > /dev/null; \
-        else \
-            echo "   ⚠️  Skipping modules/{{MOD}} (no directory or .terraform-docs.yml)"; \
-        fi; \
-        if [ -d "examples/{{MOD}}" ]; then \
-            for exdir in examples/{{MOD}}/*; do \
-                if [ -d "$$exdir" ] && [ -f "$$exdir/.terraform-docs.yml" ]; then \
-                    echo "📄 Generating docs for example: $$exdir"; \
-                    cd "$$exdir" && \
-                    terraform-docs markdown . --output-file README.md || \
-                    echo "❌ Documentation generation failed for $$exdir"; \
-                    cd - > /dev/null; \
-                else \
-                    echo "   ⚠️  Skipping $$exdir (no directory or .terraform-docs.yml)"; \
-                fi; \
-            done; \
-        else \
-            echo "   ⚠️  No examples found for module {{MOD}}"; \
-        fi; \
+        ./scripts/utilities/tfdocs.sh --module {{MOD}}; \
     fi
 
-# 📄 Generate Terraform module documentation in Nix development environment using terraform-docs
+# 📄 Generate Terraform documentation using terraform-docs in Nix environment
 tf-docs-generate-nix MOD='':
-    @echo "🔍 Generating Terraform module documentation (nix)..."
+    @echo "📄 Generating Terraform documentation in Nix environment..."
     @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "📄 Attempting to generate docs for: $$dir"; \
-            if [ -d "$$dir" ]; then \
-                cd "$$dir" && \
-                echo "   🔧 Current directory: $$(pwd)" && \
-                nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
-                echo "   ❌ Documentation generation failed for $$dir"; \
-                cd - > /dev/null; \
-            else \
-                echo "   ❌ Directory not found: $$dir"; \
-            fi; \
-        done; \
+        ./scripts/utilities/tfdocs.sh --nix; \
     else \
-        if [ -d "modules/{{MOD}}" ] && [ -f "modules/{{MOD}}/.terraform-docs.yml" ]; then \
-            echo "📄 Generating docs for module: modules/{{MOD}}"; \
-            cd "modules/{{MOD}}" && \
-            nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
-            echo "❌ Documentation generation failed for modules/{{MOD}}"; \
-            cd - > /dev/null; \
-        else \
-            echo "   ⚠️  Skipping modules/{{MOD}} (no directory or .terraform-docs.yml)"; \
-        fi; \
-        if [ -d "examples/{{MOD}}" ]; then \
-            for exdir in examples/{{MOD}}/*; do \
-                if [ -d "$$exdir" ] && [ -f "$$exdir/.terraform-docs.yml" ]; then \
-                    echo "📄 Generating docs for example: $$exdir"; \
-                    cd "$$exdir" && \
-                    nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
-                    echo "❌ Documentation generation failed for $$exdir"; \
-                    cd - > /dev/null; \
-                else \
-                    echo "   ⚠️  Skipping $$exdir (no directory or .terraform-docs.yml)"; \
-                fi; \
-            done; \
-        else \
-            echo "   ⚠️  No examples found for module {{MOD}}"; \
-        fi; \
+        ./scripts/utilities/tfdocs.sh --module {{MOD}} --nix; \
     fi
 
 # 📄 Validate Terraform modules locally using terraform validate
-tf-validate MOD='': (tf-cmd MOD 'init -backend=false') (tf-cmd MOD 'validate')
+tf-validate MOD='': (tf-exec-mod MOD 'init -backend=false') (tf-exec-mod MOD 'validate')
 
 # 📄 Validate Terraform modules in Nix development environment using terraform validate
-tf-validate-nix MOD='': (tf-cmd-nix MOD 'init -backend=false') (tf-cmd-nix MOD 'validate')
+tf-validate-nix MOD='': (tf-exec-mod-cmd-nix MOD 'init -backend=false') (tf-exec-mod-cmd-nix MOD 'validate')
 
 # 📄 Run Terraform CI checks locally (only static, like 'fmt', 'lint', 'docs')
 tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) (tf-validate MOD)
@@ -429,7 +327,7 @@ tf-dev MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
     @just tf-ci-static "{{MOD}}"
 
     @echo "🔍 Initializing module: {{MOD}}"
-    @just tf-cmd "{{MOD}}" 'init'
+    @just tf-exec-mod "{{MOD}}" 'init'
 
     @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MOD}}"
     @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'init'
