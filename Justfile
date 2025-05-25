@@ -15,7 +15,7 @@ set dotenv-load
 default: help
 
 # 📦 Variables for project directories
-TESTS_DIR := 'tests'
+TESTS_DIR := 'tests/modules'
 MODULES_DIR := 'modules'
 EXAMPLES_DIR := 'examples'
 FIXTURES_DIR := 'fixtures'
