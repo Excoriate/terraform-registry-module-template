@@ -1,10 +1,10 @@
-module "main_module" {
+module "this" {
   source     = "../../../modules/default"
-  is_enabled = false
+  is_enabled = var.is_enabled
 
   tags = {
-    Environment = "development"
-    Terraform   = "true"
-    Module      = "default"
+    environment = "development"
+    project     = "terraform-module-template"
+    managed-by  = "terraform"
   }
 }

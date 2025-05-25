@@ -116,13 +116,13 @@ execute_tflint() {
         return 1
     }
 
-    if [ ${exit_code} -eq 0 ]; then
+    if [ "${exit_code}" -eq 0 ]; then
         success "Linting completed successfully for ${target_dir}"
     else
         error "Linting failed for ${target_dir}"
     fi
 
-    return ${exit_code}
+    return "${exit_code}"
 }
 
 # Discover directories with .tflint.hcl files

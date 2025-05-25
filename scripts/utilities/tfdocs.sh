@@ -116,13 +116,13 @@ execute_terraform_docs() {
         return 1
     }
 
-    if [ ${exit_code} -eq 0 ]; then
+    if [ "${exit_code}" -eq 0 ]; then
         success "Documentation generated successfully for ${target_dir}"
     else
         error "Documentation generation failed for ${target_dir}"
     fi
 
-    return ${exit_code}
+    return "${exit_code}"
 }
 
 # Discover directories with .terraform-docs.yml files
