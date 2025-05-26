@@ -208,18 +208,26 @@ func (m *Infra) OpenTerminal(
 	// loadEnvFiles is a boolean to load the environment files.
 	// +optional
 	loadEnvFiles bool,
-) *dagger.Container {
+) (*dagger.Container, error) {
 	if srcDir == nil {
 		srcDir = m.Src
 	}
 
 	if loadEnvFiles {
-		m.WithDotEnvFile(ctx, m.Src)
+		mDecorated, err := m.WithDotEnvFile(ctx, m.Src)
+		if err != nil {
+			return nil, WrapErrorf(err, "failed to decorate container with dot env file")
+		}
+
+		m = mDecorated
 	}
+
+	m = m.WithTFLint(defaultTFLintVersion).
+		WithTerraformDocs(defaultTerraformDocsVersion)
 
 	return m.
 		Ctr.
-		Terminal()
+		Terminal(), nil
 }
 
 // WithSRC mounts a source directory into the Terraform container.

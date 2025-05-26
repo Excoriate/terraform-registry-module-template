@@ -14,9 +14,9 @@ permissions:
   pull-requests: read
 
 env:
-  TERRAFORM_VERSION: '1.10.0'
-  TFLINT_VERSION: 'latest'
-  TERRAFORM_DOCS_VERSION: 'latest'
+  TERRAFORM_VERSION: '1.12.0'
+  TFLINT_VERSION: '0.58.0'
+  TERRAFORM_DOCS_VERSION: '0.20.0'
   GO_VERSION: '1.21'
 
 jobs:
