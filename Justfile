@@ -618,6 +618,8 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
        --arguments="{{args}}" \
        --load-dot-env-file=true \
        --no-cache=true \
+       --tflint-version="0.58.0" \
+       --terraform-docs-version="0.20.0" \
        --git-ssh $SSH_AUTH_SOCK
 
 # 🔨 Validate Terraform modules for best practices and security

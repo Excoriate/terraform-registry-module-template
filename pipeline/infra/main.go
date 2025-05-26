@@ -401,29 +401,51 @@ func (m *Infra) WithTerraform(version string) *Infra {
 	return m
 }
 
-// WithTerraformTools installs TFLint and terraform-docs tools in the container.
+// WithTFLint installs TFLint tool in the container.
 //
-// This method installs both TFLint (a Terraform linter) and terraform-docs (documentation generator)
-// using their respective installation methods. If versions are not specified, the latest versions
+// This method installs TFLint (a Terraform linter) using its installation method. If version is not specified, the latest version
 // will be installed.
 //
 // Parameters:
 //   - tflintVersion: The TFLint version to install (optional, defaults to latest)
+//
+// Returns:
+//   - The updated Infra instance with TFLint installed
+func (m *Infra) WithTFLint(tflintVersion string) *Infra {
+	if tflintVersion == "" {
+		tflintVersion = defaultTFLintVersion
+	}
+
+	// Install TFLint using the official installation script
+	tflintInstallCmd := getTFLintInstallCmd(tflintVersion)
+
+	m.Ctr = m.Ctr.
+		// Install TFLint
+		WithExec([]string{"/bin/sh", "-c", tflintInstallCmd}).
+		WithExec([]string{"tflint", "--version"})
+
+	return m
+}
+
+// WithTerraformDocs installs terraform-docs tool in the container.
+//
+// This method installs terraform-docs (documentation generator) using its installation method. If version is not specified, the latest version
+// will be installed.
+//
+// Parameters:
 //   - terraformDocsVersion: The terraform-docs version to install (optional, defaults to latest)
 //
 // Returns:
-//   - The updated Infra instance with TFLint and terraform-docs installed
-func (m *Infra) WithTerraformTools(tflintVersion, terraformDocsVersion string) *Infra {
-	// Install TFLint using the official installation script
-	tflintInstallCmd := getTFLintInstallCmd(tflintVersion)
+//   - The updated Infra instance with terraform-docs installed
+func (m *Infra) WithTerraformDocs(terraformDocsVersion string) *Infra {
+	if terraformDocsVersion == "" {
+		terraformDocsVersion = defaultTerraformDocsVersion
+	}
 
 	// Install terraform-docs using binary download
 	terraformDocsInstallCmd := getTerraformDocsInstallCmd(terraformDocsVersion)
 
 	m.Ctr = m.Ctr.
-		// Install TFLint
-		WithExec([]string{"/bin/sh", "-c", tflintInstallCmd}).
-		WithExec([]string{"tflint", "--version"}).
 		// Install terraform-docs
 		WithExec([]string{"/bin/sh", "-c", terraformDocsInstallCmd}).
 		WithExec([]string{"terraform-docs", "--version"})
