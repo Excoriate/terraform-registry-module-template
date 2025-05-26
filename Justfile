@@ -627,7 +627,7 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
 pipeline-job-terraform-static-check MODULE="default" args="": (pipeline-infra-build)
     @echo " Analyzing Terraform modules for security and best practices"
     @echo "⚡ Running static analysis checks"
-    @dagger --use-hashicorp-image=true call job-terraform-static-check \
+    @dagger --use-hashicorp-image=true call action-terraform-static-analysis \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
        --no-cache=true \
