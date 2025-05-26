@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"dagger/infra/internal/dagger"
-	"sync"
 )
 
 // JobTerraformStaticCheck performs static analysis checks on Terraform code.
@@ -100,10 +99,10 @@ func (m *Infra) ActionTerraformStaticAnalysis(
 	return baseContainer, nil
 }
 
-// JobTerraformVersionCompatibilityCheck performs compatibility checks across multiple Terraform versions.
+// ActionTerraformVersionCompatibilityVerification performs compatibility checks across multiple Terraform versions.
 // It tests the Terraform modules against different versions to ensure compatibility.
-// This function creates separate containers for each version and runs validation concurrently.
-func (m *Infra) JobTerraformVersionCompatibilityCheck(
+// This function creates separate containers for each version and runs validation sequentially.
+func (m *Infra) ActionTerraformVersionCompatibilityVerification(
 	// Context is the context for managing the operation's lifecycle
 	// +optional
 	ctx context.Context,
@@ -154,230 +153,191 @@ func (m *Infra) JobTerraformVersionCompatibilityCheck(
 	// terraformDocsVersion is the terraform-docs version to use.
 	// +optional
 	terraformDocsVersion string,
-) (string, error) {
+	// tfVersionsToVerify is the list of Terraform versions to verify.
+	// +optional
+	tfVersionsToVerify []string,
+) (*dagger.Container, error) {
 	// Define Terraform versions to test against
 	versions := []string{
 		"1.12.0",
 		"1.12.1",
 	}
 
-	// Create channel for collecting results from concurrent version tests
-	// Buffer size = versions * checks per version
-	resultChan := make(chan JobResult, len(versions)*2)
-
-	// Use WaitGroup to wait for all version tests to complete
-	var wg sync.WaitGroup
-	wg.Add(len(versions) * 2) // 2 checks per version (init + validate)
-
-	// Test each Terraform version concurrently
-	for _, version := range versions {
-		go func(tfVersion string) {
-			// Create a copy of the Infra instance for this version
-			versionedInfra := &Infra{
-				Ctr: m.Ctr,
-				Src: m.Src,
-			}
-
-			// Install the specific Terraform version
-			versionedInfra = versionedInfra.WithTerraform(tfVersion)
-
-			// Get the base container for this version
-			baseContainer, err := versionedInfra.JobTerraform(
-				ctx,
-				tfModulePath,
-				awsAccessKeyID,
-				awsSecretAccessKey,
-				awsSessionToken,
-				awsRegion,
-				tfRegistryGitlabToken,
-				gitHubToken,
-				gitlabToken,
-				loadDotEnvFile,
-				noCache,
-				envVars,
-				gitSSH,
-				logLevel,
-				dotTerraformVersion,
-				tflintVersion,
-				terraformDocsVersion,
-			)
-
-			if err != nil {
-				// Send error result for this version
-				defer wg.Done()
-				defer wg.Done() // Decrement twice since we're skipping both checks
-				resultChan <- JobResult{
-					WorkDir: tfVersion + ".init",
-					Output:  "",
-					Err:     WrapErrorf(err, "failed to create container for Terraform version %s", tfVersion),
-				}
-				return
-			}
-
-			// Define compatibility checks for this version
-			versionChecks := []struct {
-				name     string
-				commands [][]string
-			}{
-				{
-					name: tfVersion + ".init",
-					commands: [][]string{
-						{"terraform", "version"},
-						{"terraform", "init", "-backend=false"},
-					},
-				},
-				{
-					name: tfVersion + ".validate",
-					commands: [][]string{
-						{"terraform", "version"},
-						{"terraform", "init", "-backend=false"},
-						{"terraform", "validate"},
-					},
-				},
-			}
-
-			// Execute checks for this version
-			for _, check := range versionChecks {
-				go func(checkName string, checkCommands [][]string, container *dagger.Container) {
-					defer wg.Done()
-					executeDaggerCtrAsync(
-						ctx,
-						resultChan,
-						container,
-						checkName,
-						checkCommands,
-					)
-				}(check.name, check.commands, baseContainer)
-			}
-		}(version)
+	if len(tfVersionsToVerify) > 0 {
+		versions = append(versions, tfVersionsToVerify...)
 	}
 
-	// Close the channel after all goroutines complete
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	// Get the base container using JobTerraform
+	baseContainer, err := m.JobTerraform(
+		ctx,
+		tfModulePath,
+		awsAccessKeyID,
+		awsSecretAccessKey,
+		awsSessionToken,
+		awsRegion,
+		tfRegistryGitlabToken,
+		gitHubToken,
+		gitlabToken,
+		loadDotEnvFile,
+		noCache,
+		envVars,
+		gitSSH,
+		logLevel,
+		dotTerraformVersion,
+		tflintVersion,
+		terraformDocsVersion,
+	)
 
-	// Process the results from concurrent execution
-	output, err := processActionAsyncResults(resultChan)
 	if err != nil {
-		return "", WrapErrorf(err, "version compatibility checks failed")
+		return nil, WrapErrorf(err, "failed to create base Terraform container")
 	}
 
-	return output, nil
+	// Test each Terraform version sequentially
+	for _, version := range versions {
+		// Install the specific Terraform version
+		versionContainer := baseContainer.WithExec([]string{"sh", "-c", getTFInstallCmd(version)})
+
+		// Define compatibility check commands for this version
+		versionCMDs := []DaggerCMD{
+			{"terraform", "version"},
+			{"terraform", "init", "-backend=false"},
+			{"terraform", "validate"},
+		}
+
+		// Execute compatibility checks using the reusable function
+		versionContainer = addDaggerCMDs(versionContainer, versionCMDs...)
+
+		// Update base container for next iteration
+		baseContainer = versionContainer
+	}
+
+	return baseContainer, nil
 }
 
-// func (m *Infra) JobTerraformModuleCI(
-// 	// Context is the context for managing the operation's lifecycle
-// 	// +optional
-// 	ctx context.Context,
-// 	// tfModulePath is the path to the Terraform modules.
-// 	tfModulePath string,
-// 	// tfModuleExamplesPath is the path to the Terraform module examples.
-// 	// +optional
-// 	tfModuleExamplesPath []string,
-// 	// awsAccessKeyID is the AWS access key ID.
-// 	// +optional
-// 	awsAccessKeyID *dagger.Secret,
-// 	// awsSecretAccessKey is the AWS secret access key.
-// 	// +optional
-// 	awsSecretAccessKey *dagger.Secret,
-// 	// awsSessionToken is the AWS session token.
-// 	// +optional
-// 	awsSessionToken *dagger.Secret,
-// 	// awsRegion is the AWS region to use for the remote backend.
-// 	// +optional
-// 	awsRegion string,
-// 	// tfRegistryGitlabToken is the Terraform Gitlab token.
-// 	// +optional
-// 	tfRegistryGitlabToken *dagger.Secret,
-// 	// GitHubToken is the github token
-// 	// +optional
-// 	gitHubToken *dagger.Secret,
-// 	// GitlabToken is the Gitlab token.
-// 	// +optional
-// 	gitlabToken *dagger.Secret,
-// 	// loadDotEnvFile is a flag to enable source .env files from the local directory.
-// 	// +optional
-// 	loadDotEnvFile bool,
-// 	// NoCache is a flag to disable caching of the container.
-// 	// +optional
-// 	noCache bool,
-// 	// envVars are the environment variables to set in the container.
-// 	// +optional
-// 	envVars []string,
-// 	// gitSSH is a flag to enable SSH for the container.
-// 	// +optional
-// 	gitSSH *dagger.Socket,
-// 	// logLevel is the Terraform log level to use.
-// 	// +optional
-// 	logLevel string,
-// 	// dotTerraformVersion is the Terraform version to generate a .terraform-version file in the working directory.
-// 	// +optional
-// 	dotTerraformVersion string,
-// ) (string, error) {
-// 	ctrs := []*dagger.Container{}
+func (m *Infra) ActionTerraformFileVerification(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// files is the list of files to verify.
+	// +optional
+	files []string,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// envVars are the environment variables to set in the container.
+) (*dagger.Container, error) {
+	mandatoryTFModuleFiles := []string{
+		"main.tf",
+		"variables.tf",
+		"outputs.tf",
+		"locals.tf",
+		"versions.tf",
+	}
 
-// 	// Get the base container for this version
-// 	tfModuleCIContainer, tfModuleCIContainerErr := m.JobTerraform(
-// 		ctx,
-// 		tfModulePath, // Path of the module
-// 		awsAccessKeyID,
-// 		awsSecretAccessKey,
-// 		awsSessionToken,
-// 		awsRegion,
-// 		tfRegistryGitlabToken,
-// 		gitHubToken,
-// 		gitlabToken,
-// 		loadDotEnvFile,
-// 		noCache,
-// 		envVars,
-// 		gitSSH,
-// 		logLevel,
-// 		dotTerraformVersion,
-// 	)
+	mandatoryTFDocFiles := []string{
+		"README.md",
+		".terraform-docs.yml",
+	}
 
-// 	tfModuleCIContainer = tfModuleCIContainer.
-// 		WithExec([]string{"terraform", "init", "-backend=false"}).
-// 		WithExec([]string{"terraform", "validate"}).
-// 		WithExec([]string{"terraform", "fmt", "-check", "-diff"})
+	mandatoryTFToolingFiles := []string{
+		".tflint.hcl",
+	}
 
-// 	if tfModuleCIContainerErr != nil {
-// 		return "", WrapErrorf(tfModuleCIContainerErr, "failed to create base Terraform container")
-// 	}
+	// Get the base container using JobTerraform
+	baseContainer, err := m.JobTerraform(
+		ctx,
+		tfModulePath,
+		nil,
+		nil,
+		nil,
+		"",
+		nil,
+		nil,
+		nil,
+		loadDotEnvFile,
+		noCache,
+		nil,
+		nil,
+		"",
+		"",
+		"",
+		"",
+	)
 
-// 	for _, examplePath := range tfModuleExamplesPath {
-// 		examplePath := filepath.Join("examples", tfModulePath, examplePath)
-// 		exampleCICtr, exampleCICtrErr := m.JobTerraform(
-// 			ctx,
-// 			examplePath,
-// 			awsAccessKeyID,
-// 			awsSecretAccessKey,
-// 			awsSessionToken,
-// 			awsRegion,
-// 			tfRegistryGitlabToken,
-// 			gitHubToken,
-// 			gitlabToken,
-// 			loadDotEnvFile,
-// 			noCache,
-// 			envVars,
-// 			gitSSH,
-// 			logLevel,
-// 			dotTerraformVersion,
-// 		)
+	if err != nil {
+		return nil, WrapErrorf(err, "failed to create base Terraform container")
+	}
 
-// 		if exampleCICtrErr != nil {
-// 			return "", WrapErrorf(exampleCICtrErr, "failed to create example Terraform container")
-// 		}
+	tfModuleDirectory := m.Src.Directory("modules/" + tfModulePath).Terminal()
 
-// 		exampleCICtr = exampleCICtr.
-// 			WithExec([]string{"terraform", "init", "-backend=false"}).
-// 			WithExec([]string{"terraform", "validate"}).
-// 			WithExec([]string{"terraform", "fmt", "-check", "-diff"}).
-// 			WithExec([]string{"terraform", "plan"})
+	tfModuleEntries, tfModuleEntriesErr := tfModuleDirectory.
+		Entries(ctx)
 
-// 		ctrs = append(ctrs, exampleCICtr)
-// 	}
-// 	// TODO: Complete later.
-// 	return "", nil
-// }
+	if tfModuleEntriesErr != nil {
+		return nil, WrapErrorf(tfModuleEntriesErr, "failed to get Terraform module entries")
+	}
+
+	// Create a map of found files for efficient lookup
+	foundFiles := make(map[string]bool)
+	for _, entry := range tfModuleEntries {
+		foundFiles[entry] = true
+	}
+
+	// Validate each file category with specific error messages
+	var missingTFModuleFiles []string
+	var missingDocFiles []string
+	var missingToolingFiles []string
+	var missingAdditionalFiles []string
+
+	// Check Terraform module files
+	for _, file := range mandatoryTFModuleFiles {
+		if !foundFiles[file] {
+			missingTFModuleFiles = append(missingTFModuleFiles, file)
+		}
+	}
+
+	// Check documentation files
+	for _, file := range mandatoryTFDocFiles {
+		if !foundFiles[file] {
+			missingDocFiles = append(missingDocFiles, file)
+		}
+	}
+
+	// Check tooling files
+	for _, file := range mandatoryTFToolingFiles {
+		if !foundFiles[file] {
+			missingToolingFiles = append(missingToolingFiles, file)
+		}
+	}
+
+	// Check additional files if provided
+	for _, file := range files {
+		if !foundFiles[file] {
+			missingAdditionalFiles = append(missingAdditionalFiles, file)
+		}
+	}
+
+	// Report missing files with category-specific error messages including mandatory file lists
+	if len(missingTFModuleFiles) > 0 {
+		return nil, Errorf("mandatory Terraform module files are missing: %v (required: %v)", missingTFModuleFiles, mandatoryTFModuleFiles)
+	}
+
+	if len(missingDocFiles) > 0 {
+		return nil, Errorf("mandatory documentation files are missing: %v (required: %v)", missingDocFiles, mandatoryTFDocFiles)
+	}
+
+	if len(missingToolingFiles) > 0 {
+		return nil, Errorf("mandatory tooling files are missing: %v (required: %v)", missingToolingFiles, mandatoryTFToolingFiles)
+	}
+
+	if len(missingAdditionalFiles) > 0 {
+		return nil, Errorf("additional required files are missing: %v (specified: %v)", missingAdditionalFiles, files)
+	}
+
+	return baseContainer, nil
+}

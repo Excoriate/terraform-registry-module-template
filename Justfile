@@ -624,7 +624,7 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
 
 # 🔨 Validate Terraform modules for best practices and security
 [working-directory:'pipeline/infra']
-pipeline-job-terraform-static-check MODULE="default" args="": (pipeline-infra-build)
+pipeline-action-terraform-static-analysis MODULE="default" args="": (pipeline-infra-build)
     @echo " Analyzing Terraform modules for security and best practices"
     @echo "⚡ Running static analysis checks"
     @dagger --use-hashicorp-image=true call action-terraform-static-analysis \
@@ -636,15 +636,26 @@ pipeline-job-terraform-static-check MODULE="default" args="": (pipeline-infra-bu
 
 # 🔨 Test Terraform modules against multiple provider versions
 [working-directory:'pipeline/infra']
-pipeline-job-terraform-version-compatibility-check MODULE="default": (pipeline-infra-build)
+pipeline-action-terraform-version-compatibility-verification MODULE="default": (pipeline-infra-build)
     @echo " Testing module compatibility across provider versions"
     @echo "⚡ Running version compatibility checks"
-    @dagger --use-hashicorp-image=true call job-terraform-version-compatibility-check \
+    @dagger --use-hashicorp-image=true call action-terraform-version-compatibility-verification \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
        --no-cache=true \
        --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Version compatibility testing completed"
 
+# 🔨 Test Terraform modules against multiple provider versions
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-file-verification MODULE="default": (pipeline-infra-build)
+    @echo " Testing module files"
+    @echo "⚡ Running file verification"
+    @dagger --use-hashicorp-image=true call action-terraform-file-verification \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache=true
+    @echo "✅ File verification completed"
+
 # 🔨 Run comprehensive CI checks for Terraform modules
-pipeline-infra-tf-ci MODULE="default" args="": (pipeline-job-terraform-static-check MODULE args) (pipeline-job-terraform-version-compatibility-check MODULE)
+pipeline-infra-tf-ci MODULE="default" args="": (pipeline-action-terraform-static-analysis MODULE args) (pipeline-action-terraform-version-compatibility-verification MODULE)

@@ -65,7 +65,7 @@ func New(
 	// srcDir is the directory to mount as the source code.
 	// +optional
 	// +defaultPath="/"
-	// +ignore=["*", "!**/*.tf", "!**/*.tfvars", "!**/.git/**", "!**/*.tfvars.json", "!*.env"]
+	// +ignore=["*", "!**/*.tf", "!**/*.tfvars", "!**/.git/**", "!**/*.tfvars.json", "!*.env", "!**/README.md", "!**/.terraform-docs.yml", "!**/.tflint.hcl"]
 	srcDir *dagger.Directory,
 
 	// EnvVars are the environment variables that will be used to run the Terraform commands.

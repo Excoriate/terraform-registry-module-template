@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"dagger/infra/internal/dagger"
-	"sync"
+	"path/filepath"
 )
 
 // JobTerraform performs a command on Terraform by:
@@ -64,7 +64,7 @@ func (m *Infra) JobTerraform(
 		tfExecutionPath := getTerraformModulesExecutionPath(tfModulePath)
 		m.Ctr = m.
 			Ctr.
-			WithWorkdir(tfExecutionPath)
+			WithWorkdir(filepath.Join(defaultMntPath, tfExecutionPath))
 	}
 
 	if len(envVars) > 0 {

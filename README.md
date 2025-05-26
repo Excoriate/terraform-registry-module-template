@@ -24,6 +24,117 @@ This module provides:
 
 ### Usage
 
+## Development Workflow
+
+This project uses [Just](https://github.com/casey/just) as a command runner for common development tasks. Just provides a convenient way to run project-specific commands and automate workflows.
+
+### Prerequisites
+
+- **Just**: Install the Just command runner
+  ```bash
+  # macOS
+  brew install just
+
+  # Linux
+  curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/bin
+
+  # Windows
+  scoop install just
+  ```
+
+- **Nix** (Optional): For reproducible development environment
+  ```bash
+  # Install Nix
+  curl -L https://nixos.org/nix/install | sh
+
+  # Enter development shell
+  nix develop
+  ```
+
+### Available Commands
+
+Run `just` without arguments to see all available commands:
+
+```bash
+just
+```
+
+#### Common Development Tasks
+
+**Terraform Operations:**
+```bash
+# Validate Terraform modules
+just tf-validate "module-name"
+
+# Run static analysis on modules
+just tf-ci-static "module-name"
+
+# Execute Terraform commands in specific directories
+just tf-exec "examples/module-name/basic" "init"
+just tf-exec "examples/module-name/basic" "plan"
+```
+
+**Testing:**
+```bash
+# Run unit tests
+just tf-test-unit
+
+# Run example tests
+just tf-test-examples
+
+# Run tests with specific parameters
+just tf-test-unit "module-name" "readonly,unit" "unit" "false" "5m"
+```
+
+**Code Quality:**
+```bash
+# Run pre-commit hooks
+just hooks-run
+
+# Format code
+just fmt
+
+# Run linting
+just lint
+```
+
+**Documentation:**
+```bash
+# Generate module documentation
+just docs-generate
+
+# Update README files
+just docs-update
+```
+
+### Quick Start
+
+1. **Initialize the development environment:**
+   ```bash
+   just init
+   ```
+
+2. **Validate your changes:**
+   ```bash
+   just validate
+   ```
+
+3. **Run tests:**
+   ```bash
+   just test
+   ```
+
+4. **Format and lint code:**
+   ```bash
+   just fmt
+   just lint
+   ```
+
+For detailed information about available commands and their parameters, run:
+```bash
+just --list
+```
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
