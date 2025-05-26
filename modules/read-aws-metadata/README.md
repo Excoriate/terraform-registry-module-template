@@ -81,7 +81,6 @@ resource "aws_s3_bucket" "example" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_is_enabled"></a> [is\_enabled](#input\_is\_enabled) | Toggle module data source execution.<br/><br/>Use cases:<br/>- Conditional data source execution<br/>- Environment-specific deployments<br/>- Cost and resource management<br/><br/>Examples:<pre>hcl<br/># Disable all module data sources<br/>is_enabled = false<br/><br/># Enable module data sources (default)<br/>is_enabled = true</pre>🔗 References:<br/>- Terraform Variables: https://terraform.io/language/values/variables<br/>- Module Patterns: https://hashicorp.com/blog/terraform-module-composition | `bool` | `true` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Resource tagging for organization and governance.<br/><br/>Key benefits:<br/>- Resource tracking<br/>- Cost allocation<br/>- Compliance management<br/><br/>Best practices:<br/>- Use lowercase, hyphen-separated keys<br/>- Include context (env, project, ownership)<br/><br/>Examples:<pre>hcl<br/>tags = {<br/>  environment = "production"<br/>  project     = "core-infra"<br/>  managed-by  = "terraform"<br/>}</pre>Note: This module creates no taggable resources, but this variable is included for consistency.<br/><br/>🔗 References:<br/>- AWS Tagging: https://aws.amazon.com/answers/account-management/aws-tagging-strategies/<br/>- Cloud Tagging: https://cloud.google.com/resource-manager/docs/best-practices-labels | `map(string)` | `{}` | no |
 
 ## Outputs
 
