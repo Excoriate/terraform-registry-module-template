@@ -25,6 +25,7 @@ const (
 	defaultAWSOidcTokenSecretName = "AWS_OIDC_TOKEN"
 	// Configuration
 	configTerraformModulesRootPath = "modules"
+	configTerraformFixturesPath    = "fixtures"
 	configTerraformModulesTestPath = "test/modules"
 	configTerraformPluginCachePath = "/root/.terraform.d/plugin-cache"
 	configTerraformDataDirPath     = "/root/.terraform.d"

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"dagger/infra/internal/dagger"
+	"path/filepath"
 )
 
 // JobTerraformStaticCheck performs static analysis checks on Terraform code.
@@ -273,7 +274,7 @@ func (m *Infra) ActionTerraformFileVerification(
 		return nil, WrapErrorf(err, "failed to create base Terraform container")
 	}
 
-	tfModuleDirectory := m.Src.Directory("modules/" + tfModulePath).Terminal()
+	tfModuleDirectory := m.Src.Directory("modules/" + tfModulePath)
 
 	tfModuleEntries, tfModuleEntriesErr := tfModuleDirectory.
 		Entries(ctx)
@@ -338,6 +339,206 @@ func (m *Infra) ActionTerraformFileVerification(
 	if len(missingAdditionalFiles) > 0 {
 		return nil, Errorf("additional required files are missing: %v (specified: %v)", missingAdditionalFiles, files)
 	}
+
+	return baseContainer, nil
+}
+
+func (m *Infra) ActionTerraformBuild(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// fixture is the fixture to use for the build, meaning, the file.tfvars file to use.
+	// +optional
+	fixture string,
+	// awsAccessKeyID is the AWS access key ID.
+	// +optional
+	awsAccessKeyID *dagger.Secret,
+	// awsSecretAccessKey is the AWS secret access key.
+	// +optional
+	awsSecretAccessKey *dagger.Secret,
+	// awsSessionToken is the AWS session token.
+	// +optional
+	awsSessionToken *dagger.Secret,
+	// awsRegion is the AWS region to use for the remote backend.
+	// +optional
+	awsRegion string,
+	// tfRegistryGitlabToken is the Terraform Gitlab token.
+	// +optional
+	tfRegistryGitlabToken *dagger.Secret,
+	// GitHubToken is the github token
+	// +optional
+	gitHubToken *dagger.Secret,
+	// GitlabToken is the Gitlab token.
+	// +optional
+	gitlabToken *dagger.Secret,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// envVars are the environment variables to set in the container.
+	// +optional
+	envVars []string,
+	// gitSSH is a flag to enable SSH for the container.
+	// +optional
+	gitSSH *dagger.Socket,
+	// logLevel is the Terraform log level to use.
+	// +optional
+	logLevel string,
+) (*dagger.Container, error) {
+	// Get the base container using JobTerraform
+	baseContainer, err := m.JobTerraform(
+		ctx,
+		tfModulePath,
+		awsAccessKeyID,
+		awsSecretAccessKey,
+		awsSessionToken,
+		awsRegion,
+		tfRegistryGitlabToken,
+		gitHubToken,
+		gitlabToken,
+		loadDotEnvFile,
+		noCache,
+		envVars,
+		gitSSH,
+		logLevel,
+		"",
+		"",
+		"",
+	)
+
+	if err != nil {
+		return nil, WrapErrorf(err, "failed to create base Terraform container")
+	}
+
+	buildTFCommands := []DaggerCMD{
+		{"terraform", "init", "-backend=false"},
+	}
+
+	if fixture != "" {
+		fixturePath := filepath.Join(configTerraformFixturesPath, fixture)
+		buildTFCommands = append(buildTFCommands, DaggerCMD{"terraform", "plan", "-var-file=" + fixturePath})
+	} else {
+		buildTFCommands = append(buildTFCommands, DaggerCMD{"terraform", "plan"})
+	}
+
+	baseContainer = addDaggerCMDs(baseContainer, buildTFCommands...)
+
+	return baseContainer, nil
+}
+
+func (m *Infra) ActionTerraformDocs(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// terraformDocsVersion is the terraform-docs version to use.
+	// +optional
+	terraformDocsVersion string,
+) (*dagger.Container, error) {
+	tfDocsConfigFile := ".terraform-docs.yml"
+
+	tfDocCommands := []DaggerCMD{
+		{"cat", tfDocsConfigFile},
+		{"terraform-docs", "markdown", ".", "--output-file", "README.md"},
+	}
+
+	m = m.WithTerraformDocs(terraformDocsVersion)
+
+	// Get the base container using JobTerraform
+	baseContainer, err := m.JobTerraform(
+		ctx,
+		tfModulePath,
+		nil,
+		nil,
+		nil,
+		"",
+		nil,
+		nil,
+		nil,
+		loadDotEnvFile,
+		noCache,
+		nil,
+		nil,
+		"",
+		"",
+		"",
+		"",
+		// FIXME: This is not working as expected, the terraform-docs version is not being set.
+		// terraformDocsVersion,
+	)
+
+	if err != nil {
+		return nil, WrapErrorf(err, "failed to create base Terraform container")
+	}
+
+	baseContainer = addDaggerCMDs(baseContainer, tfDocCommands...)
+
+	return baseContainer, nil
+}
+
+func (m *Infra) ActionTerraformLint(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// tflintVersion is the TFLint version to use.
+	// +optional
+	tflintVersion string,
+) (*dagger.Container, error) {
+	tfLintConfigFile := ".tflint.hcl"
+
+	tfLintCommands := []DaggerCMD{
+		{"cat", tfLintConfigFile},
+		{"tflint", "--init"},
+		{"tflint", "--recursive"},
+	}
+
+	m = m.WithTFLint(tflintVersion)
+
+	// Get the base container using JobTerraform
+	baseContainer, err := m.JobTerraform(
+		ctx,
+		tfModulePath,
+		nil,
+		nil,
+		nil,
+		"",
+		nil,
+		nil,
+		nil,
+		loadDotEnvFile,
+		noCache,
+		nil,
+		nil,
+		"",
+		"",
+		"",
+		"",
+	)
+
+	if err != nil {
+		return nil, WrapErrorf(err, "failed to create base Terraform container")
+	}
+
+	baseContainer = addDaggerCMDs(baseContainer, tfLintCommands...)
 
 	return baseContainer, nil
 }

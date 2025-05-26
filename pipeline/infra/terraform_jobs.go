@@ -60,72 +60,74 @@ func (m *Infra) JobTerraform(
 	// +optional
 	terraformDocsVersion string,
 ) (*dagger.Container, error) {
+	job := m
+
+	if noCache {
+		job = job.WithCacheBuster()
+	}
+
+	if awsAccessKeyID != nil && awsSecretAccessKey != nil {
+		job = job.WithAWSKeys(ctx, awsAccessKeyID, awsSecretAccessKey, awsRegion, awsSessionToken)
+	}
+
+	if tfRegistryGitlabToken != nil {
+		job = job.WithTerraformRegistryGitlabToken(ctx, tfRegistryGitlabToken)
+	}
+
+	if gitlabToken != nil {
+		job = job.WithGitlabToken(ctx, gitlabToken)
+	}
+
+	if gitHubToken != nil {
+		job = job.WithGitHubToken(ctx, gitHubToken)
+	}
+
+	if logLevel != "" {
+		job = job.WithTerraformLogLevel(logLevel)
+	}
+
+	if dotTerraformVersion != "" {
+		job = job.WithDotTerraformVersionFileGeneration(dotTerraformVersion)
+	}
+
+	if tflintVersion != "" {
+		job = job.WithTFLint(tflintVersion)
+	}
+
+	if terraformDocsVersion != "" {
+		job = job.WithTerraformDocs(terraformDocsVersion)
+	}
+
 	if tfModulePath != "" {
 		tfExecutionPath := getTerraformModulesExecutionPath(tfModulePath)
-		m.Ctr = m.
+		job.Ctr = job.
 			Ctr.
 			WithWorkdir(filepath.Join(defaultMntPath, tfExecutionPath))
 	}
 
 	if len(envVars) > 0 {
-		mWithEnvVars, err := m.WithEnvVars(envVars)
+		mWithEnvVars, err := job.WithEnvVars(envVars)
 		if err != nil {
 			return nil, WrapErrorf(err, "failed to set environment variables")
 		}
 
-		m = mWithEnvVars
+		job = mWithEnvVars
 	}
 
 	if gitSSH != nil {
-		m = m.WithSSHAuthSocket(gitSSH, "", "", false, true)
+		job = job.WithSSHAuthSocket(gitSSH, "", "", false, true)
 	}
 
 	if loadDotEnvFile {
-		mDecorated, err := m.WithDotEnvFile(ctx, m.Src)
+		mDecorated, err := job.WithDotEnvFile(ctx, job.Src)
 		if err != nil {
 			return nil, WrapErrorf(err, "failed to source .env files from the local directory")
 		}
 
-		m = mDecorated
+		job = mDecorated
 	}
 
-	if noCache {
-		m = m.WithCacheBuster()
-	}
-
-	if awsAccessKeyID != nil && awsSecretAccessKey != nil {
-		m = m.WithAWSKeys(ctx, awsAccessKeyID, awsSecretAccessKey, awsRegion, awsSessionToken)
-	}
-
-	if tfRegistryGitlabToken != nil {
-		m = m.WithTerraformRegistryGitlabToken(ctx, tfRegistryGitlabToken)
-	}
-
-	if gitlabToken != nil {
-		m = m.WithGitlabToken(ctx, gitlabToken)
-	}
-
-	if gitHubToken != nil {
-		m = m.WithGitHubToken(ctx, gitHubToken)
-	}
-
-	if logLevel != "" {
-		m = m.WithTerraformLogLevel(logLevel)
-	}
-
-	if dotTerraformVersion != "" {
-		m = m.WithDotTerraformVersionFileGeneration(dotTerraformVersion)
-	}
-
-	if tflintVersion != "" {
-		m = m.WithTFLint(tflintVersion)
-	}
-
-	if terraformDocsVersion != "" {
-		m = m.WithTerraformDocs(terraformDocsVersion)
-	}
-
-	return m.Ctr, nil
+	return job.Ctr, nil
 }
 
 // JobTerraformExec executes a Terraform command with arguments using a pre-configured container.

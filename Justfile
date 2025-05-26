@@ -608,7 +608,7 @@ pipeline-infra-shell args="": (pipeline-infra-build)
     @echo "🚀 Launching interactive terminal"
     @dagger call open-terminal {{args}}
 
-# 🔨 Execute a Dagger job with any arbitrary command
+# 🔨 Execute a Dagger job with a specified command and arguments
 [working-directory:'pipeline/infra']
 pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
     @echo "🚀 Executing job: {{command}} with arguments: {{args}}"
@@ -622,7 +622,7 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
        --terraform-docs-version="0.20.0" \
        --git-ssh $SSH_AUTH_SOCK
 
-# 🔨 Validate Terraform modules for best practices and security
+# 🔨 Perform static analysis on Terraform modules for security and best practices
 [working-directory:'pipeline/infra']
 pipeline-action-terraform-static-analysis MODULE="default" args="": (pipeline-infra-build)
     @echo " Analyzing Terraform modules for security and best practices"
@@ -634,7 +634,7 @@ pipeline-action-terraform-static-analysis MODULE="default" args="": (pipeline-in
        --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Static analysis completed successfully"
 
-# 🔨 Test Terraform modules against multiple provider versions
+# 🔨 Verify compatibility of Terraform modules across different provider versions
 [working-directory:'pipeline/infra']
 pipeline-action-terraform-version-compatibility-verification MODULE="default": (pipeline-infra-build)
     @echo " Testing module compatibility across provider versions"
@@ -646,7 +646,7 @@ pipeline-action-terraform-version-compatibility-verification MODULE="default": (
        --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Version compatibility testing completed"
 
-# 🔨 Test Terraform modules against multiple provider versions
+# 🔨 Verify the integrity of Terraform module files
 [working-directory:'pipeline/infra']
 pipeline-action-terraform-file-verification MODULE="default": (pipeline-infra-build)
     @echo " Testing module files"
@@ -657,5 +657,37 @@ pipeline-action-terraform-file-verification MODULE="default": (pipeline-infra-bu
        --no-cache=true
     @echo "✅ File verification completed"
 
+# 🔨 Build Terraform modules
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-build MODULE="default": (pipeline-infra-build)
+    @echo " Building module files"
+    @echo "⚡ Running plan"
+    @dagger --use-hashicorp-image=true call action-terraform-build \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache=true
+    @echo "✅ Build completed"
+
+# 🔨 Generate module documentation
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-docs MODULE="default": (pipeline-infra-build)
+    @echo " Generating module documentation"
+    @echo "⚡ Running docs"
+    @dagger --use-hashicorp-image=true call action-terraform-docs \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache=true
+    @echo "✅ Docs completed"
+
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-lint MODULE="default": (pipeline-infra-build)
+    @echo " Linting module files"
+    @echo "⚡ Running lint"
+    @dagger --use-hashicorp-image=true call action-terraform-lint \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache=true
+    @echo "✅ Lint completed"
+
 # 🔨 Run comprehensive CI checks for Terraform modules
-pipeline-infra-tf-ci MODULE="default" args="": (pipeline-action-terraform-static-analysis MODULE args) (pipeline-action-terraform-version-compatibility-verification MODULE)
+pipeline-infra-tf-ci MODULE="default" args="": (pipeline-action-terraform-static-analysis MODULE args) (pipeline-action-terraform-version-compatibility-verification MODULE) (pipeline-action-terraform-file-verification MODULE)

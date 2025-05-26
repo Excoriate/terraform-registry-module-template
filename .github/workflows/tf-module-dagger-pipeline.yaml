@@ -1,0 +1,97 @@
+---
+name: 🧩 TF Dagger Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      tf_module_name:
+        description: 'Terraform module name to run the dagger functions on. Modules are under the modules/ directory.'
+        required: true
+        default: 'default'
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  TERRAFORM_VERSION: '1.12.0'
+  TFLINT_VERSION: 'latest'
+  TERRAFORM_DOCS_VERSION: 'latest'
+  GO_VERSION: '1.21'
+  DAGGER_VERSION: "0.18.8"
+  DAGGER_MODULE_DIR: "pipeline/infra"
+
+jobs:
+  ci-module:
+    name: 🌐 Module Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+
+  summary:
+    name: 🏁 Validation Summary
+    needs:
+      - ci-module
+      - ci-examples
+      - ci-terratest-unit-readonly
+      - ci-terratest-examples-readonly
+      - ci-terratest-unit-integration
+      - ci-terratest-examples-integration
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📊 Workflow Status
+        run: |
+          echo "🚀 Module-Specific Terraform CI Complete!"
+          echo "✅ Module: ${{ inputs.module_name }}"
+          echo "🔍 Detailed results available in job logs."
+
+          # Check the status of all jobs
+          if [[ "${{ needs.ci-module.result }}" != "success" ]]; then
+            echo "❌ Module validation failed"
+            exit 1
+          fi
+
+          # ci-examples may be skipped if there are no examples
+          if [[ "${{ needs.ci-examples.result }}" != "success" && "${{ needs.ci-examples.result }}" != "skipped" ]]; then
+            echo "❌ Examples validation failed"
+            exit 1
+          fi
+
+          # Unit tests (readonly) may be skipped if there are no unit tests
+          if [[ "${{ needs.ci-terratest-unit-readonly.result }}" != "success" && "${{ needs.ci-terratest-unit-readonly.result }}" != "skipped" ]]; then
+            echo "❌ Unit tests (readonly) failed"
+            exit 1
+          fi
+
+          # Examples tests (readonly) may be skipped if there are no examples tests
+          if [[ "${{ needs.ci-terratest-examples-readonly.result }}" != "success" && "${{ needs.ci-terratest-examples-readonly.result }}" != "skipped" ]]; then
+            echo "❌ Examples tests (readonly) failed"
+            exit 1
+          fi
+
+          # Integration tests are disabled by default, so they should be skipped
+          if [[ "${{ needs.ci-terratest-unit-integration.result }}" != "success" && "${{ needs.ci-terratest-unit-integration.result }}" != "skipped" ]]; then
+            echo "❌ Unit tests (integration) failed"
+            exit 1
+          fi
+
+          # Integration tests are disabled by default, so they should be skipped
+          if [[ "${{ needs.ci-terratest-examples-integration.result }}" != "success" && "${{ needs.ci-terratest-examples-integration.result }}" != "skipped" ]]; then
+            echo "❌ Examples tests (integration) failed"
+            exit 1
+          fi
+
+          echo "✅ All checks passed!"
