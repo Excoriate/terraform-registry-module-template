@@ -627,10 +627,10 @@ pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
 pipeline-action-terraform-static-analysis MODULE="default" args="": (pipeline-infra-build)
     @echo " Analyzing Terraform modules for security and best practices"
     @echo "⚡ Running static analysis checks"
-    @dagger --use-hashicorp-image=true call action-terraform-static-analysis \
+    @dagger --use-hashicorp-image=true call action-terraform-static-analysis-exec \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
-       --no-cache=true \
+       --no-cache \
        --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Static analysis completed successfully"
 
@@ -639,10 +639,10 @@ pipeline-action-terraform-static-analysis MODULE="default" args="": (pipeline-in
 pipeline-action-terraform-version-compatibility-verification MODULE="default": (pipeline-infra-build)
     @echo " Testing module compatibility across provider versions"
     @echo "⚡ Running version compatibility checks"
-    @dagger --use-hashicorp-image=true call action-terraform-version-compatibility-verification \
+    @dagger --use-hashicorp-image=true call action-terraform-version-compatibility-verification-exec \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
-       --no-cache=true \
+       --no-cache \
        --git-ssh $SSH_AUTH_SOCK
     @echo "✅ Version compatibility testing completed"
 
@@ -651,10 +651,10 @@ pipeline-action-terraform-version-compatibility-verification MODULE="default": (
 pipeline-action-terraform-file-verification MODULE="default": (pipeline-infra-build)
     @echo " Testing module files"
     @echo "⚡ Running file verification"
-    @dagger --use-hashicorp-image=true call action-terraform-file-verification \
+    @dagger --use-hashicorp-image=true call action-terraform-file-verification-exec \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
-       --no-cache=true
+       --no-cache
     @echo "✅ File verification completed"
 
 # 🔨 Build Terraform modules
@@ -662,10 +662,10 @@ pipeline-action-terraform-file-verification MODULE="default": (pipeline-infra-bu
 pipeline-action-terraform-build MODULE="default": (pipeline-infra-build)
     @echo " Building module files"
     @echo "⚡ Running plan"
-    @dagger --use-hashicorp-image=true call action-terraform-build \
+    @dagger --use-hashicorp-image=true call action-terraform-build-exec \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
-       --no-cache=true
+       --no-cache
     @echo "✅ Build completed"
 
 # 🔨 Generate module documentation
@@ -673,20 +673,20 @@ pipeline-action-terraform-build MODULE="default": (pipeline-infra-build)
 pipeline-action-terraform-docs MODULE="default": (pipeline-infra-build)
     @echo " Generating module documentation"
     @echo "⚡ Running docs"
-    @dagger --use-hashicorp-image=true call action-terraform-docs \
+    @dagger --use-hashicorp-image=true call action-terraform-docs-exec \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
-       --no-cache=true
+       --no-cache
     @echo "✅ Docs completed"
 
 [working-directory:'pipeline/infra']
 pipeline-action-terraform-lint MODULE="default": (pipeline-infra-build)
     @echo " Linting module files"
     @echo "⚡ Running lint"
-    @dagger --use-hashicorp-image=true call action-terraform-lint \
+    @dagger --use-hashicorp-image=true call action-terraform-lint-exec \
        --tf-module-path="{{MODULE}}" \
        --load-dot-env-file=true \
-       --no-cache=true
+       --no-cache
     @echo "✅ Lint completed"
 
 # 🔨 Run comprehensive CI checks for Terraform modules

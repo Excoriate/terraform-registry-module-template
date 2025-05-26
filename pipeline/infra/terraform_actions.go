@@ -100,6 +100,93 @@ func (m *Infra) ActionTerraformStaticAnalysis(
 	return baseContainer, nil
 }
 
+// ActionTerraformStaticAnalysisExec executes static analysis checks on Terraform code and returns the output.
+// This is a wrapper function that calls ActionTerraformStaticAnalysis and retrieves the stdout output.
+func (m *Infra) ActionTerraformStaticAnalysisExec(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// awsAccessKeyID is the AWS access key ID.
+	// +optional
+	awsAccessKeyID *dagger.Secret,
+	// awsSecretAccessKey is the AWS secret access key.
+	// +optional
+	awsSecretAccessKey *dagger.Secret,
+	// awsSessionToken is the AWS session token.
+	// +optional
+	awsSessionToken *dagger.Secret,
+	// awsRegion is the AWS region to use for the remote backend.
+	// +optional
+	awsRegion string,
+	// tfRegistryGitlabToken is the Terraform Gitlab token.
+	// +optional
+	tfRegistryGitlabToken *dagger.Secret,
+	// GitHubToken is the github token
+	// +optional
+	gitHubToken *dagger.Secret,
+	// GitlabToken is the Gitlab token.
+	// +optional
+	gitlabToken *dagger.Secret,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// envVars are the environment variables to set in the container.
+	// +optional
+	envVars []string,
+	// gitSSH is a flag to enable SSH for the container.
+	// +optional
+	gitSSH *dagger.Socket,
+	// logLevel is the Terraform log level to use.
+	// +optional
+	logLevel string,
+	// dotTerraformVersion is the Terraform version to generate a .terraform-version file in the working directory.
+	// +optional
+	dotTerraformVersion string,
+	// tflintVersion is the TFLint version to use.
+	// +optional
+	tflintVersion string,
+	// terraformDocsVersion is the terraform-docs version to use.
+	// +optional
+	terraformDocsVersion string,
+) (string, error) {
+	action, actionErr := m.ActionTerraformStaticAnalysis(
+		ctx,
+		tfModulePath,
+		awsAccessKeyID,
+		awsSecretAccessKey,
+		awsSessionToken,
+		awsRegion,
+		tfRegistryGitlabToken,
+		gitHubToken,
+		gitlabToken,
+		loadDotEnvFile,
+		noCache,
+		envVars,
+		gitSSH,
+		logLevel,
+		dotTerraformVersion,
+		tflintVersion,
+		terraformDocsVersion,
+	)
+
+	if actionErr != nil {
+		return "", WrapErrorf(actionErr, "failed to create base Terraform container")
+	}
+
+	actionOutput, actionOutputErr := action.Stdout(ctx)
+
+	if actionOutputErr != nil {
+		return "", WrapErrorf(actionOutputErr, "failed to get action output")
+	}
+
+	return actionOutput, nil
+}
+
 // ActionTerraformVersionCompatibilityVerification performs compatibility checks across multiple Terraform versions.
 // It tests the Terraform modules against different versions to ensure compatibility.
 // This function creates separate containers for each version and runs validation sequentially.
@@ -215,6 +302,100 @@ func (m *Infra) ActionTerraformVersionCompatibilityVerification(
 	return baseContainer, nil
 }
 
+// ActionTerraformVersionCompatibilityVerificationExec executes compatibility checks across multiple Terraform versions and returns the output.
+// This is a wrapper function that calls ActionTerraformVersionCompatibilityVerification and retrieves the stdout output.
+func (m *Infra) ActionTerraformVersionCompatibilityVerificationExec(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// awsAccessKeyID is the AWS access key ID.
+	// +optional
+	awsAccessKeyID *dagger.Secret,
+	// awsSecretAccessKey is the AWS secret access key.
+	// +optional
+	awsSecretAccessKey *dagger.Secret,
+	// awsSessionToken is the AWS session token.
+	// +optional
+	awsSessionToken *dagger.Secret,
+	// awsRegion is the AWS region to use for the remote backend.
+	// +optional
+	awsRegion string,
+	// tfRegistryGitlabToken is the Terraform Gitlab token.
+	// +optional
+	tfRegistryGitlabToken *dagger.Secret,
+	// GitHubToken is the github token
+	// +optional
+	gitHubToken *dagger.Secret,
+	// GitlabToken is the Gitlab token.
+	// +optional
+	gitlabToken *dagger.Secret,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// envVars are the environment variables to set in the container.
+	// +optional
+	envVars []string,
+	// gitSSH is a flag to enable SSH for the container.
+	// +optional
+	gitSSH *dagger.Socket,
+	// logLevel is the Terraform log level to use.
+	// +optional
+	logLevel string,
+	// dotTerraformVersion is the Terraform version to generate a .terraform-version file in the working directory.
+	// +optional
+	dotTerraformVersion string,
+	// tflintVersion is the TFLint version to use.
+	// +optional
+	tflintVersion string,
+	// terraformDocsVersion is the terraform-docs version to use.
+	// +optional
+	terraformDocsVersion string,
+	// tfVersionsToVerify is the list of Terraform versions to verify.
+	// +optional
+	tfVersionsToVerify []string,
+) (string, error) {
+	action, actionErr := m.ActionTerraformVersionCompatibilityVerification(
+		ctx,
+		tfModulePath,
+		awsAccessKeyID,
+		awsSecretAccessKey,
+		awsSessionToken,
+		awsRegion,
+		tfRegistryGitlabToken,
+		gitHubToken,
+		gitlabToken,
+		loadDotEnvFile,
+		noCache,
+		envVars,
+		gitSSH,
+		logLevel,
+		dotTerraformVersion,
+		tflintVersion,
+		terraformDocsVersion,
+		tfVersionsToVerify,
+	)
+
+	if actionErr != nil {
+		return "", WrapErrorf(actionErr, "failed to create base Terraform container")
+	}
+
+	actionOutput, actionOutputErr := action.Stdout(ctx)
+
+	if actionOutputErr != nil {
+		return "", WrapErrorf(actionOutputErr, "failed to get action output")
+	}
+
+	return actionOutput, nil
+}
+
+// ActionTerraformFileVerification verifies the presence of mandatory Terraform module files.
+// It checks for required Terraform files, documentation files, and tooling configuration files
+// to ensure the module follows the established structure and standards.
 func (m *Infra) ActionTerraformFileVerification(
 	// Context is the context for managing the operation's lifecycle
 	// +optional
@@ -343,6 +524,47 @@ func (m *Infra) ActionTerraformFileVerification(
 	return baseContainer, nil
 }
 
+// ActionTerraformFileVerificationExec executes file verification checks on Terraform modules and returns the output.
+// This is a wrapper function that calls ActionTerraformFileVerification and retrieves the stdout output.
+func (m *Infra) ActionTerraformFileVerificationExec(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// files is the list of files to verify.
+	// +optional
+	files []string,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+) (string, error) {
+	action, actionErr := m.ActionTerraformFileVerification(
+		ctx,
+		tfModulePath,
+		files,
+		loadDotEnvFile,
+		noCache,
+	)
+
+	if actionErr != nil {
+		return "", WrapErrorf(actionErr, "failed to create base Terraform container")
+	}
+
+	actionOutput, actionOutputErr := action.Stdout(ctx)
+
+	if actionOutputErr != nil {
+		return "", WrapErrorf(actionOutputErr, "failed to get action output")
+	}
+
+	return actionOutput, nil
+}
+
+// ActionTerraformBuild performs a Terraform build operation including initialization and planning.
+// It creates a base container, initializes Terraform, and runs a plan operation with optional fixture files.
 func (m *Infra) ActionTerraformBuild(
 	// Context is the context for managing the operation's lifecycle
 	// +optional
@@ -430,6 +652,88 @@ func (m *Infra) ActionTerraformBuild(
 	return baseContainer, nil
 }
 
+// ActionTerraformBuildExec executes a Terraform build operation and returns the output.
+// This is a wrapper function that calls ActionTerraformBuild and retrieves the stdout output.
+func (m *Infra) ActionTerraformBuildExec(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// fixture is the fixture to use for the build, meaning, the file.tfvars file to use.
+	// +optional
+	fixture string,
+	// awsAccessKeyID is the AWS access key ID.
+	// +optional
+	awsAccessKeyID *dagger.Secret,
+	// awsSecretAccessKey is the AWS secret access key.
+	// +optional
+	awsSecretAccessKey *dagger.Secret,
+	// awsSessionToken is the AWS session token.
+	// +optional
+	awsSessionToken *dagger.Secret,
+	// awsRegion is the AWS region to use for the remote backend.
+	// +optional
+	awsRegion string,
+	// tfRegistryGitlabToken is the Terraform Gitlab token.
+	// +optional
+	tfRegistryGitlabToken *dagger.Secret,
+	// GitHubToken is the github token
+	// +optional
+	gitHubToken *dagger.Secret,
+	// GitlabToken is the Gitlab token.
+	// +optional
+	gitlabToken *dagger.Secret,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// envVars are the environment variables to set in the container.
+	// +optional
+	envVars []string,
+	// gitSSH is a flag to enable SSH for the container.
+	// +optional
+	gitSSH *dagger.Socket,
+	// logLevel is the Terraform log level to use.
+	// +optional
+	logLevel string,
+) (string, error) {
+	action, actionErr := m.ActionTerraformBuild(
+		ctx,
+		tfModulePath,
+		fixture,
+		awsAccessKeyID,
+		awsSecretAccessKey,
+		awsSessionToken,
+		awsRegion,
+		tfRegistryGitlabToken,
+		gitHubToken,
+		gitlabToken,
+		loadDotEnvFile,
+		noCache,
+		envVars,
+		gitSSH,
+		logLevel,
+	)
+
+	if actionErr != nil {
+		return "", WrapErrorf(actionErr, "failed to create base Terraform container")
+	}
+
+	actionOutput, actionOutputErr := action.Stdout(ctx)
+
+	if actionOutputErr != nil {
+		return "", WrapErrorf(actionOutputErr, "failed to get action output")
+	}
+
+	return actionOutput, nil
+}
+
+// ActionTerraformDocs generates Terraform documentation using terraform-docs.
+// It reads the terraform-docs configuration file and generates markdown documentation
+// for the specified Terraform module.
 func (m *Infra) ActionTerraformDocs(
 	// Context is the context for managing the operation's lifecycle
 	// +optional
@@ -487,6 +791,48 @@ func (m *Infra) ActionTerraformDocs(
 	return baseContainer, nil
 }
 
+// ActionTerraformDocsExec executes Terraform documentation generation and returns the output.
+// This is a wrapper function that calls ActionTerraformDocs and retrieves the stdout output.
+func (m *Infra) ActionTerraformDocsExec(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// terraformDocsVersion is the terraform-docs version to use.
+	// +optional
+	terraformDocsVersion string,
+) (string, error) {
+	action, actionErr := m.ActionTerraformDocs(
+		ctx,
+		tfModulePath,
+		loadDotEnvFile,
+		noCache,
+		terraformDocsVersion,
+	)
+
+	if actionErr != nil {
+		return "", WrapErrorf(actionErr, "failed to create base Terraform container")
+	}
+
+	actionOutput, actionOutputErr := action.Stdout(ctx)
+
+	if actionOutputErr != nil {
+		return "", WrapErrorf(actionOutputErr, "failed to get action output")
+	}
+
+	return actionOutput, nil
+}
+
+// ActionTerraformLint performs linting checks on Terraform code using TFLint.
+// It reads the TFLint configuration file, initializes TFLint, and runs recursive linting
+// across the Terraform module to ensure code quality and best practices.
 func (m *Infra) ActionTerraformLint(
 	// Context is the context for managing the operation's lifecycle
 	// +optional
@@ -541,4 +887,43 @@ func (m *Infra) ActionTerraformLint(
 	baseContainer = addDaggerCMDs(baseContainer, tfLintCommands...)
 
 	return baseContainer, nil
+}
+
+// ActionTerraformLintExec executes Terraform linting checks and returns the output.
+// This is a wrapper function that calls ActionTerraformLint and retrieves the stdout output.
+func (m *Infra) ActionTerraformLintExec(
+	// Context is the context for managing the operation's lifecycle
+	// +optional
+	ctx context.Context,
+	// tfModulePath is the path to the Terraform modules.
+	tfModulePath string,
+	// loadDotEnvFile is a flag to enable source .env files from the local directory.
+	// +optional
+	loadDotEnvFile bool,
+	// NoCache is a flag to disable caching of the container.
+	// +optional
+	noCache bool,
+	// tflintVersion is the TFLint version to use.
+	// +optional
+	tflintVersion string,
+) (string, error) {
+	action, actionErr := m.ActionTerraformLint(
+		ctx,
+		tfModulePath,
+		loadDotEnvFile,
+		noCache,
+		tflintVersion,
+	)
+
+	if actionErr != nil {
+		return "", WrapErrorf(actionErr, "failed to create base Terraform container")
+	}
+
+	actionOutput, actionOutputErr := action.Stdout(ctx)
+
+	if actionOutputErr != nil {
+		return "", WrapErrorf(actionOutputErr, "failed to get action output")
+	}
+
+	return actionOutput, nil
 }
