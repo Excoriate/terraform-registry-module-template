@@ -102,15 +102,151 @@ jobs:
           echo "🔄 Running version compatibility verification for module: ${{ inputs.tf_module_name }}"
           dagger --use-hashicorp-image=true call action-terraform-version-compatibility-verification-exec \
             --tf-module-path="${{ inputs.tf_module_name }}" \
-            --load-dot-env-file=true \
             --no-cache
           echo "✅ Version compatibility verification completed successfully"
+
+  static-analysis:
+    name: 🔬 Static Analysis
+    runs-on: ubuntu-latest
+    needs: is-tf-module
+    if: needs.is-tf-module.outputs.is_module == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
+
+      - name: 🔬 Static Analysis Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🔬 Running static analysis for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-static-analysis-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --no-cache
+          echo "✅ Static analysis completed successfully"
+
+  module-docs-verification:
+    name: 📚 Module Documentation Verification
+    runs-on: ubuntu-latest
+    needs: is-tf-module
+    if: needs.is-tf-module.outputs.is_module == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
+
+      - name: 📚 Documentation Generation Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "📚 Running documentation generation for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-docs-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --no-cache
+          echo "✅ Documentation generation completed successfully"
+
+  module-lint:
+    name: 🧹 Module Linting
+    runs-on: ubuntu-latest
+    needs: [module-docs-verification, static-analysis]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
+
+      - name: 🧹 Linting Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🧹 Running linting for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-lint-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --no-cache
+          echo "✅ Linting completed successfully"
+
+  module-versions-compatibility-check:
+    name: 🔄 Module Versions Compatibility Check
+    runs-on: ubuntu-latest
+    needs: module-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
+
+      - name: 🔄 File Verification Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🔄 Running file verification for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-file-verification-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --no-cache
+          echo "✅ File verification completed successfully"
+
+  module-build:
+    name: 🏗️ Module Build
+    runs-on: ubuntu-latest
+    needs: module-versions-compatibility-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
+
+      - name: 🏗️ Build Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🏗️ Running build for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-build-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --no-cache
+          echo "✅ Build completed successfully"
 
   summary:
     name: 🏁 Validation Summary
     needs:
       - is-tf-module
       - module-convention-check
+      - static-analysis
+      - module-docs-verification
+      - module-lint
+      - module-versions-compatibility-check
+      - module-build
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -128,6 +264,31 @@ jobs:
 
           if [[ "${{ needs.module-convention-check.result }}" != "success" ]]; then
             echo "❌ Module convention check failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.static-analysis.result }}" != "success" ]]; then
+            echo "❌ Static analysis failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.module-docs-verification.result }}" != "success" ]]; then
+            echo "❌ Module documentation verification failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.module-lint.result }}" != "success" ]]; then
+            echo "❌ Module linting failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.module-versions-compatibility-check.result }}" != "success" ]]; then
+            echo "❌ Module versions compatibility check failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.module-build.result }}" != "success" ]]; then
+            echo "❌ Module build failed"
             exit 1
           fi
 
