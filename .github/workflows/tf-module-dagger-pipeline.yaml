@@ -9,6 +9,11 @@ on:
         required: true
         default: 'default'
         type: string
+      dagger_version:
+        description: 'Dagger version to use'
+        required: false
+        default: '0.18.8'
+        type: string
 
 permissions:
   contents: read
@@ -19,13 +24,56 @@ env:
   TFLINT_VERSION: 'latest'
   TERRAFORM_DOCS_VERSION: 'latest'
   GO_VERSION: '1.21'
-  DAGGER_VERSION: "0.18.8"
+  DAGGER_VERSION: ${{ inputs.dagger_version || '0.18.8' }}
   DAGGER_MODULE_DIR: "pipeline/infra"
 
 jobs:
-  ci-module:
-    name: 🌐 Module Validation
+  is-tf-module:
+    name: 🔍 Check if Terraform Module Exists
     runs-on: ubuntu-latest
+    outputs:
+      is_module: ${{ steps.check_module.outputs.is_module }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔍 Check if module exists and has .tf files
+        id: check_module
+        run: |
+          MODULE_PATH="modules/${{ inputs.tf_module_name }}"
+
+          echo "🔍 Checking module path: $MODULE_PATH"
+
+          # Check if directory exists
+          if [ ! -d "$MODULE_PATH" ]; then
+            echo "❌ Module directory does not exist: $MODULE_PATH"
+            echo "is_module=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check if directory is not empty
+          if [ -z "$(ls -A $MODULE_PATH)" ]; then
+            echo "❌ Module directory is empty: $MODULE_PATH"
+            echo "is_module=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check if directory contains at least one .tf file
+          if [ -z "$(find $MODULE_PATH -maxdepth 1 -name "*.tf" -type f)" ]; then
+            echo "❌ Module directory does not contain any .tf files: $MODULE_PATH"
+            echo "is_module=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "✅ Valid Terraform module found at: $MODULE_PATH"
+          echo "📁 Module contains the following .tf files:"
+          find $MODULE_PATH -maxdepth 1 -name "*.tf" -type f -exec basename {} \;
+          echo "is_module=true" >> $GITHUB_OUTPUT
+
+  module-convention-check:
+    name: 🧩 Module Convention Check
+    runs-on: ubuntu-latest
+    needs: is-tf-module
+    if: needs.is-tf-module.outputs.is_module == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -34,63 +82,52 @@ jobs:
           curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: 🔧 Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: ${{ env.TFLINT_VERSION }}
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
 
+      - name: 🔍 File Verification Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🔍 Running file verification for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-file-verification-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --no-cache
+          echo "✅ File verification completed successfully"
+
+      - name: 🔄 Version Compatibility Check
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🔄 Running version compatibility verification for module: ${{ inputs.tf_module_name }}"
+          dagger --use-hashicorp-image=true call action-terraform-version-compatibility-verification-exec \
+            --tf-module-path="${{ inputs.tf_module_name }}" \
+            --load-dot-env-file=true \
+            --no-cache
+          echo "✅ Version compatibility verification completed successfully"
 
   summary:
     name: 🏁 Validation Summary
     needs:
-      - ci-module
-      - ci-examples
-      - ci-terratest-unit-readonly
-      - ci-terratest-examples-readonly
-      - ci-terratest-unit-integration
-      - ci-terratest-examples-integration
+      - is-tf-module
+      - module-convention-check
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: 📊 Workflow Status
         run: |
           echo "🚀 Module-Specific Terraform CI Complete!"
-          echo "✅ Module: ${{ inputs.module_name }}"
+          echo "✅ Module: ${{ inputs.tf_module_name }}"
           echo "🔍 Detailed results available in job logs."
 
           # Check the status of all jobs
-          if [[ "${{ needs.ci-module.result }}" != "success" ]]; then
-            echo "❌ Module validation failed"
+          if [[ "${{ needs.is-tf-module.result }}" != "success" ]]; then
+            echo "❌ Module existence check failed"
             exit 1
           fi
 
-          # ci-examples may be skipped if there are no examples
-          if [[ "${{ needs.ci-examples.result }}" != "success" && "${{ needs.ci-examples.result }}" != "skipped" ]]; then
-            echo "❌ Examples validation failed"
-            exit 1
-          fi
-
-          # Unit tests (readonly) may be skipped if there are no unit tests
-          if [[ "${{ needs.ci-terratest-unit-readonly.result }}" != "success" && "${{ needs.ci-terratest-unit-readonly.result }}" != "skipped" ]]; then
-            echo "❌ Unit tests (readonly) failed"
-            exit 1
-          fi
-
-          # Examples tests (readonly) may be skipped if there are no examples tests
-          if [[ "${{ needs.ci-terratest-examples-readonly.result }}" != "success" && "${{ needs.ci-terratest-examples-readonly.result }}" != "skipped" ]]; then
-            echo "❌ Examples tests (readonly) failed"
-            exit 1
-          fi
-
-          # Integration tests are disabled by default, so they should be skipped
-          if [[ "${{ needs.ci-terratest-unit-integration.result }}" != "success" && "${{ needs.ci-terratest-unit-integration.result }}" != "skipped" ]]; then
-            echo "❌ Unit tests (integration) failed"
-            exit 1
-          fi
-
-          # Integration tests are disabled by default, so they should be skipped
-          if [[ "${{ needs.ci-terratest-examples-integration.result }}" != "success" && "${{ needs.ci-terratest-examples-integration.result }}" != "skipped" ]]; then
-            echo "❌ Examples tests (integration) failed"
+          if [[ "${{ needs.module-convention-check.result }}" != "success" ]]; then
+            echo "❌ Module convention check failed"
             exit 1
           fi
 
