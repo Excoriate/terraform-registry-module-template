@@ -17,7 +17,7 @@ This guide provides comprehensive documentation for all Terraform environment va
 
 ## Quick Start
 
-This project uses Justfile with `set dotenv-load` to automatically load environment variables from `.env` files. 
+This project uses Justfile with `set dotenv-load` to automatically load environment variables from `.env` files.
 
 1. Copy `.env.example` to `.env`
 2. Uncomment and set required variables
@@ -443,7 +443,7 @@ Terraform uses the following precedence order (highest to lowest):
    ```justfile
    # The `set dotenv-load` directive automatically loads .env files
    set dotenv-load
-   
+
    terraform-plan env="development":
        @echo "Planning for {{env}} environment"
        terraform plan
@@ -565,6 +565,6 @@ gcloud config get-value project
 
 ---
 
-**Last Updated**: January 2025  
-**Terraform Version**: 1.12.x  
-**Sources**: Official HashiCorp documentation, AWS provider docs, community best practices 
+**Last Updated**: January 2025
+**Terraform Version**: 1.12.x
+**Sources**: Official HashiCorp documentation, AWS provider docs, community best practices

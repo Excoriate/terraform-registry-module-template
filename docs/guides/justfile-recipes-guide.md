@@ -177,4 +177,4 @@ Using `just dev` provides an interactive shell with all necessary tools loaded, 
 - Leverage the `-f <Justfile>` option if you have multiple Justfiles (though typically you'll only have one in the project root).
 - Combine recipes using dependencies for complex workflows (see the Justfile for examples like `tf-validate` or `go-ci`).
 
-This guide should provide new contributors with a solid understanding of how to use the Justfile recipes to streamline their development workflow. 
+This guide should provide new contributors with a solid understanding of how to use the Justfile recipes to streamline their development workflow.

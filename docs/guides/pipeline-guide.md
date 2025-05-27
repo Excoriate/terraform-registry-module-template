@@ -377,14 +377,14 @@ graph TD
     A[is-tf-module] --> B[module-convention-check]
     A --> C[static-analysis]
     A --> D[module-docs-verification]
-    
+
     B --> E[module-lint]
     C --> E
     D --> E
-    
+
     E --> F[module-versions-compatibility-check]
     F --> G[module-build]
-    
+
     G --> H[summary]
     E --> H
     F --> H
@@ -428,7 +428,7 @@ on:
    ```bash
    # Initialize pipeline
    just pipeline-infra-build
-   
+
    # Open interactive shell for debugging
    just pipeline-infra-shell
    ```
@@ -437,7 +437,7 @@ on:
    ```bash
    # Test static analysis
    just pipeline-action-terraform-static-analysis default
-   
+
    # Test with custom module
    just pipeline-action-terraform-static-analysis my-module
    ```
@@ -673,4 +673,4 @@ dagger call with-terragrunt --version="0.45.0"
 dagger call with-terraform-init --providers-only=true
 ```
 
-This comprehensive guide should help you understand and effectively use the Dagger pipeline for Terraform module development and CI/CD operations. 
+This comprehensive guide should help you understand and effectively use the Dagger pipeline for Terraform module development and CI/CD operations.
