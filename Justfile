@@ -1,26 +1,21 @@
 # 🚀 Terraform Module Development Workflow: Automate setup, formatting, linting, and project management
-#
-# This Justfile provides a comprehensive set of tasks for managing
-# Terraform module development, including:
-# - Environment setup
-# - Code formatting
-# - Linting
-# - Pre-commit hooks
-# - Cleanup utilities
-#
-# Usage:
-#   just <recipe>           # Run a specific task
-#   just                    # Show available tasks
-#   just help               # List all available recipes
 
-# 🌍 Load environment variables from .env file for consistent configuration
+# 🐚 Shell configuration
+# Use bash with strict error handling to prevent silent failures
+# -u: Treat unset variables as an error
+# -e: Exit immediately if a command exits with a non-zero status
+set shell := ["bash", "-uce"]
 set dotenv-load
+
+# Avoid reporting traces to Dagger
+# TODO: Uncomment if traces aren't needed.
+# export NOTHANKS := "1"
 
 # 🎯 Default task: Display available recipes when no specific task is specified
 default: help
 
 # 📦 Variables for project directories
-TESTS_DIR := 'tests'
+TESTS_DIR := 'tests/modules'
 MODULES_DIR := 'modules'
 EXAMPLES_DIR := 'examples'
 FIXTURES_DIR := 'fixtures'
@@ -179,101 +174,52 @@ reload-direnv:
     @direnv reload
 
 # 🌿 Format Terraform files locally using terraform fmt
-tf-format MOD='':
-    @echo "🌿 Discovering Terraform files..."
-    @if [ -z "{{MOD}}" ]; then \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-            echo "📄 Found: $file"; \
-        done; \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
-    else \
-        echo "📂 Formatting Terraform files in directory: {{{{MODULES_DIR}}/{{MOD}}}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
-        cd - > /dev/null; \
-        cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -recursive; \
-        cd - > /dev/null; \
-    fi
+tf-format:
+    @echo "🎨 Formatting Terraform files in current directory..."
+    @./scripts/utilities/format.sh --terraform
 
 # 🌿 Format all Terraform files across modules, examples, and tests directories
 tf-format-all:
-    @echo "🌿 Formatting all Terraform files across the repository..."
-    @echo "📂 Scanning directories: modules/, examples/, tests/"
+    @echo "🎨 Formatting all Terraform files across repository..."
+    @./scripts/utilities/format.sh --terraform --tf-all-dirs
 
-    @echo "\n🔍 Formatting files in modules/"
-    @pushd modules > /dev/null && \
-    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "   📄 Processing: $file"; \
-    done && \
-    terraform fmt -recursive && \
-    popd > /dev/null
+# 🌿 Format Terraform files for a specific module (both module and example directories)
+tf-format-module MODULE:
+    @echo "🎨 Formatting Terraform files for module: {{MODULE}}"
+    @./scripts/utilities/format.sh --terraform --tf-module {{MODULE}}
 
-    @echo "\n🔍 Formatting files in examples/"
-    @pushd examples > /dev/null && \
-    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "   📄 Processing: $file"; \
-    done && \
-    terraform fmt -recursive && \
-    popd > /dev/null
-
-    @echo "\n🔍 Formatting files in tests/"
-    @pushd tests > /dev/null && \
-    find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-        echo "   📄 Processing: $file"; \
-    done && \
-    terraform fmt -recursive && \
-    popd > /dev/null
-
-    @echo "\n✅ All Terraform files have been formatted!"
-
-# 🌿 Format Terraform files in Nix development environment
-tf-format-nix MOD='':
-    @echo "🌿 Discovering Terraform files in Nix environment..."
-    @if [ -z "{{MOD}}" ]; then \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
-    else \
-        echo "📂 Formatting Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
-        cd - > /dev/null; \
-        echo "📂 Formatting Terraform files in directory: {{EXAMPLES_DIR}}/{{MOD}}"; \
-        cd "{{EXAMPLES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform fmt -recursive; \
-        cd - > /dev/null; \
-    fi
-
-# 🌿 Format Terraform files in Nix development environment
+# 🔍 Check Terraform file formatting without modifying files
 tf-format-check MOD='':
-    @echo "🌿 Discovering Terraform files..."
+    @echo "🔍 Checking Terraform file formatting..."
     @if [ -z "{{MOD}}" ]; then \
-        find . -type f \( -name "*.tf" -o -name "*.tfvars" \) | sort | while read -r file; do \
-            echo "📄 Found: $file"; \
-        done; \
-        unformatted_files=$(find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check | tee /dev/tty); \
-        if [ -n "$unformatted_files" ]; then \
-            echo "❌ Some Terraform files are not properly formatted:"; \
-            echo "$unformatted_files"; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted"; \
-        fi; \
+        ./scripts/utilities/format.sh --terraform --tf-check; \
     else \
-        echo "📂 Checking formatting for Terraform files in directory: {{MODULES_DIR}}/{{MOD}}"; \
-        module_unformatted=$(cd "{{MODULES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check | tee /dev/tty); \
-        example_unformatted=$(cd "{{EXAMPLES_DIR}}/{{MOD}}" && find . -type f \( -name "*.tf" -o -name "*.tfvars" \) -print0 | xargs -0 terraform fmt -check | tee /dev/tty); \
-        \
-        if [ -n "$module_unformatted" ] || [ -n "$example_unformatted" ]; then \
-            echo "❌ Some Terraform files are not properly formatted:"; \
-            if [ -n "$module_unformatted" ]; then \
-                echo "📂 Unformatted files in module directory:"; \
-                echo "$module_unformatted"; \
-            fi; \
-            if [ -n "$example_unformatted" ]; then \
-                echo "📂 Unformatted files in example directory:"; \
-                echo "$example_unformatted"; \
-            fi; \
-            exit 1; \
-        else \
-            echo "✅ All Terraform files are correctly formatted"; \
-        fi; \
+        ./scripts/utilities/format.sh --terraform --tf-check --tf-module {{MOD}}; \
     fi
+
+# 🔍 Check Terraform file formatting for all directories
+tf-format-check-all:
+    @echo "🔍 Checking Terraform file formatting across all directories..."
+    @./scripts/utilities/format.sh --terraform --tf-check --tf-all-dirs
+
+# 🔍 Check Terraform file formatting for a specific module
+tf-format-check-module MODULE:
+    @echo "🔍 Checking Terraform file formatting for module: {{MODULE}}"
+    @./scripts/utilities/format.sh --terraform --tf-check --tf-module {{MODULE}}
+
+# 🔍 Check Terraform file formatting without modifying files (Nix environment)
+tf-format-check-nix MOD='':
+    @echo "🔍 Checking Terraform file formatting in Nix environment..."
+    @if [ -z "{{MOD}}" ]; then \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform --tf-check; \
+    else \
+        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command ./scripts/utilities/format.sh --terraform --tf-check --tf-module {{MOD}}; \
+    fi
+
+# 🔍 Discover and list all Terraform files in the repository
+tf-discover:
+    @echo "🔍 Discovering Terraform files..."
+    @./scripts/utilities/format.sh --terraform --tf-discover
 
 # 🌿 Run Terraform commands with flexible working directory and command selection
 tf-exec WORKDIR='.' CMDS='--help':
@@ -290,294 +236,192 @@ tf-exec-nix WORKDIR='.' CMDS='--help':
     @cd "{{WORKDIR}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run Terraform commands locally with flexible module and command selection
-tf-cmd MOD='.' CMDS='--help':
+tf-exec-mod MODULE='.' CMDS='--help':
     @echo "🏗️ Running Terraform command:"
     @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && terraform {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && terraform {{CMDS}}
 
 # 🌿 Run Terraform commands in Nix development environment with flexible module and command selection
-tf-cmd-nix MOD='.' CMDS='--help':
+tf-exec-mod-cmd-nix MODULE='.' CMDS='--help':
     @echo "🏗️ Running Terraform command in Nix environment:"
     @echo "👨🏻‍💻 Command: terraform {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command terraform {{CMDS}}
 
 # 🌿 Run OpenTofu commands locally with flexible module and command selection
-tofu-cmd MOD='.' CMDS='--help':
+tofu-exec-mod MODULE='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command:"
     @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && tofu {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && tofu {{CMDS}}
 
 # 🌿 Run OpenTofu commands in Nix development environment with flexible module and command selection
-tofu-cmd-nix MOD='.' CMDS='--help':
+tofu-exec-mod-cmd-nix MODULE='.' CMDS='--help':
     @echo "🏗️ Running OpenTofu command in Nix environment:"
     @echo "👨🏻‍💻 Command: tofu {{CMDS}}"
-    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MOD}})"
-    @cd "{{MODULES_DIR}}/{{MOD}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
+    @echo "📂 Working directory: $(realpath {{MODULES_DIR}}/{{MODULE}})"
+    @cd "{{MODULES_DIR}}/{{MODULE}}" && nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command tofu {{CMDS}}
 
-# 🔍 Lint Terraform modules locally using tflint, supporting directory-wide or specific module linting
-tf-lint MOD='':
-    @echo "🔍 Discovering and linting Terraform modules..."
-    @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
-            echo "🕵️ Linting directory: $dir"; \
-            cd $dir && \
-            tflint --init && \
-            tflint --recursive && \
-            cd - > /dev/null; \
-        done \
+# 🔍 Run TFLint on Terraform files to check for issues and best practices
+tf-lint MODULE='':
+    @echo "🔍 Running TFLint on Terraform files..."
+    @if [ -z "{{MODULE}}" ]; then \
+        ./scripts/utilities/tflint.sh; \
     else \
-        echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && \
-        tflint --init && \
-        tflint --recursive && \
-        cd - > /dev/null; \
-        \
-        echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
-        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
-            echo "   📂 Linting example directory: $example_dir"; \
-            cd "$example_dir" && \
-            tflint --init && \
-            tflint --recursive && \
-            cd - > /dev/null; \
-        done; \
+        ./scripts/utilities/tflint.sh --module {{MODULE}}; \
     fi
 
-# 🔍 Lint Terraform modules in Nix development environment using tflint, supporting directory-wide or specific module linting
-tf-lint-nix MOD='':
-    @echo "🔍 Discovering and linting Terraform modules in Nix environment..."
-    @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".tflint.hcl" | xargs -I {} dirname {}); do \
-            echo "🕵️ Linting directory: $dir"; \
-            cd $dir && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
-            cd - > /dev/null; \
-        done \
+# 🔍 Run TFLint on Terraform files using Nix environment
+tf-lint-nix MODULE='':
+    @echo "🔍 Running TFLint on Terraform files in Nix environment..."
+    @if [ -z "{{MODULE}}" ]; then \
+        ./scripts/utilities/tflint.sh --nix; \
     else \
-        echo "🕵️ Linting module directory: {{MODULES_DIR}}/{{MOD}}"; \
-        cd "{{MODULES_DIR}}/{{MOD}}" && \
-        nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
-        cd - > /dev/null; \
-        \
-        echo "🕵️ Linting example subdirectories for module: {{MOD}}"; \
-        for example_dir in $(find "{{EXAMPLES_DIR}}/{{MOD}}" -type f -name ".tflint.hcl" | xargs -I {} dirname {} | sort -u); do \
-            echo "   📂 Linting example directory: $example_dir"; \
-            cd "$example_dir" && \
-            nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'tflint --init && tflint --recursive' && \
-            cd - > /dev/null; \
-        done; \
+        ./scripts/utilities/tflint.sh --module {{MODULE}} --nix; \
     fi
 
-tf-docs-generate MOD='':
-    @echo "🔍 Generating Terraform module documentation..."
-    @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "📄 Attempting to generate docs for: $$dir"; \
-            if [ -d "$$dir" ]; then \
-                cd "$$dir" && \
-                echo "   🔧 Current directory: $$(pwd)" && \
-                terraform-docs markdown . --output-file README.md || \
-                echo "   ❌ Documentation generation failed for $$dir"; \
-                cd - > /dev/null; \
-            else \
-                echo "   ❌ Directory not found: $$dir"; \
-            fi; \
-        done; \
+# 📄 Generate Terraform documentation using terraform-docs
+tf-docs-generate MODULE='':
+    @echo "📄 Generating Terraform documentation..."
+    @if [ -z "{{MODULE}}" ]; then \
+        ./scripts/utilities/tfdocs.sh; \
     else \
-        if [ -d "modules/{{MOD}}" ] && [ -f "modules/{{MOD}}/.terraform-docs.yml" ]; then \
-            echo "📄 Generating docs for module: modules/{{MOD}}"; \
-            cd "modules/{{MOD}}" && \
-            terraform-docs markdown . --output-file README.md || \
-            echo "❌ Documentation generation failed for modules/{{MOD}}"; \
-            cd - > /dev/null; \
-        else \
-            echo "   ⚠️  Skipping modules/{{MOD}} (no directory or .terraform-docs.yml)"; \
-        fi; \
-        if [ -d "examples/{{MOD}}" ]; then \
-            for exdir in examples/{{MOD}}/*; do \
-                if [ -d "$$exdir" ] && [ -f "$$exdir/.terraform-docs.yml" ]; then \
-                    echo "📄 Generating docs for example: $$exdir"; \
-                    cd "$$exdir" && \
-                    terraform-docs markdown . --output-file README.md || \
-                    echo "❌ Documentation generation failed for $$exdir"; \
-                    cd - > /dev/null; \
-                else \
-                    echo "   ⚠️  Skipping $$exdir (no directory or .terraform-docs.yml)"; \
-                fi; \
-            done; \
-        else \
-            echo "   ⚠️  No examples found for module {{MOD}}"; \
-        fi; \
+        ./scripts/utilities/tfdocs.sh --module {{MODULE}}; \
     fi
 
-# 📄 Generate Terraform module documentation in Nix development environment using terraform-docs
-tf-docs-generate-nix MOD='':
-    @echo "🔍 Generating Terraform module documentation (nix)..."
-    @if [ -z "{{MOD}}" ]; then \
-        for dir in $(find modules examples -type f -name ".terraform-docs.yml" | xargs -I {} dirname {} | sort -u); do \
-            echo "📄 Attempting to generate docs for: $$dir"; \
-            if [ -d "$$dir" ]; then \
-                cd "$$dir" && \
-                echo "   🔧 Current directory: $$(pwd)" && \
-                nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
-                echo "   ❌ Documentation generation failed for $$dir"; \
-                cd - > /dev/null; \
-            else \
-                echo "   ❌ Directory not found: $$dir"; \
-            fi; \
-        done; \
+# 📄 Generate Terraform documentation using terraform-docs in Nix environment
+tf-docs-generate-nix MODULE='':
+    @echo "📄 Generating Terraform documentation in Nix environment..."
+    @if [ -z "{{MODULE}}" ]; then \
+        ./scripts/utilities/tfdocs.sh --nix; \
     else \
-        if [ -d "modules/{{MOD}}" ] && [ -f "modules/{{MOD}}/.terraform-docs.yml" ]; then \
-            echo "📄 Generating docs for module: modules/{{MOD}}"; \
-            cd "modules/{{MOD}}" && \
-            nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
-            echo "❌ Documentation generation failed for modules/{{MOD}}"; \
-            cd - > /dev/null; \
-        else \
-            echo "   ⚠️  Skipping modules/{{MOD}} (no directory or .terraform-docs.yml)"; \
-        fi; \
-        if [ -d "examples/{{MOD}}" ]; then \
-            for exdir in examples/{{MOD}}/*; do \
-                if [ -d "$$exdir" ] && [ -f "$$exdir/.terraform-docs.yml" ]; then \
-                    echo "📄 Generating docs for example: $$exdir"; \
-                    cd "$$exdir" && \
-                    nix run github:terraform-docs/terraform-docs -- markdown . --output-file README.md || \
-                    echo "❌ Documentation generation failed for $$exdir"; \
-                    cd - > /dev/null; \
-                else \
-                    echo "   ⚠️  Skipping $$exdir (no directory or .terraform-docs.yml)"; \
-                fi; \
-            done; \
-        else \
-            echo "   ⚠️  No examples found for module {{MOD}}"; \
-        fi; \
+        ./scripts/utilities/tfdocs.sh --module {{MODULE}} --nix; \
     fi
 
 # 📄 Validate Terraform modules locally using terraform validate
-tf-validate MOD='': (tf-cmd MOD 'init -backend=false') (tf-cmd MOD 'validate')
+tf-validate MODULE='': (tf-exec-mod MODULE 'init -backend=false') (tf-exec-mod MODULE 'validate')
 
 # 📄 Validate Terraform modules in Nix development environment using terraform validate
-tf-validate-nix MOD='': (tf-cmd-nix MOD 'init -backend=false') (tf-cmd-nix MOD 'validate')
+tf-validate-nix MODULE='': (tf-exec-mod-cmd-nix MODULE 'init -backend=false') (tf-exec-mod-cmd-nix MODULE 'validate')
 
 # 📄 Run Terraform CI checks locally (only static, like 'fmt', 'lint', 'docs')
-tf-ci-static MOD='': (tf-format-check MOD) (tf-lint MOD) (tf-docs-generate MOD) (tf-validate MOD)
+tf-ci-static MODULE='': (tf-format-check MODULE) (tf-lint MODULE) (tf-docs-generate MODULE) (tf-validate MODULE)
 
 # 📄 Run Terraform CI checks in Nix development environment
-tf-ci-static-nix MOD='': (tf-format-check-nix MOD) (tf-lint-nix MOD) (tf-docs-generate-nix MOD) (tf-validate-nix MOD)
+tf-ci-static-nix MODULE='': (tf-format-check-nix MODULE) (tf-lint-nix MODULE) (tf-docs-generate-nix MODULE) (tf-validate-nix MODULE)
 
 # 🌀 Quick feedback loop for development E.g: just tf-dev "default" "basic" "true"
-tf-dev MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
-    @echo "🔄 Cleaning up resources for module: {{MOD}}, example: {{EXAMPLE}} (Clean: {{CLEAN}})"
+tf-dev MODULE='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
+    @echo "🔄 Cleaning up resources for module: {{MODULE}}, example: {{EXAMPLE}} (Clean: {{CLEAN}})"
     @if [ "{{CLEAN}}" = "true" ]; then \
-        rm -rf "./modules/{{MOD}}/.terraform" && \
-        rm -rf "./examples/{{MOD}}/{{EXAMPLE}}/.terraform" && \
-        rm -f "./examples/{{MOD}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
-        echo "✅ Cleaned up resources for module: {{MOD}}, example: {{EXAMPLE}}"; \
+        rm -rf "./modules/{{MODULE}}/.terraform" && \
+        rm -rf "./examples/{{MODULE}}/{{EXAMPLE}}/.terraform" && \
+        rm -f "./examples/{{MODULE}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
+        echo "✅ Cleaned up resources for module: {{MODULE}}, example: {{EXAMPLE}}"; \
     else \
-        echo "🛑 No cleanup performed for module: {{MOD}}, example: {{EXAMPLE}}"; \
+        echo "🛑 No cleanup performed for module: {{MODULE}}, example: {{EXAMPLE}}"; \
     fi;
 
-    @echo "🔍 Running CI checks for module: {{MOD}}"
-    @just tf-ci-static "{{MOD}}"
+    @echo "🔍 Running CI checks for module: {{MODULE}}"
+    @just tf-ci-static "{{MODULE}}"
 
-    @echo "🔍 Initializing module: {{MOD}}"
-    @just tf-cmd "{{MOD}}" 'init'
+    @echo "🔍 Initializing module: {{MODULE}}"
+    @just tf-exec-mod "{{MODULE}}" 'init'
 
-    @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MOD}}"
-    @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+    @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MODULE}}"
+    @just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'init'
 
-    @echo "🔍 Validating example: {{EXAMPLE}} for module: {{MOD}}"
-    @just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
+    @echo "🔍 Validating example: {{EXAMPLE}} for module: {{MODULE}}"
+    @just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'validate'
 
-    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+    @if [ -f "./examples/{{MODULE}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
         echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for planning"; \
-        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'plan -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}"'; \
+        just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'plan -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}"'; \
     else \
         echo "📄 No fixture provided, running plan without it"; \
-        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'plan'; \
+        just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'plan'; \
     fi
 
 # 🌀 Quick feedback loop for development whic includes apply, and optionally destroy E.g: just tf-dev-apply "default" "basic" "default.tfvars" "true"
-tf-dev-full MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false': (tf-dev MOD EXAMPLE FIXTURE CLEAN)
-    @echo "🚀 Running apply for module: {{MOD}}"
-    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+tf-dev-full MODULE='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false': (tf-dev MODULE EXAMPLE FIXTURE CLEAN)
+    @echo "🚀 Running apply for module: {{MODULE}}"
+    @if [ -f "./examples/{{MODULE}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
         echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for apply"; \
-        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'apply -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+        just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'apply -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
     else \
         echo "📄 No fixture provided, running apply without it"; \
-        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'apply -auto-approve'; \
+        just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'apply -auto-approve'; \
     fi
 
-    @echo "💣 Running destroy for module: {{MOD}}"
-    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+    @echo "💣 Running destroy for module: {{MODULE}}"
+    @if [ -f "./examples/{{MODULE}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
         echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for destroy"; \
-        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+        just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'destroy -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
     else \
         echo "📄 No fixture provided, running destroy without it"; \
-        just tf-exec "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -auto-approve'; \
+        just tf-exec "examples/{{MODULE}}/{{EXAMPLE}}" 'destroy -auto-approve'; \
     fi
 
 # 🌀 Quick feedback loop for development in Nix environment which includes apply and destroy E.g: just tf-dev-full-nix "default" "basic" "default.tfvars" "true"
-tf-dev-full-nix MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false': (tf-dev-full MOD EXAMPLE FIXTURE CLEAN)
-    @echo "🚀 Running apply for module: {{MOD}}"
-    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+tf-dev-full-nix MODULE='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false': (tf-dev-full MODULE EXAMPLE FIXTURE CLEAN)
+    @echo "🚀 Running apply for module: {{MODULE}}"
+    @if [ -f "./examples/{{MODULE}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
         echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for apply"; \
-        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'apply -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+        just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'apply -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
     else \
         echo "📄 No fixture provided, running apply without it"; \
-        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'apply -auto-approve'; \
+        just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'apply -auto-approve'; \
     fi
 
-    @echo "💣 Running destroy for module: {{MOD}}"
-    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+    @echo "💣 Running destroy for module: {{MODULE}}"
+    @if [ -f "./examples/{{MODULE}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
         echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for destroy"; \
-        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
+        just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'destroy -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}" -auto-approve'; \
     else \
         echo "📄 No fixture provided, running destroy without it"; \
-        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'destroy -auto-approve'; \
+        just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'destroy -auto-approve'; \
     fi
 
 
 # 🌀 Quick feedback loop for development in Nix environment
-tf-dev-nix MOD='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
-    @echo "🔄 Cleaning up resources for module: {{MOD}}, example: {{EXAMPLE}} (Clean: {{CLEAN}})"
+tf-dev-nix MODULE='default' EXAMPLE='basic' FIXTURE='default.tfvars' CLEAN='false':
+    @echo "🔄 Cleaning up resources for module: {{MODULE}}, example: {{EXAMPLE}} (Clean: {{CLEAN}})"
     @if [ "{{CLEAN}}" = "true" ]; then \
-        rm -rf "./modules/{{MOD}}/.terraform" && \
-        rm -rf "./examples/{{MOD}}/{{EXAMPLE}}/.terraform" && \
-        rm -f "./examples/{{MOD}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
-        echo "✅ Cleaned up resources for module: {{MOD}}, example: {{EXAMPLE}}"; \
+        rm -rf "./modules/{{MODULE}}/.terraform" && \
+        rm -rf "./examples/{{MODULE}}/{{EXAMPLE}}/.terraform" && \
+        rm -f "./examples/{{MODULE}}/{{EXAMPLE}}/.terraform.lock.hcl"; \
+        echo "✅ Cleaned up resources for module: {{MODULE}}, example: {{EXAMPLE}}"; \
     else \
-        echo "🛑 No cleanup performed for module: {{MOD}}, example: {{EXAMPLE}}"; \
+        echo "🛑 No cleanup performed for module: {{MODULE}}, example: {{EXAMPLE}}"; \
     fi;
 
-    @echo "🔍 Running CI checks for module: {{MOD}}"
-    @just tf-ci-static-nix "{{MOD}}"
+    @echo "🔍 Running CI checks for module: {{MODULE}}"
+    @just tf-ci-static-nix "{{MODULE}}"
 
-    @echo "🔍 Initializing module: {{MOD}}"
-    @just tf-cmd-nix "{{MOD}}" 'init'
+    @echo "🔍 Initializing module: {{MODULE}}"
+    @just tf-cmd-nix "{{MODULE}}" 'init'
 
-    @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MOD}}"
-    @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'init'
+    @echo "🔍 Initializing example: {{EXAMPLE}} for module: {{MODULE}}"
+    @just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'init'
 
-    @echo "🔍 Validating example: {{EXAMPLE}} for module: {{MOD}}"
-    @just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'validate'
+    @echo "🔍 Validating example: {{EXAMPLE}} for module: {{MODULE}}"
+    @just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'validate'
 
-    @if [ -f "./examples/{{MOD}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
+    @if [ -f "./examples/{{MODULE}}/{{EXAMPLE}}/{{FIXTURES_DIR}}/{{FIXTURE}}" ]; then \
         echo "📄 Using fixture: {{FIXTURES_DIR}}/{{FIXTURE}} for planning"; \
-        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}"'; \
+        just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'plan -var-file="{{FIXTURES_DIR}}/{{FIXTURE}}"'; \
     else \
         echo "📄 No fixture provided, running plan without it"; \
-        just tf-exec-nix "examples/{{MOD}}/{{EXAMPLE}}" 'plan'; \
+        just tf-exec-nix "examples/{{MODULE}}/{{EXAMPLE}}" 'plan'; \
     fi
 
 # 🧪 Run unit tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+tf-test-unit TAGS='readonly' MODULE='default' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running unit tests..."
     @echo "📋 Configuration:"
     @echo "   🏷️  Tags: unit,{{TAGS}}"
-    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🔍 Module: {{MODULE}}"
     @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
@@ -587,8 +431,8 @@ tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
     fi
 
     @cd {{TESTS_DIR}} && \
-    if [ -z "{{MOD}}" ] || [ "{{MOD}}" = "default" ]; then \
-        echo "🔍 Running unit tests for module: default in path {{TESTS_DIR}}/modules/{{MOD}}/unit" && \
+    if [ -z "{{MODULE}}" ] || [ "{{MODULE}}" = "default" ]; then \
+        echo "🔍 Running unit tests for module: default in path {{TESTS_DIR}}/modules/{{MODULE}}/unit" && \
         echo "🧹 Cleaning up terraform state" && \
         find . -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
         find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
@@ -599,29 +443,29 @@ tf-test-unit TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             -timeout="{{TIMEOUT}}" \
             ./modules/default/unit/...; \
     else \
-        if [ -d "./modules/{{MOD}}/unit" ]; then \
-            echo "🔍 Running unit tests for module: {{MOD}}" && \
+        if [ -d "./modules/{{MODULE}}/unit" ]; then \
+            echo "🔍 Running unit tests for module: {{MODULE}}" && \
             echo "🧹 Cleaning up terraform state" && \
-            find "./modules/{{MOD}}/unit" -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
-            find "./modules/{{MOD}}/unit" -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
+            find "./modules/{{MODULE}}/unit" -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
+            find "./modules/{{MODULE}}/unit" -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
             go test \
                 -v \
                 -tags "unit,{{TAGS}}" \
                 $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
                 -timeout="{{TIMEOUT}}" \
-                "./modules/{{MOD}}/unit/..."; \
+                "./modules/{{MODULE}}/unit/..."; \
         else \
-            echo "❌ Unit test directory not found: ./modules/{{MOD}}/unit"; \
+            echo "❌ Unit test directory not found: ./modules/{{MODULE}}/unit"; \
             exit 1; \
         fi; \
     fi
 
 # 🧪 Run unit tests in Nix environment - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-unit-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+tf-test-unit-nix TAGS='readonly' MODULE='default' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running unit tests in Nix environment..."
     @echo "📋 Configuration:"
     @echo "   🏷️  Tags: unit,{{TAGS}}"
-    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🔍 Module: {{MODULE}}"
     @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
@@ -631,7 +475,7 @@ tf-test-unit-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
     fi
 
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
-    if [ -z '{{MOD}}' ] || [ '{{MOD}}' = 'default' ]; then \
+    if [ -z '{{MODULE}}' ] || [ '{{MODULE}}' = 'default' ]; then \
         echo '🔍 Running unit tests for module: default' && \
         find . -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
         find . -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
@@ -642,28 +486,28 @@ tf-test-unit-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             -timeout='{{TIMEOUT}}' \
             ./modules/default/unit/...; \
     else \
-        if [ -d './modules/{{MOD}}/unit' ]; then \
-            echo '🔍 Running unit tests for module: {{MOD}}' && \
-            find './modules/{{MOD}}/unit' -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
-            find './modules/{{MOD}}/unit' -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
+        if [ -d './modules/{{MODULE}}/unit' ]; then \
+            echo '🔍 Running unit tests for module: {{MODULE}}' && \
+            find './modules/{{MODULE}}/unit' -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
+            find './modules/{{MODULE}}/unit' -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
             go test \
                 -v \
                 -tags 'unit,{{TAGS}}' \
                 $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
                 -timeout='{{TIMEOUT}}' \
-                './modules/{{MOD}}/unit/...'; \
+                './modules/{{MODULE}}/unit/...'; \
         else \
-            echo '❌ Unit test directory not found: ./modules/{{MOD}}/unit'; \
+            echo '❌ Unit test directory not found: ./modules/{{MODULE}}/unit'; \
             exit 1; \
         fi; \
     fi"
 
 # 🧪 Run examples tests - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-examples TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+tf-test-examples TAGS='readonly' MODULE='default' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running example tests..."
     @echo "📋 Configuration:"
     @echo "   🏷️  Tags: examples,{{TAGS}}"
-    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🔍 Module: {{MODULE}}"
     @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
@@ -673,8 +517,8 @@ tf-test-examples TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
     fi
 
     @cd {{TESTS_DIR}} && \
-    if [ -z "{{MOD}}" ] || [ "{{MOD}}" = "default" ]; then \
-        echo "🔍 Running examples tests for module: default in path {{TESTS_DIR}}/modules/{{MOD}}/examples" && \
+    if [ -z "{{MODULE}}" ] || [ "{{MODULE}}" = "default" ]; then \
+        echo "🔍 Running examples tests for module: default in path {{TESTS_DIR}}/modules/{{MODULE}}/examples" && \
         echo "🧹 Cleaning up terraform state" && \
         find . -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
         find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
@@ -685,29 +529,29 @@ tf-test-examples TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             -timeout="{{TIMEOUT}}" \
             ./modules/default/examples/...; \
     else \
-        if [ -d "./modules/{{MOD}}/examples" ]; then \
-            echo "🔍 Running examples tests for module: {{MOD}}" && \
+        if [ -d "./modules/{{MODULE}}/examples" ]; then \
+            echo "🔍 Running examples tests for module: {{MODULE}}" && \
             echo "🧹 Cleaning up terraform state" && \
-            find "./modules/{{MOD}}/examples" -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
-            find "./modules/{{MOD}}/examples" -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
+            find "./modules/{{MODULE}}/examples" -type d -name ".terraform" -exec rm -rf {} \; 2>/dev/null || true; \
+            find "./modules/{{MODULE}}/examples" -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true; \
             go test \
                 -v \
                 -tags "examples,{{TAGS}}" \
                 $(if [ "{{NOCACHE}}" = "true" ]; then echo "-count=1"; fi) \
                 -timeout="{{TIMEOUT}}" \
-                "./modules/{{MOD}}/examples/..."; \
+                "./modules/{{MODULE}}/examples/..."; \
         else \
-            echo "❌ Examples test directory not found: ./modules/{{MOD}}/examples"; \
+            echo "❌ Examples test directory not found: ./modules/{{MODULE}}/examples"; \
             exit 1; \
         fi; \
     fi
 
 # 🧪 Run examples tests in Nix environment - parameters: TAGS (E.g. 'readonly' or 'integration'), MOD (module name), NOCACHE (true/false), TIMEOUT (E.g. '60s|5m|1h')
-tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
+tf-test-examples-nix TAGS='readonly' MODULE='default' NOCACHE='true' TIMEOUT='60s':
     @echo "🧪 Running example tests in Nix environment..."
     @echo "📋 Configuration:"
     @echo "   🏷️  Tags: examples,{{TAGS}}"
-    @echo "   🔍 Module: {{MOD}}"
+    @echo "   🔍 Module: {{MODULE}}"
     @echo "   🔄 No Cache: {{NOCACHE}}"
     @echo "   ⏱️  Timeout: {{TIMEOUT}}"
 
@@ -717,7 +561,7 @@ tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
     fi
 
     @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "cd {{TESTS_DIR}} && \
-    if [ -z '{{MOD}}' ] || [ '{{MOD}}' = 'default' ]; then \
+    if [ -z '{{MODULE}}' ] || [ '{{MODULE}}' = 'default' ]; then \
         echo '🔍 Running examples tests for module: default' && \
         find . -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
         find . -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
@@ -728,18 +572,122 @@ tf-test-examples-nix TAGS='readonly' MOD='default' NOCACHE='true' TIMEOUT='60s':
             -timeout='{{TIMEOUT}}' \
             ./modules/default/examples/...; \
     else \
-        if [ -d './modules/{{MOD}}/examples' ]; then \
-            echo '🔍 Running examples tests for module: {{MOD}}' && \
-            find './modules/{{MOD}}/examples' -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
-            find './modules/{{MOD}}/examples' -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
+        if [ -d './modules/{{MODULE}}/examples' ]; then \
+            echo '🔍 Running examples tests for module: {{MODULE}}' && \
+            find './modules/{{MODULE}}/examples' -type d -name '.terraform' -exec rm -rf {} \; 2>/dev/null || true; \
+            find './modules/{{MODULE}}/examples' -type f -name '.terraform.lock.hcl' -delete 2>/dev/null || true; \
             go test \
                 -v \
                 -tags 'examples,{{TAGS}}' \
                 $(if [ '{{NOCACHE}}' = 'true' ]; then echo '-count=1'; fi) \
                 -timeout='{{TIMEOUT}}' \
-                './modules/{{MOD}}/examples/...'; \
+                './modules/{{MODULE}}/examples/...'; \
         else \
-            echo '❌ Examples test directory not found: ./modules/{{MOD}}/examples'; \
+            echo '❌ Examples test directory not found: ./modules/{{MODULE}}/examples'; \
             exit 1; \
         fi; \
     fi"
+
+# 🔨 Build the Dagger pipeline
+[working-directory:'pipeline/infra']
+pipeline-infra-build:
+    @echo "🔨 Initializing Dagger development environment"
+    @dagger develop
+    @echo "📋 Building Dagger pipeline"
+    @dagger functions
+
+# 🔨 Help for Dagger job
+[working-directory:'pipeline/infra']
+pipeline-job-help fn: (pipeline-infra-build)
+    @echo "🔨 Help for Dagger job: {{fn}}"
+    @dagger call {{fn}} --help
+
+# 🔨 Open an interactive development shell for the Infra pipeline
+[working-directory:'pipeline/infra']
+pipeline-infra-shell args="": (pipeline-infra-build)
+    @echo "🚀 Launching interactive terminal"
+    @dagger call open-terminal {{args}}
+
+# 🔨 Execute a Dagger job with a specified command and arguments
+[working-directory:'pipeline/infra']
+pipeline-job-exec mod="default" command="init" args="": (pipeline-infra-build)
+    @echo "🚀 Executing job: {{command}} with arguments: {{args}}"
+    @dagger --use-hashicorp-image=true call job-terraform-exec \
+       --command="{{command}}" \
+       --tf-module-path="{{mod}}" \
+       --arguments="{{args}}" \
+       --load-dot-env-file=true \
+       --no-cache=true \
+       --tflint-version="0.58.0" \
+       --terraform-docs-version="0.20.0" \
+       --git-ssh $SSH_AUTH_SOCK
+
+# 🔨 Perform static analysis on Terraform modules for security and best practices
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-static-analysis MODULE="default" args="": (pipeline-infra-build)
+    @echo " Analyzing Terraform modules for security and best practices"
+    @echo "⚡ Running static analysis checks"
+    @dagger --use-hashicorp-image=true call action-terraform-static-analysis-exec \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache \
+       --git-ssh $SSH_AUTH_SOCK
+    @echo "✅ Static analysis completed successfully"
+
+# 🔨 Verify compatibility of Terraform modules across different provider versions
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-version-compatibility-verification MODULE="default": (pipeline-infra-build)
+    @echo " Testing module compatibility across provider versions"
+    @echo "⚡ Running version compatibility checks"
+    @dagger --use-hashicorp-image=true call action-terraform-version-compatibility-verification-exec \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache \
+       --git-ssh $SSH_AUTH_SOCK
+    @echo "✅ Version compatibility testing completed"
+
+# 🔨 Verify the integrity of Terraform module files
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-file-verification MODULE="default": (pipeline-infra-build)
+    @echo " Testing module files"
+    @echo "⚡ Running file verification"
+    @dagger --use-hashicorp-image=true call action-terraform-file-verification-exec \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache
+    @echo "✅ File verification completed"
+
+# 🔨 Build Terraform modules
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-build MODULE="default": (pipeline-infra-build)
+    @echo " Building module files"
+    @echo "⚡ Running plan"
+    @dagger --use-hashicorp-image=true call action-terraform-build-exec \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache
+    @echo "✅ Build completed"
+
+# 🔨 Generate module documentation
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-docs MODULE="default": (pipeline-infra-build)
+    @echo " Generating module documentation"
+    @echo "⚡ Running docs"
+    @dagger --use-hashicorp-image=true call action-terraform-docs-exec \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache
+    @echo "✅ Docs completed"
+
+[working-directory:'pipeline/infra']
+pipeline-action-terraform-lint MODULE="default": (pipeline-infra-build)
+    @echo " Linting module files"
+    @echo "⚡ Running lint"
+    @dagger --use-hashicorp-image=true call action-terraform-lint-exec \
+       --tf-module-path="{{MODULE}}" \
+       --load-dot-env-file=true \
+       --no-cache
+    @echo "✅ Lint completed"
+
+# 🔨 Run comprehensive CI checks for Terraform modules
+pipeline-infra-tf-ci MODULE="default" args="": (pipeline-action-terraform-static-analysis MODULE args) (pipeline-action-terraform-version-compatibility-verification MODULE) (pipeline-action-terraform-file-verification MODULE)

@@ -6,7 +6,7 @@
 # Each resource is annotated with comments explaining its purpose and any notable configurations.
 #
 ###################################
-resource "random_string" "random_text" {
+resource "random_string" "this" {
   for_each = local.is_enabled ? { example = true } : {}
   length   = 10
   special  = false

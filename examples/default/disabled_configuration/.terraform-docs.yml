@@ -1,0 +1,59 @@
+---
+formatter: markdown table
+
+sections:
+  hide: []
+  show:
+    - inputs
+    - outputs
+    - resources
+
+content: |-
+  # Terraform Module: Default Disabled Configuration Example
+
+  ## Overview
+  > **Note:** This module demonstrates the usage of the `default` module with the feature flag disabled.
+
+  ### 🔑 Key Features
+  - **Disabled Module Usage**: Illustrates how the module behaves when `is_enabled` is set to `false`.
+  - **No Resource Creation**: Shows that no resources are created when the module is disabled.
+  - **Output Validation**: Demonstrates that outputs still work correctly even when the module is disabled.
+
+  ### 📋 Usage Guidelines
+  1. The `is_enabled` variable is set to `false` to disable the module.
+  2. This example is useful for testing conditional module behavior.
+  3. Validates that the module gracefully handles the disabled state.
+
+  {{ .Header }}
+
+  ## Variables
+
+  {{ .Inputs }}
+
+  ## Outputs
+
+  {{ .Outputs }}
+
+  ## Resources
+
+  {{ .Resources }}
+
+output:
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+settings:
+  anchor: true
+  color: true
+  description: true
+  escape: true
+  header: true
+  html: true
+  indent: 2
+  required: true
+  sensitive: true
+  type: true

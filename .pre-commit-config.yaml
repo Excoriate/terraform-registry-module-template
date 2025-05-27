@@ -53,7 +53,7 @@ repos:
       - id: yamlfmt
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+    rev: v1.37.1
     hooks:
       - id: yamllint
         name: YAML Lint
@@ -66,6 +66,6 @@ repos:
           )$
 
   - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.25
+    rev: v0.1.29
     hooks:
       - id: shellcheck

@@ -8,22 +8,29 @@ This directory contains Terraform modules that encapsulate infrastructure compon
 - **Maximum Reusability**: Designed for adaptability across different environments
 - **Minimal External Dependencies**: Carefully managed module interactions
 - **Comprehensive Customization**: Extensive configuration through well-defined variables
+- **Contract First Design**: Module interfaces (input variables and outputs) are paramount and designed before implementation. They define the module's expected behavior and interaction points.
+- **Mandatory Tooling**: Every module MUST include `.terraform-docs.yml` for documentation and `.tflint.hcl` for linting.
 
 ## 📂 Enhanced Module Structure
 
+A typical module within this directory follows this structure:
 ```text
 /modules/[module-name]/
 ├── main.tf              # Primary resource definitions
 ├── locals.tf            # Complex computations and transformations
-├── data.tf              # External data source retrieval
+├── data.tf              # External data source retrieval (if needed)
 ├── variables.tf         # Input variable definitions
 ├── outputs.tf           # Module output definitions
 ├── versions.tf          # Provider and Terraform version constraints
-├── providers.tf         # Optional provider configurations
-├── README.md            # Comprehensive module documentation
-├── .terraform-docs.yml  # Terraform documentation generation config
-├── .tflint.hcl          # TFLint configuration for static analysis
+├── README.md            # Comprehensive module documentation (auto-generated sections)
+├── .terraform-docs.yml  # Terraform documentation generation config (mandatory)
+├── .tflint.hcl          # TFLint configuration for static analysis (mandatory)
+└── examples/            # Internal examples for demonstration/testing
+    ├── basic/           # Minimal configuration example
+    └── complete/        # Full-featured configuration example
 ```
+**Note on `examples/` directory within a module**: This internal `examples/` directory is for self-contained examples or test fixtures that are part of the module's own codebase. This is distinct from the top-level `/examples` directory in the project, which contains standalone, runnable examples that consume these modules.
+**Note on `providers.tf`**: This file is generally NOT included in reusable modules within the `modules/` directory as provider configurations are typically handled by the root module consuming these modules.
 
 ## 🛠 Documentation and Linting Tools
 
@@ -116,5 +123,11 @@ just tf-ci-static MOD=default
 - [Terraform Docs](https://terraform-docs.io/)
 - [TFLint](https://github.com/terraform-linters/tflint)
 - [HashiCorp Module Creation Guide](https://developer.hashicorp.com/terraform/tutorials/modules/pattern-module-creation)
+
+**Internal Style Guides (MUST READ for development):**
+- **Modules**: [terraform-styleguide-modules.md](../../docs/terraform-styleguide/terraform-styleguide-modules.md)
+- **Terraform Code (HCL)**: [terraform-styleguide-code.md](../../docs/terraform-styleguide/terraform-styleguide-code.md)
+- **Examples (Top-Level)**: [terraform-styleguide-examples.md](../../docs/terraform-styleguide/terraform-styleguide-examples.md)
+- **Terratest Tests**: [terraform-styleguide-terratest.md](../../docs/terraform-styleguide/terraform-styleguide-terratest.md)
 
 **Note:** This guide represents our current best practices and evolves with the Terraform ecosystem.

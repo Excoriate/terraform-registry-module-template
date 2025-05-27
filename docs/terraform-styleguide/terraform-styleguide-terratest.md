@@ -152,7 +152,7 @@ tests/
 
 ### Rule: Go code, and utilities in the `pkg/` directory
 
-- ALWAYS use the latest golang version available. Currently, it's `1.24.0`.
+- ALWAYS use the latest golang version available. Currently, it's `1.24` (as specified in the project's `tests/go.mod`).
 - STRICTLY adhere to the `.golangci.yml` file, to ensure the test files are well-written, and easy to understand.
 - ALWAYS use Go Docs (verbose) for each Test Function, to explain what the test is verifying.
 - ALWAYS write common utilities, and helpers in the `pkg/` directory, to be used across all tests.

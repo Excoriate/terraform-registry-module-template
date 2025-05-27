@@ -1,24 +1,20 @@
 <!-- BEGIN_TF_DOCS -->
-## Requirements
+# Terraform Module: Default Basic Example
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.2 |
+## Overview
+> **Note:** This module demonstrates the basic usage of the `default` module.
 
-## Providers
+### 🔑 Key Features
+- **Basic Module Usage**: Illustrates the minimal configuration required to use the `default` module.
+- **Conditional Creation**: Shows how to enable or disable the module using the `is_enabled` variable.
 
-No providers.
+### 📋 Usage Guidelines
+1. Set `is_enabled` to `true` or `false` to control module creation.
+2. Provide `tags` for resource organization.
 
-## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_main_module"></a> [main\_module](#module\_main\_module) | ../../../modules/default | n/a |
 
-## Resources
-
-No resources.
+## Variables
 
 ## Inputs
 
@@ -29,8 +25,16 @@ No resources.
 
 ## Outputs
 
+## Outputs
+
 | Name | Description |
 |------|-------------|
 | <a name="output_is_enabled"></a> [is\_enabled](#output\_is\_enabled) | Whether the module is enabled or not |
 | <a name="output_tags_set"></a> [tags\_set](#output\_tags\_set) | The tags set for the module |
+
+## Resources
+
+## Resources
+
+No resources.
 <!-- END_TF_DOCS -->

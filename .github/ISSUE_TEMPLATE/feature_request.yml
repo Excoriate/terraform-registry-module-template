@@ -30,7 +30,8 @@ body:
     id: problem
     attributes:
       label: Problem Statement / Current Behavior
-      description: "Describe the specific limitation, challenge, or current behavior you'd like to see improved. Why is this a problem?"
+      description: "Describe the specific limitation, challenge, or current behavior you'd like to see improved. Why is this
+        a problem?"
       placeholder: "What problem are you trying to solve? E.g., I'm always frustrated when [...]"
     validations:
       required: true
@@ -74,7 +75,8 @@ body:
     id: technical-considerations
     attributes:
       label: Technical Considerations (Optional)
-      description: "Any compatibility, configuration impact, or other technical details. E.g., Terraform version requirements, provider compatibility."
+      description: "Any compatibility, configuration impact, or other technical details. E.g., Terraform version requirements,
+        provider compatibility."
       placeholder: |
         - Terraform version requirements:
         - Potential configuration changes:
@@ -86,7 +88,8 @@ body:
     id: alternatives
     attributes:
       label: Alternatives Considered (Optional)
-      description: "Have you considered any alternative solutions or workarounds? If so, please describe them and why they were not sufficient."
+      description: "Have you considered any alternative solutions or workarounds? If so, please describe them and why they
+        were not sufficient."
       placeholder: "E.g., Current workaround is X, but it's not ideal because Y."
     validations:
       required: false

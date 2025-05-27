@@ -14,7 +14,7 @@ permissions:
   pull-requests: read
 
 env:
-  TERRAFORM_VERSION: '1.10.0'
+  TERRAFORM_VERSION: '1.12.0'
   TFLINT_VERSION: 'latest'
   TERRAFORM_DOCS_VERSION: 'latest'
   GO_VERSION: '1.21'

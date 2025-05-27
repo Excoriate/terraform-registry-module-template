@@ -1,4 +1,4 @@
-module "main_module" {
+module "this" {
   source     = "../../../modules/default"
   is_enabled = var.is_enabled
 
