@@ -49,8 +49,8 @@
 
         # Consolidated tools list
         devTools = with pkgs; [
-          # Go toolchain
-          go
+          # Go toolchain (pinned to 1.23 for golangci-lint compatibility)
+          go_1_23
           go-tools
           golangci-lint
 
@@ -84,8 +84,13 @@
           buildInputs = devTools;
 
           shellHook = ''
+            # Set GOROOT to use the Nix Go 1.23 installation
+            export GOROOT="${pkgs.go_1_23}/share/go"
+            export PATH="${pkgs.go_1_23}/bin:$PATH"
+
             echo "🚀 Devshell for Terraform Registry Module Template 🛠️"
             echo "Go version: $(go version)"
+            echo "GOROOT: $GOROOT"
             echo "Terraform version: $(${terraform-pkg}/bin/terraform version)"
             echo "OpenTofu version: $(${opentofu-pkg}/bin/tofu version)"
           '';
@@ -108,7 +113,7 @@
               # Go-specific hooks
               go-fmt = {
                 enable = true;
-                entry = "${pkgs.go}/bin/gofmt -l -w";
+                entry = "${pkgs.go_1_23}/bin/gofmt -l -w";
                 files = "\\.go$";
               };
               # Terraform and OpenTofu hooks

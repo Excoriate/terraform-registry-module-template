@@ -3,7 +3,7 @@ name: 👩‍🚀 Dagger Build
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
     paths:
       - 'pipeline/infra/**'
       - '.github/workflows/dagger-build.yaml'

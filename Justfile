@@ -162,6 +162,24 @@ go-lint-all:
     @just go-lint-tests
     @just go-lint-pipeline
 
+# 🔨 Build and validate Go test module dependencies and compilation
+go-build-tests:
+    @echo "🔨 Building Go test module..."
+    @echo "🔍 Tidying Go dependencies in tests directory..."
+    @cd tests/ && go mod tidy
+    @echo "🔧 Building Go test module to validate compilation..."
+    @cd tests/ && go build -v ./...
+    @echo "✅ Go test module build completed successfully!"
+
+# 🔨 Build and validate Go test module dependencies and compilation in Nix environment
+go-build-tests-nix:
+    @echo "🔨 Building Go test module in Nix environment..."
+    @echo "🔍 Tidying Go dependencies in tests directory..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd tests/ && go mod tidy'
+    @echo "🔧 Building Go test module to validate compilation..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd tests/ && go build -v ./...'
+    @echo "✅ Go test module build completed successfully!"
+
 # 🐹 Format Go files in Nix environment using gofmt
 go-format-nix:
     @echo "🐹 Formatting Go files in Nix environment..."
@@ -185,11 +203,11 @@ go-tidy:
     @cd tests && go mod tidy
 
 # 🐹 Comprehensive CI checks for Go files
-go-ci: (go-tidy) (go-format) (go-lint-all)
+go-ci: (go-tidy) (go-format) (go-build-tests) (go-lint-all)
     @echo "✅ Go files CI checks completed"
 
 # 🐹 Comprehensive CI checks for Go files in Nix environment
-go-ci-nix: (go-tidy-nix) (go-format-nix) (go-lint-all-nix)
+go-ci-nix: (go-tidy-nix) (go-format-nix) (go-build-tests-nix) (go-lint-all-nix)
     @echo "✅ Go files CI checks completed in Nix environment"
 
 # 🚀 Launch Nix development shell with project dependencies

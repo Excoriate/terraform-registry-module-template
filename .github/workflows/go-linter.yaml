@@ -3,17 +3,32 @@ name: 🦫 Go Code Quality Checks
 
 on:
   workflow_dispatch:
+    inputs:
+      go_version:
+        description: 'Go version to use'
+        required: false
+        default: '1.23'
+        type: string
+      golangci_lint_version:
+        description: 'GolangCI-Lint version to use'
+        required: false
+        default: 'v1.64.5'
+        type: string
   push:
     paths:
       - 'tests/**'
-      - '.golangci.yml'
+      - 'pipeline/infra/**'
+      - '.golangci-pipeline.yml'
+      - '.golangci-tests.yml'
       - 'go.mod'
       - 'go.sum'
   pull_request:
     types: [opened, edited, synchronize]
     paths:
       - 'tests/**'
-      - '.golangci.yml'
+      - 'pipeline/infra/**'
+      - '.golangci-pipeline.yml'
+      - '.golangci-tests.yml'
       - 'go.mod'
       - 'go.sum'
 
@@ -22,35 +37,51 @@ permissions:
   pull-requests: read
 
 env:
-  GO_VERSION: '1.24'
-  GOLANGCI_LINT_VERSION: 'v1.64.5'
-  TEST_ROOT: tests
+  GO_VERSION: ${{ inputs.go_version || '1.23' }}
+  GOLANGCI_LINT_VERSION: ${{ inputs.golangci_lint_version || 'v1.64.5' }}
 
 jobs:
-  detect-modules:
-    name: 🔍 Detect Go Modules
+  go-lint-pipeline:
+    name: 🚀 Go Lint Pipeline
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: 📋 Set Module Matrix
-        id: set-matrix
+      - name: 🛠️ Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: 🔍 Validate GolangCI-Lint Configuration
         run: |
-          DIRS=$(find ${{ env.TEST_ROOT }} -type f -name 'go.mod' -exec dirname {} \;)
-          MATRIX_JSON=$(echo "$DIRS" | jq -R -s -c 'split("\n") | map(select(. != ""))')
-          echo "matrix=${MATRIX_JSON}" >> $GITHUB_OUTPUT
+          echo "🔍 Validating golangci-lint configuration for pipeline..."
+          golangci-lint config verify --config .golangci-pipeline.yml
+          echo "✅ Configuration valid, proceeding with linting..."
 
-  go-quality-checks:
-    name: 🧪 Go Code Quality
-    needs: detect-modules
+      - name: 🎨 Go Format Check
+        working-directory: pipeline/infra
+        run: |
+          echo "✨ Checking Go code formatting in pipeline..."
+          gofmt_output=$(gofmt -l .)
+          if [ -n "$gofmt_output" ]; then
+            echo "❌ Formatting issues found in files:"
+            echo "$gofmt_output"
+            exit 1
+          fi
+
+      - name: 🕵️ Go Linter Pipeline
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          working-directory: pipeline/infra
+          args: --config ../../.golangci-pipeline.yml --verbose
+          skip-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  go-lint-tests:
+    name: 🧪 Go Lint Tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dir: ${{ fromJson(needs.detect-modules.outputs.matrix) }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -61,16 +92,22 @@ jobs:
           cache: false
 
       - name: 🧹 Go Mod Tidy
-        working-directory: ${{ matrix.dir }}
+        working-directory: tests
         run: |
           echo "🔄 Tidying Go module dependencies..."
           go mod tidy
           git diff --exit-code || (echo "❌ go.mod/go.sum files were modified during tidy" && exit 1)
 
-      - name: 🎨 Go Format Check
-        working-directory: ${{ matrix.dir }}
+      - name: 🔍 Validate GolangCI-Lint Configuration
         run: |
-          echo "✨ Checking Go code formatting..."
+          echo "🔍 Validating golangci-lint configuration for tests..."
+          golangci-lint config verify --config .golangci-tests.yml
+          echo "✅ Configuration valid, proceeding with linting..."
+
+      - name: 🎨 Go Format Check
+        working-directory: tests
+        run: |
+          echo "✨ Checking Go code formatting in tests..."
           gofmt_output=$(gofmt -l .)
           if [ -n "$gofmt_output" ]; then
             echo "❌ Formatting issues found in files:"
@@ -78,28 +115,40 @@ jobs:
             exit 1
           fi
 
-      - name: 🕵️ Go Linter
+      - name: 🕵️ Go Linter Tests
         uses: golangci/golangci-lint-action@v3
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
-          working-directory: ${{ matrix.dir }}
-          args: --config ../.golangci.yml
+          working-directory: tests
+          args: --config ../.golangci-tests.yml --verbose
           skip-cache: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   summary:
     name: 🏁 Quality Check Summary
-    needs: [detect-modules, go-quality-checks]
+    needs: [go-lint-pipeline, go-lint-tests]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: 📊 Workflow Status
         run: |
           echo "🦫 Go Code Quality Checks Complete!"
-          echo "✅ Modules Scanned: ${{ needs.detect-modules.outputs.matrix }}"
+          echo "🚀 Pipeline Lint: ${{ needs.go-lint-pipeline.result }}"
+          echo "🧪 Tests Lint: ${{ needs.go-lint-tests.result }}"
           echo "🔍 Detailed results available in job logs."
+          echo "🧹 Go Version: ${{ env.GO_VERSION }}"
           echo "🧹 Golangci-lint Version: ${{ env.GOLANGCI_LINT_VERSION }}"
 
-        # Conditional status check
-        if: |
-          needs.go-quality-checks.result == 'success'
+          # Check pipeline lint result
+          if [[ "${{ needs.go-lint-pipeline.result }}" != "success" ]]; then
+            echo "❌ Pipeline linting failed"
+            exit 1
+          fi
+
+          # Check tests lint result
+          if [[ "${{ needs.go-lint-tests.result }}" != "success" ]]; then
+            echo "❌ Tests linting failed"
+            exit 1
+          fi
+
+          echo "✅ All Go code quality checks passed!"

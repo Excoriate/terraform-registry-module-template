@@ -6,7 +6,7 @@ run:
   timeout: 10m
   tests: true
   build-tags: ["unit", "integration", "readonly", "examples"]
-  go: "1.24"
+  go: "1.23"
 
 # Formatter configuration
 formatters:
@@ -43,9 +43,9 @@ linters:
     govet:
       enable-all: true
       disable:
-        - fieldalignment  # Not critical for test code
+        - fieldalignment # Not critical for test code
     gocyclo:
-      min-complexity: 25  # Higher threshold for test code
+      min-complexity: 25 # Higher threshold for test code
     goconst:
       min-len: 3
       min-occurrences: 3
@@ -57,11 +57,11 @@ linters:
       disabled-checks:
         - hugeParam
         - commentedOutCode
-        - unnamedResult  # Common in test helper functions
+        - unnamedResult # Common in test helper functions
     gosec:
       excludes:
-        - G204  # Subprocess launched with variable - common in Terratest
-        - G304  # File path provided as taint input - common in test file operations
+        - G204 # Subprocess launched with variable - common in Terratest
+        - G304 # File path provided as taint input - common in test file operations
 
 
   # Exclusion configuration
