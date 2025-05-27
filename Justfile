@@ -118,15 +118,49 @@ scripts-lint:
     @echo "🐚 Linting shell scripts..."
     @find . -type f -name "*.sh" | xargs shellcheck
 
-# 🦫 Lint Go files using custom script in Nix environment
-go-lint-nix:
-    @echo "🦫 Linting Go files in Nix environment..."
-    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci.yml'
+# 🦫 Lint Go test files in Nix environment
+go-lint-tests-nix:
+    @echo "🦫 Linting Go test files in Nix environment..."
+    @echo "🔍 Validating golangci-lint configuration for tests..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command golangci-lint config verify --config .golangci-tests.yml
+    @echo "✅ Configuration valid, proceeding with linting..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci-tests.yml'
 
-# 🦫 Perform static code analysis on Go files
-go-lint:
-    @echo "🦫 Linting Go files..."
-    @cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci.yml
+# 🚀 Lint Dagger pipeline Go files in Nix environment
+go-lint-pipeline-nix:
+    @echo "🚀 Linting Dagger pipeline Go files in Nix environment..."
+    @echo "🔍 Validating golangci-lint configuration for pipeline..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command golangci-lint config verify --config .golangci-pipeline.yml
+    @echo "✅ Configuration valid, proceeding with linting..."
+    @nix develop . --impure --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c 'cd pipeline/infra/ && golangci-lint run --verbose --config ../../.golangci-pipeline.yml'
+
+# 🦫 Lint all Go files in Nix environment (tests + pipeline)
+go-lint-all-nix:
+    @echo "🦫 Linting all Go files in Nix environment..."
+    @just go-lint-tests-nix
+    @just go-lint-pipeline-nix
+
+# 🦫 Perform static code analysis on Go test files
+go-lint-tests:
+    @echo "🦫 Linting Go test files..."
+    @echo "🔍 Validating golangci-lint configuration for tests..."
+    @golangci-lint config verify --config .golangci-tests.yml
+    @echo "✅ Configuration valid, proceeding with linting..."
+    @cd tests/ && go mod tidy && golangci-lint run --verbose --config ../.golangci-tests.yml
+
+# 🚀 Perform static code analysis on Dagger pipeline Go files
+go-lint-pipeline:
+    @echo "🚀 Linting Dagger pipeline Go files..."
+    @echo "🔍 Validating golangci-lint configuration for pipeline..."
+    @golangci-lint config verify --config .golangci-pipeline.yml
+    @echo "✅ Configuration valid, proceeding with linting..."
+    @cd pipeline/infra/ && golangci-lint run --verbose --config ../../.golangci-pipeline.yml
+
+# 🦫 Perform static code analysis on all Go files (tests + pipeline)
+go-lint-all:
+    @echo "🦫 Linting all Go files..."
+    @just go-lint-tests
+    @just go-lint-pipeline
 
 # 🐹 Format Go files in Nix environment using gofmt
 go-format-nix:
@@ -151,11 +185,11 @@ go-tidy:
     @cd tests && go mod tidy
 
 # 🐹 Comprehensive CI checks for Go files
-go-ci: (go-tidy) (go-format) (go-lint)
+go-ci: (go-tidy) (go-format) (go-lint-all)
     @echo "✅ Go files CI checks completed"
 
 # 🐹 Comprehensive CI checks for Go files in Nix environment
-go-ci-nix: (go-tidy-nix) (go-format-nix) (go-lint-nix)
+go-ci-nix: (go-tidy-nix) (go-format-nix) (go-lint-all-nix)
     @echo "✅ Go files CI checks completed in Nix environment"
 
 # 🚀 Launch Nix development shell with project dependencies
