@@ -14,6 +14,8 @@ This directory contains utility scripts and hooks that support the development w
 scripts/
 ├── utilities/     # Utility scripts for development tasks
 │   ├── format.sh     # Cross-language code formatting script
+│   ├── tflint.sh    # TFLint script for Terraform files
+│   └── tfdocs.sh    # tfdocs script for Terraform modules
 │   └── ...           # Additional utility scripts
 └── hooks/        # Pre-commit and workflow management hooks
     ├── pre-commit-init.sh  # Pre-commit hook initialization
@@ -40,6 +42,48 @@ A comprehensive script for formatting code across multiple languages and configu
 # --check   Validate formatting without changes
 # --fix     Apply formatting fixes
 # --lang    Specify target language(s)
+```
+
+### `utilities/tflint.sh`
+
+A script to run TFLint on Terraform files for checking syntax, style, and best practices.
+
+**Features:**
+- Runs TFLint with a predefined configuration
+- Supports targeting specific modules
+- Can be run in a Nix environment
+
+**Usage:**
+```bash
+# Run TFLint on all files in the current directory
+./utilities/tflint.sh
+
+# Run TFLint for a specific module
+./utilities/tflint.sh --module mymodule
+
+# Run TFLint in a Nix environment
+./utilities/tflint.sh --nix
+```
+
+### `utilities/tfdocs.sh`
+
+A script to generate documentation for Terraform modules using `terraform-docs`.
+
+**Features:**
+- Automates documentation generation
+- Supports targeting specific modules
+- Can be run in a Nix environment
+
+**Usage:**
+```bash
+# Generate docs for all modules
+./utilities/tfdocs.sh
+
+# Generate docs for a specific module
+./utilities/tfdocs.sh --module mymodule
+
+# Generate docs in a Nix environment
+./utilities/tfdocs.sh --nix
 ```
 
 ## 🪝 Hooks Management

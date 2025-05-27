@@ -1,6 +1,8 @@
 module github.com/Excoriate/terraform-registry-module-template/tests
 
-go 1.24
+go 1.23.0
+
+toolchain go1.23.9
 
 require (
 	github.com/gruntwork-io/terratest v0.48.2

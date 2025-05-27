@@ -1,0 +1,111 @@
+---
+version: "2"
+
+# Run configuration for tests directory
+run:
+  timeout: 10m
+  tests: true
+  build-tags: ["unit", "integration", "readonly", "examples"]
+  go: "1.23"
+
+# Formatter configuration
+formatters:
+  enable:
+    - gofmt
+
+# Linter configuration optimized for Terratest
+linters:
+  # Enable specific linters appropriate for Terratest projects
+  enable:
+    # Core linters for reliability
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+    # Style and complexity linters
+    - gocyclo
+    - goconst
+    - gocritic
+    - revive
+
+    # Security linters (important for Terratest)
+    - gosec
+    - bodyclose
+
+    # Additional useful linters for Go testing
+    - misspell
+    - unconvert
+
+  # Linter-specific settings
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Not critical for test code
+    gocyclo:
+      min-complexity: 25 # Higher threshold for test code
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam
+        - commentedOutCode
+        - unnamedResult # Common in test helper functions
+    gosec:
+      excludes:
+        - G204 # Subprocess launched with variable - common in Terratest
+        - G304 # File path provided as taint input - common in test file operations
+
+
+  # Exclusion configuration
+  exclusions:
+    # Exclude specific paths
+    paths:
+      - vendor
+      - go/pkg/mod
+      - '.*\.pb\.go'
+      - '.*_generated\.go'
+
+    # Exclusion rules for test files
+    rules:
+      # Allow certain patterns in test files
+      - path: '_test\.go'
+        linters:
+          - gosec
+          - gocritic
+          - revive
+        text: "(G204|G304|hugeParam)"
+
+      # Exclude specific static analysis warnings common in tests
+      - text: "SA1019:"
+        linters:
+          - staticcheck
+
+      # Allow long functions in test files
+      - path: '_test\.go'
+        linters:
+          - gocyclo
+
+    # Use default exclusion presets for common false positives
+    presets:
+      - common-false-positives
+      - std-error-handling
+
+# Output configuration
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+
+# Issues configuration
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

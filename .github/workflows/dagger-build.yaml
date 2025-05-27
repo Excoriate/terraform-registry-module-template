@@ -1,0 +1,75 @@
+---
+name: 👩‍🚀 Dagger Build
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'pipeline/infra/**'
+      - '.github/workflows/dagger-build.yaml'
+  workflow_dispatch:
+    inputs:
+      dagger_version:
+        description: 'Dagger version to use'
+        required: false
+        default: '0.18.8'
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  DAGGER_VERSION: ${{ inputs.dagger_version || '0.18.8' }}
+  DAGGER_MODULE_DIR: "pipeline/infra"
+
+jobs:
+  dagger-build:
+    name: 🔨 Build Dagger Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Dagger CLI
+        run: |
+          curl -fsSL https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=${{ env.DAGGER_VERSION }} BIN_DIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Verify Dagger Installation
+        run: |
+          dagger version
+          echo "✅ Dagger CLI installed successfully"
+
+      - name: 🔨 Initialize Dagger Development Environment
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "🔨 Initializing Dagger development environment"
+          dagger develop
+          echo "✅ Dagger development environment initialized successfully"
+
+      - name: 📋 Build Dagger Pipeline
+        working-directory: ${{ env.DAGGER_MODULE_DIR }}
+        run: |
+          echo "📋 Building Dagger pipeline"
+          dagger functions
+          echo "✅ Dagger pipeline built successfully"
+
+  summary:
+    name: 🏁 Build Summary
+    needs:
+      - dagger-build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📊 Workflow Status
+        run: |
+          echo "🚀 Dagger Build Complete!"
+          echo "🔍 Detailed results available in job logs."
+
+          # Check the status of the build job
+          if [[ "${{ needs.dagger-build.result }}" != "success" ]]; then
+            echo "❌ Dagger build failed"
+            exit 1
+          fi
+
+          echo "✅ All checks passed!"

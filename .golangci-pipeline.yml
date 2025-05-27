@@ -1,0 +1,122 @@
+---
+version: "2"
+
+# Run configuration for pipeline directory
+run:
+  timeout: 10m
+  tests: false # Pipeline code typically doesn't include test files
+  build-tags: []
+  go: "1.23"
+
+# Formatter configuration
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+
+# Linter configuration optimized for Dagger SDK
+linters:
+  # Enable specific linters appropriate for Dagger pipeline code
+  enable:
+    # Core linters for reliability
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+    # Style and complexity linters
+    - gocyclo
+    - goconst
+    - gocritic
+    - revive
+
+    # Security linters
+    - gosec
+    - bodyclose
+
+    # Additional useful linters for pipeline code
+    - misspell
+    - unconvert
+    - unparam
+    - wastedassign
+
+    # Code quality linters for pipeline infrastructure
+    - whitespace
+
+  # Linter-specific settings
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Not always critical for pipeline code
+    gocyclo:
+      min-complexity: 15 # Stricter threshold for pipeline code
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+        - experimental
+      disabled-checks:
+        - hugeParam
+        - commentedOutCode
+    gosec:
+      excludes:
+        - G204 # Subprocess launched with variable - common in pipeline operations
+
+  # Exclusion configuration
+  exclusions:
+    # Exclude specific paths and files
+    paths:
+      - vendor
+      - go/pkg/mod
+      - '.*\.pb\.go'
+      - '.*_generated\.go'
+      - 'dagger\.gen\.go' # Exclude Dagger generated files
+      - 'internal/.*' # Exclude internal directory
+
+    # Exclusion rules
+    rules:
+      # Exclude specific static analysis warnings
+      - text: "SA1019:"
+        linters:
+          - staticcheck
+
+      # Allow certain patterns in Dagger-generated code
+      - path: 'dagger\.gen\.go'
+        linters:
+          - errcheck
+          - govet
+          - staticcheck
+          - unused
+          - gosec
+          - gocritic
+          - revive
+
+      # Allow certain patterns in internal directory (if any files are processed)
+      - path: 'internal/.*'
+        linters:
+          - errcheck
+          - gosec
+          - gocritic
+
+    # Use default exclusion presets for common false positives
+    presets:
+      - common-false-positives
+      - std-error-handling
+
+# Output configuration
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+
+# Issues configuration
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
